@@ -6,11 +6,14 @@ import (
 )
 
 const (
-	ModuleName        = types.ModuleName
-	StoreKey          = types.StoreKey
-	QuerierRoute      = types.QuerierRoute
-	RouterKey         = types.RouterKey
-	DefaultParamspace = types.DefaultParamspace
+	ModuleName             = types.ModuleName
+	StoreKey               = types.StoreKey
+	QuerierRoute           = types.QuerierRoute
+	RouterKey              = types.RouterKey
+	DefaultParamspace      = types.DefaultParamspace
+	EventTypeDefineService = types.EventTypeDefineService
+	AttributeKeyAuthor     = types.AttributeKeyAuthor
+	AttributeValueCategory = types.AttributeValueCategory
 )
 
 var (
@@ -20,5 +23,6 @@ var (
 )
 
 type (
-	Keeper = keeper.Keeper
+	Keeper           = keeper.Keeper
+	MsgDefineService = types.MsgDefineService
 )
