@@ -2,6 +2,7 @@ package service
 
 import (
 	"encoding/json"
+	"math/rand"
 
 	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
@@ -12,6 +13,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	sim "github.com/cosmos/cosmos-sdk/x/simulation"
+
+	"github.com/irismod/service/client/cli"
+	"github.com/irismod/service/client/rest"
+	"github.com/irismod/service/simulation"
+	"github.com/irismod/service/types"
 )
 
 var (
@@ -45,28 +52,35 @@ func (AppModuleBasic) ValidateGenesis(_ json.RawMessage) error {
 
 // RegisterRESTRoutes registers the REST routes for the service module.
 func (AppModuleBasic) RegisterRESTRoutes(ctx context.CLIContext, rtr *mux.Router) {
+	rest.RegisterRoutes(ctx, rtr)
 }
 
 // GetTxCmd returns the root tx command for the service module.
 func (AppModuleBasic) GetTxCmd(cdc *codec.Codec) *cobra.Command {
-	return nil
+	return cli.GetTxCmd(StoreKey, cdc)
 }
 
 // GetQueryCmd returns the root query command for the service module.
 func (AppModuleBasic) GetQueryCmd(cdc *codec.Codec) *cobra.Command {
-	return nil
+	return cli.GetQueryCmd(StoreKey, cdc)
 }
+
+//____________________________________________________________________________
 
 // AppModule implements an application module for the service module.
 type AppModule struct {
 	AppModuleBasic
-	keeper Keeper
+
+	keeper        Keeper
+	accountKeeper types.AccountKeeper
 }
 
 // NewAppModule creates a new AppModule object
-func NewAppModule(k Keeper) AppModule {
+func NewAppModule(keeper Keeper, accountKeeper types.AccountKeeper) AppModule {
 	return AppModule{
-		keeper: k,
+		AppModuleBasic: AppModuleBasic{},
+		keeper:         keeper,
+		accountKeeper:  accountKeeper,
 	}
 }
 
@@ -119,4 +133,34 @@ func (am AppModule) BeginBlock(ctx sdk.Context, req abci.RequestBeginBlock) {
 // updates.
 func (am AppModule) EndBlock(ctx sdk.Context, req abci.RequestEndBlock) []abci.ValidatorUpdate {
 	return []abci.ValidatorUpdate{}
+}
+
+//____________________________________________________________________________
+
+// AppModuleSimulation functions
+
+// GenerateGenesisState creates a randomized GenState of the service module.
+func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
+	return
+}
+
+// ProposalContents doesn't return any content functions for governance proposals.
+func (AppModule) ProposalContents(_ module.SimulationState) []sim.WeightedProposalContent {
+	return nil
+}
+
+// RandomizedParams creates randomized service param changes for the simulator.
+func (AppModule) RandomizedParams(r *rand.Rand) []sim.ParamChange {
+	return nil
+}
+
+// RegisterStoreDecoder registers a decoder for service module's types
+func (AppModule) RegisterStoreDecoder(sdr sdk.StoreDecoderRegistry) {
+	sdr[StoreKey] = simulation.DecodeStore
+}
+
+// WeightedOperations returns the all the staking module operations with their respective weights.
+func (am AppModule) WeightedOperations(simState module.SimulationState) []sim.WeightedOperation {
+	return simulation.WeightedOperations(simState.AppParams, simState.Cdc,
+		am.accountKeeper, am.keeper)
 }
