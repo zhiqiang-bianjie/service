@@ -14,6 +14,38 @@ all: tools lint test
 ########################################
 ### Tools & dependencies
 
+###
+# Find OS and Go environment
+# GO contains the Go binary
+# FS contains the OS file separator
+###
+ifeq ($(OS),Windows_NT)
+  GO := $(shell where go.exe 2> NUL)
+  FS := "\\"
+else
+  GO := $(shell command -v go 2> /dev/null)
+  FS := "/"
+endif
+
+ifeq ($(GO),)
+  $(error could not find go. Is it in PATH $(GO))
+endif
+
+tools: runsim
+
+GOPATH ?= $(shell $(GO) env GOPATH)
+
+TOOLS_DESTDIR  ?= $(GOPATH)/bin
+RUNSIM 		   = $(TOOLS_DESTDIR)/runsim
+
+runsim:
+	@echo "Installing runsim..."
+	@go get github.com/cosmos/tools/cmd/runsim@v1.0.0
+
+tools-clean:
+	rm -f $(RUNSIM)
+	rm -f tools-stamp
+
 go-mod-cache: go.sum
 	@echo "--> Download go modules to local cache"
 	@go mod download
@@ -23,30 +55,6 @@ go.sum: go.mod
 	@echo "--> Ensure dependencies have not been modified"
 	@go mod verify
 	@go mod tidy
-
-########################################
-### Documentation
-
-godocs:
-	@echo "--> Wait a few seconds and visit http://localhost:6060/pkg/github.com/irismod/service/types"
-	godoc -http=:6060
-
-build-docs:
-	@cd docs && \
-	while read p; do \
-		(git checkout $${p} && npm install && VUEPRESS_BASE="/$${p}/" npm run build) ; \
-		mkdir -p ~/output/$${p} ; \
-		cp -r .vuepress/dist/* ~/output/$${p}/ ; \
-		cp ~/output/$${p}/index.html ~/output ; \
-	done < versions ;
-
-sync-docs:
-	cd ~/output && \
-	echo "role_arn = ${DEPLOYMENT_ROLE_ARN}" >> /root/.aws/config ; \
-	echo "CI job = ${CIRCLE_BUILD_URL}" >> version.html ; \
-	aws s3 sync . s3://${WEBSITE_BUCKET} --profile terraform --delete ; \
-	aws cloudfront create-invalidation --distribution-id ${CF_DISTRIBUTION_ID} --profile terraform --path "/*" ;
-.PHONY: sync-docs
 
 ########################################
 ### Testing
