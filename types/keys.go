@@ -17,7 +17,7 @@ const (
 var (
 	// Keys for store prefixes
 
-	ServiceDefinitionKey = []byte{0x11} // prefix for service definition
+	ServiceDefinitionKey = []byte{0x01} // prefix for service definition
 )
 
 // GetServiceDefinitionKey gets the key for the service definition with the specified service name
