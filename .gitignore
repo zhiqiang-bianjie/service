@@ -4,9 +4,6 @@ vendor
 .vscode
 build/
 .out
-docs/.vuepress/dist/
-node_modules/
 package.json
 yarn.lock
-lite/statik/statik.go
 dependency-graph.png
