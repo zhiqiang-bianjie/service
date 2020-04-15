@@ -7,42 +7,13 @@ SIMAPP = ./simapp
 
 export GO111MODULE = on
 
-all: tools test
+all: tools lint test
+
+# The below include contains the tools, runsim and golangci-lint targets.
+include devtools/Makefile
 
 ########################################
-### Tools & dependencies
-
-###
-# Find OS and Go environment
-# GO contains the Go binary
-# FS contains the OS file separator
-###
-ifeq ($(OS),Windows_NT)
-  GO := $(shell where go.exe 2> NUL)
-  FS := "\\"
-else
-  GO := $(shell command -v go 2> /dev/null)
-  FS := "/"
-endif
-
-ifeq ($(GO),)
-  $(error could not find go. Is it in PATH $(GO))
-endif
-
-tools: runsim
-
-GOPATH ?= $(shell $(GO) env GOPATH)
-
-TOOLS_DESTDIR  ?= $(GOPATH)/bin
-RUNSIM 		   = $(TOOLS_DESTDIR)/runsim
-
-runsim:
-	@echo "Installing runsim..."
-	@go get github.com/cosmos/tools/cmd/runsim@v1.0.0
-
-tools-clean:
-	rm -f $(RUNSIM)
-	rm -f tools-stamp
+### Dependencies
 
 go-mod-cache: go.sum
 	@echo "--> Download go modules to local cache"
@@ -62,7 +33,7 @@ SIM_BLOCK_SIZE ?= 50
 SIM_COMMIT ?= true
 
 test: test-unit
-test-all: test-unit test-race
+test-all: test-unit test-race test-cover
 
 test-unit:
 	@VERSION=$(VERSION) go test -mod=readonly $(PACKAGES_NOSIMULATION)
@@ -131,3 +102,16 @@ test-sim-profile:
 		-Enabled=true -NumBlocks=$(SIM_NUM_BLOCKS) -BlockSize=$(SIM_BLOCK_SIZE) -Commit=$(SIM_COMMIT) -timeout 24h -cpuprofile cpu.out -memprofile mem.out
 
 .PHONY: test-sim-profile test-sim-benchmark
+
+test-cover:
+	bash -x devtools/test_cover.sh
+.PHONY: test-cover
+
+lint: golangci-lint
+	$(BINDIR)/golangci-lint run
+	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" | xargs gofmt -d -s
+	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" | xargs gofmt -w -s
+	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" | xargs misspell -w
+	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" | xargs goimports -w -local github.com/cosmos/cosmos-sdk
+	go mod verify
+.PHONY: lint

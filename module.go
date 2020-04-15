@@ -142,7 +142,6 @@ func (am AppModule) EndBlock(ctx sdk.Context, req abci.RequestEndBlock) []abci.V
 
 // GenerateGenesisState creates a randomized GenState of the service module.
 func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
-	return
 }
 
 // ProposalContents doesn't return any content functions for governance proposals.
