@@ -7,7 +7,7 @@ SIMAPP = ./simapp
 
 export GO111MODULE = on
 
-all: tools lint test
+all: tools test
 
 ########################################
 ### Tools & dependencies
@@ -131,19 +131,3 @@ test-sim-profile:
 		-Enabled=true -NumBlocks=$(SIM_NUM_BLOCKS) -BlockSize=$(SIM_BLOCK_SIZE) -Commit=$(SIM_COMMIT) -timeout 24h -cpuprofile cpu.out -memprofile mem.out
 
 .PHONY: test-sim-profile test-sim-benchmark
-
-lint: golangci-lint
-	$(BINDIR)/golangci-lint run
-	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" | xargs gofmt -d -s
-	go mod verify
-.PHONY: lint
-
-format: tools
-	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" -not -path "./client/lcd/statik/statik.go" | xargs gofmt -w -s
-	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" -not -path "./client/lcd/statik/statik.go" | xargs misspell -w
-	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" -not -path "./client/lcd/statik/statik.go" | xargs goimports -w -local github.com/irismod/service
-.PHONY: format
-
-benchmark:
-	@go test -mod=readonly -bench=. $(PACKAGES_NOSIMULATION)
-.PHONY: benchmark

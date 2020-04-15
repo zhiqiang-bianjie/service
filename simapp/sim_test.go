@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/log"
 	dbm "github.com/tendermint/tm-db"
@@ -25,8 +26,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/cosmos/cosmos-sdk/x/supply"
 
-	"github.com/irismod/service/simapp/helpers"
 	"github.com/irismod/service"
+	"github.com/irismod/service/simapp/helpers"
 )
 
 // Get flags every time the simulator is run
