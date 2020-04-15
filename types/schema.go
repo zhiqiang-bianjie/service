@@ -184,8 +184,8 @@ const (
 	PricingSchema = `
 {
 	"$schema": "http://json-schema.org/draft-04/schema#",
-	"title": "irishub-service-pricing",
-	"description": "IRIS Hub Service Pricing Schema",
+	"title": "service-pricing",
+	"description": "Service Pricing Schema",
 	"type": "object",
 	"definitions": {
 	  "discount": {
@@ -274,8 +274,8 @@ const (
 	ResultSchema = `
 {
 	"$schema": "http://json-schema.org/draft-04/schema#",
-	"title": "irishub-service-result",
-	"description": "IRIS Hub Service Result Schema",
+	"title": "service-result",
+	"description": "Service Result Schema",
 	"type": "object",
 	"properties": {
 	  "code": {

@@ -47,11 +47,11 @@ func init() {
 
 	FsBindService.String(FlagServiceName, "", "service name")
 	FsBindService.String(FlagDeposit, "", "deposit of the binding")
-	FsBindService.String(FlagPricing, "", "pricing content or file path, which is an instance of the Irishub Service Pricing schema")
+	FsBindService.String(FlagPricing, "", "pricing content or file path, which is an instance of the Service Pricing schema")
 	FsBindService.Uint64(FlagMinRespTime, 0, "minimum response time")
 
 	FsUpdateServiceBinding.String(FlagDeposit, "", "added deposit for the binding")
-	FsUpdateServiceBinding.String(FlagPricing, "", "pricing content or file path, which is an instance of the Irishub Service Pricing schema")
+	FsUpdateServiceBinding.String(FlagPricing, "", "pricing content or file path, which is an instance of the Service Pricing schema")
 	FsUpdateServiceBinding.Uint64(FlagMinRespTime, 0, "minimum response time, not updated if set to 0")
 
 	FsEnableServiceBinding.String(FlagDeposit, "", "added deposit for enabling the binding")
