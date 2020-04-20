@@ -74,6 +74,9 @@ var (
 		staking.BondedPoolName:    {supply.Burner, supply.Staking},
 		staking.NotBondedPoolName: {supply.Burner, supply.Staking},
 		gov.ModuleName:            {supply.Burner},
+		service.DepositAccName:    {supply.Burner},
+		service.RequestAccName:    nil,
+		service.TaxAccName:        nil,
 	}
 
 	// module accounts that are allowed to receive tokens
@@ -157,9 +160,9 @@ func NewSimApp(
 		BaseApp:        bApp,
 		cdc:            cdc,
 		invCheckPeriod: invCheckPeriod,
-		keys:           keys,
-		tkeys:          tkeys,
-		subspaces:      make(map[string]params.Subspace),
+		keys:           tkeys,
+		subspaces:      keys,
+		tkeys:          make(map[string]params.Subspace),
 	}
 
 	// init params keeper and subspaces
@@ -231,7 +234,7 @@ func NewSimApp(
 	)
 
 	app.ServiceKeeper = service.NewKeeper(
-		app.cdc, keys[service.StoreKey], app.SupplyKeeper, app.subspaces[service.ModuleName],
+		app.cdc, keys[service.StoreKey], app.SupplyKeeper, MockTokenKeeper{}, app.subspaces[service.ModuleName],
 	)
 
 	// NOTE: Any module instantiated in the module manager that is later modified
