@@ -203,7 +203,7 @@ func TestMsgBindServiceGetSignBytes(t *testing.T) {
 	msg := NewMsgBindService(testServiceName, testProvider, testDeposit, testPricing, testMinRespTime)
 	res := msg.GetSignBytes()
 
-	expected := `{"type":"irismod/service/MsgBindService","value":{"deposit":[{"amount":"100000","denom":"stake"}],"min_resp_time":"50","pricing":"{\"price\":\"1stake\"}","provider":"cosmos1w3jhxapdwpex7anfv3jhy8anr90","service_name":"test-service"}}`
+	expected := `{"type":"irismod/service/MsgBindService","value":{"deposit":[{"amount":"10000","denom":"stake"}],"min_resp_time":"50","pricing":"{\"price\":\"1stake\"}","provider":"cosmos1w3jhxapdwpex7anfv3jhy8anr90","service_name":"test-service"}}`
 	require.Equal(t, expected, string(res))
 }
 
