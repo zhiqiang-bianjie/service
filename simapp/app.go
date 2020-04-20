@@ -160,9 +160,9 @@ func NewSimApp(
 		BaseApp:        bApp,
 		cdc:            cdc,
 		invCheckPeriod: invCheckPeriod,
-		keys:           tkeys,
-		subspaces:      keys,
-		tkeys:          make(map[string]params.Subspace),
+		keys:           keys,
+		tkeys:          tkeys,
+		subspaces:      make(map[string]params.Subspace),
 	}
 
 	// init params keeper and subspaces
