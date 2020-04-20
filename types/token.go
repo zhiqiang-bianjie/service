@@ -5,4 +5,4 @@ import (
 )
 
 // TokenI defines the interface for Token
-type TokenI exported.TokenI
+type TokenI = exported.TokenI
