@@ -52,6 +52,8 @@ func (suite *KeeperTestSuite) SetupTest() {
 	suite.ctx = app.BaseApp.NewContext(isCheckTx, abci.Header{})
 	suite.app = app
 	suite.keeper = &app.ServiceKeeper
+
+	suite.app.InitChainer(suite.ctx, abci.RequestInitChain{})
 }
 
 func (suite *KeeperTestSuite) setServiceDefinition() {
