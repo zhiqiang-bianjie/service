@@ -42,3 +42,4 @@ func ParseCoinParts(coinStr string) (denom, amount string, err error) {
 	denom, amount = matches[3], matches[1]
 	return
 }
+

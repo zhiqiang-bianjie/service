@@ -41,7 +41,6 @@ type KeeperTestSuite struct {
 	cdc    *codec.Codec
 	ctx    sdk.Context
 	app    *simapp.SimApp
-	keeper *keeper.Keeper
 }
 
 func (suite *KeeperTestSuite) SetupTest() {
