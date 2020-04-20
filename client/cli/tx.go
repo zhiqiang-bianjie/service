@@ -35,6 +35,12 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 
 	serviceTxCmd.AddCommand(flags.PostCommands(
 		GetCmdDefineService(cdc),
+		GetCmdBindService(cdc),
+		GetCmdUpdateServiceBinding(cdc),
+		GetCmdSetWithdrawAddr(cdc),
+		GetCmdDisableServiceBinding(cdc),
+		GetCmdEnableServiceBinding(cdc),
+		GetCmdRefundServiceDeposit(cdc),
 	)...)
 
 	return serviceTxCmd

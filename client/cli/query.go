@@ -28,6 +28,9 @@ func GetQueryCmd(queryRoute string, cdc *codec.Codec) *cobra.Command {
 
 	serviceQueryCmd.AddCommand(flags.GetCommands(
 		GetCmdQueryServiceDefinition(queryRoute, cdc),
+		GetCmdQueryServiceBinding(queryRoute, cdc),
+		GetCmdQueryServiceBindings(queryRoute, cdc),
+		GetCmdQueryWithdrawAddr(queryRoute, cdc),
 	)...)
 
 	return serviceQueryCmd
