@@ -1,4 +1,4 @@
-package token
+package service
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"

@@ -26,15 +26,19 @@ const (
 )
 
 var (
-	NewKeeper     = keeper.NewKeeper
-	NewQuerier    = keeper.NewQuerier
-	RegisterCodec = types.RegisterCodec
+	NewKeeper           = keeper.NewKeeper
+	NewQuerier          = keeper.NewQuerier
+	ModuleCdc           = types.ModuleCdc
+	RegisterCodec       = types.RegisterCodec
+	DefaultGenesisState = types.DefaultGenesisState
+	ValidateGenesis     = types.ValidateGenesis
 )
 
 type (
 	Keeper                     = keeper.Keeper
 	ServiceDefinition          = types.ServiceDefinition
 	ServiceBinding             = types.ServiceBinding
+	GenesisState               = types.GenesisState
 	MsgDefineService           = types.MsgDefineService
 	MsgBindService             = types.MsgBindService
 	MsgUpdateServiceBinding    = types.MsgUpdateServiceBinding
