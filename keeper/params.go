@@ -62,6 +62,12 @@ func (k Keeper) TxSizeLimit(ctx sdk.Context) (res uint64) {
 	return
 }
 
+// BaseDenom returns the base denom of service module
+func (k Keeper) BaseDenom(ctx sdk.Context) (res string) {
+	k.paramstore.Get(ctx, types.KeyBaseDenom, &res)
+	return
+}
+
 // GetParams gets all parameteras as types.Params
 func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 	return types.NewParams(
@@ -73,6 +79,7 @@ func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 		k.ComplaintRetrospect(ctx),
 		k.ArbitrationTimeLimit(ctx),
 		k.TxSizeLimit(ctx),
+		k.BaseDenom(ctx),
 	)
 }
 

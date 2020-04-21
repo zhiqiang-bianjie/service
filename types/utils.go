@@ -8,7 +8,7 @@ import (
 
 var (
 	reDnmString = `[a-z][a-z0-9]{2,}`
-	reAmt       = `[[:digit:]]*\.[[:digit:]]+`
+	reAmt       = `[0-9]+(\.[0-9]+)?`
 	reSpc       = `[[:space:]]*`
 	reCoin      = regexp.MustCompile(fmt.Sprintf(`^(%s)%s(%s)$`, reAmt, reSpc, reDnmString))
 )
@@ -42,4 +42,3 @@ func ParseCoinParts(coinStr string) (denom, amount string, err error) {
 	denom, amount = matches[3], matches[1]
 	return
 }
-

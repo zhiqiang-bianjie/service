@@ -235,6 +235,7 @@ func NewSimApp(
 
 	app.ServiceKeeper = service.NewKeeper(
 		app.cdc, keys[service.StoreKey], app.SupplyKeeper, service.MockTokenKeeper{}, app.subspaces[service.ModuleName],
+		auth.FeeCollectorName,
 	)
 
 	// NOTE: Any module instantiated in the module manager that is later modified

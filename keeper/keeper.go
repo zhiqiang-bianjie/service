@@ -20,6 +20,14 @@ type Keeper struct {
 	supplyKeeper types.SupplyKeeper
 	tokenKeeper  types.TokenKeeper
 	paramstore   params.Subspace
+
+	feeCollectorName string // name of the FeeCollector ModuleAccount
+
+	// used to map the module name to response callback
+	respCallbacks map[string]types.ResponseCallback
+
+	// used to map the module name to state callback
+	stateCallbacks map[string]types.StateCallback
 }
 
 // NewKeeper creates a new service Keeper instance
@@ -29,6 +37,7 @@ func NewKeeper(
 	supplyKeeper types.SupplyKeeper,
 	tokenKeeper types.TokenKeeper,
 	paramstore params.Subspace,
+	feeCollectorName string,
 ) Keeper {
 	// ensure service module accounts are set
 	if addr := supplyKeeper.GetModuleAddress(types.DepositAccName); addr == nil {
@@ -44,11 +53,12 @@ func NewKeeper(
 	}
 
 	return Keeper{
-		storeKey:     key,
-		cdc:          cdc,
-		supplyKeeper: supplyKeeper,
-		tokenKeeper:  tokenKeeper,
-		paramstore:   paramstore.WithKeyTable(ParamKeyTable()),
+		storeKey:         key,
+		cdc:              cdc,
+		supplyKeeper:     supplyKeeper,
+		tokenKeeper:      tokenKeeper,
+		feeCollectorName: feeCollectorName,
+		paramstore:       paramstore.WithKeyTable(ParamKeyTable()),
 	}
 }
 
