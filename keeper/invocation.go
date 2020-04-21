@@ -790,7 +790,6 @@ func (k Keeper) FilterServiceProviders(
 		if found && binding.Available {
 			if binding.MinRespTime <= uint64(timeout) {
 				price := k.GetPrice(ctx, consumer, binding)
-				fmt.Println(price.String())
 
 				if price.IsAllLTE(serviceFeeCap) {
 					newProviders = append(newProviders, provider)

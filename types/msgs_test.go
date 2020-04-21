@@ -38,10 +38,8 @@ var (
 	testRepeatedFreq  = uint64(120)
 	testRepeatedTotal = int64(100)
 
-	testResult           = `{"code":200,"message":""}`
-	testOutput           = `{"last":"100"}`
-	testTrustee          = sdk.AccAddress([]byte("test-trustee"))
-	testTaxWithdrawalAmt = sdk.NewCoins(testCoin1)
+	testResult = `{"code":200,"message":""}`
+	testOutput = `{"last":"100"}`
 
 	testRequestContextID = GenerateRequestContextID(tmhash.Sum([]byte("test-request-context-id")), 0)
 	testRequestID        = GenerateRequestID(testRequestContextID, 1, 1, 1)

@@ -53,6 +53,7 @@ var (
 	RegisterCodec       = types.RegisterCodec
 	DefaultGenesisState = types.DefaultGenesisState
 	ValidateGenesis     = types.ValidateGenesis
+	NewGenesisState     = types.NewGenesisState
 )
 
 type (

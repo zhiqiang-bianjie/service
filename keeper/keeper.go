@@ -52,7 +52,7 @@ func NewKeeper(
 		panic(fmt.Sprintf("%s module account has not been set", types.TaxAccName))
 	}
 
-	return Keeper{
+	keeper := Keeper{
 		storeKey:         key,
 		cdc:              cdc,
 		supplyKeeper:     supplyKeeper,
@@ -60,6 +60,10 @@ func NewKeeper(
 		feeCollectorName: feeCollectorName,
 		paramstore:       paramstore.WithKeyTable(ParamKeyTable()),
 	}
+
+	keeper.respCallbacks = make(map[string]types.ResponseCallback)
+	keeper.stateCallbacks = make(map[string]types.StateCallback)
+	return keeper
 }
 
 // Logger returns a module-specific logger.

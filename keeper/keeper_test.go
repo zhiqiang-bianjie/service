@@ -19,6 +19,7 @@ import (
 )
 
 var (
+	initCoins = sdk.NewCoins(sdk.NewCoin(types.ServiceDepositCoinDenom, sdk.NewIntWithDecimal(10000, types.ServiceDepositCoinDecimal)))
 	testCoin1 = sdk.NewCoin(types.ServiceDepositCoinDenom, sdk.NewIntWithDecimal(10000, types.ServiceDepositCoinDecimal))
 	testCoin2 = sdk.NewCoin(types.ServiceDepositCoinDenom, sdk.NewIntWithDecimal(100, types.ServiceDepositCoinDecimal))
 	testCoin3 = sdk.NewCoin(types.ServiceDepositCoinDenom, sdk.NewIntWithDecimal(1, types.ServiceDepositCoinDecimal))
@@ -34,7 +35,7 @@ var (
 	testProvider     = sdk.AccAddress([]byte("test-provider"))
 	testProvider1    = sdk.AccAddress([]byte("test-provider-1"))
 	testDeposit      = sdk.NewCoins(testCoin1)
-	testPricing      = `{"price":"1stake"}`
+	testPricing      = `{"price":"1stake","promotions_by_volume":[{"volume":1,"discount":"0.8"}]}`
 	testMinRespTime  = uint64(50)
 	testWithdrawAddr = sdk.AccAddress([]byte("test-withdrawal-address"))
 	testAddedDeposit = sdk.NewCoins(testCoin2)
@@ -86,7 +87,7 @@ func (suite *KeeperTestSuite) setServiceBinding(available bool, disabledTime tim
 	suite.keeper.SetServiceBinding(suite.ctx, svcBinding)
 
 	pricing, _ := suite.keeper.ParsePricing(suite.ctx, testPricing)
-	suite.keeper.SetPricing(suite.ctx, testServiceName, testProvider, pricing)
+	suite.keeper.SetPricing(suite.ctx, testServiceName, provider, pricing)
 }
 
 func (suite *KeeperTestSuite) TestDefineService() {
@@ -300,6 +301,7 @@ func (suite *KeeperTestSuite) TestKeeperRequestContext() {
 func (suite *KeeperTestSuite) TestKeeperRequestService() {
 	providers := []sdk.AccAddress{testProvider, testProvider1}
 	consumer := testConsumer
+	_, _ = suite.app.BankKeeper.AddCoins(suite.ctx, consumer, initCoins)
 
 	suite.setServiceDefinition()
 
@@ -316,7 +318,7 @@ func (suite *KeeperTestSuite) TestKeeperRequestService() {
 
 	newProviders, totalServiceFees := suite.keeper.FilterServiceProviders(ctx, testServiceName, providers, testTimeout, testServiceFeeCap, consumer)
 	suite.Equal(providers, newProviders)
-	suite.Equal("2iris", totalServiceFees.String())
+	suite.Equal("2000000stake", totalServiceFees.String())
 
 	err := suite.keeper.DeductServiceFees(ctx, consumer, totalServiceFees)
 	suite.NoError(err)
@@ -363,7 +365,7 @@ func (suite *KeeperTestSuite) TestKeeperRequestService() {
 
 	// service fees will change due to the increased volume
 	_, totalServiceFees = suite.keeper.FilterServiceProviders(ctx, testServiceName, providers, testTimeout, testServiceFeeCap, consumer)
-	suite.Equal("1.6iris", totalServiceFees.String())
+	suite.Equal("1600000stake", totalServiceFees.String())
 
 	// satifying providers will change due to the condition changed
 	newTimeout := int64(40)
@@ -376,6 +378,8 @@ func (suite *KeeperTestSuite) TestKeeper_Respond_Service() {
 	ctx := suite.ctx.WithValue(types.TxHash, tmhash.Sum([]byte("tx_hash")))
 	provider := testProvider
 	consumer := testConsumer
+	_, _ = suite.app.BankKeeper.AddCoins(suite.ctx, consumer, initCoins)
+	_, _ = suite.app.BankKeeper.AddCoins(suite.ctx, provider, initCoins)
 
 	suite.setServiceDefinition()
 
@@ -439,6 +443,10 @@ func (suite *KeeperTestSuite) TestRequestServiceFromModule() {
 	providers := []sdk.AccAddress{provider1, provider2}
 	consumer := testConsumer
 
+	_, _ = suite.app.BankKeeper.AddCoins(suite.ctx, consumer, initCoins)
+	_, _ = suite.app.BankKeeper.AddCoins(suite.ctx, provider1, initCoins)
+	_, _ = suite.app.BankKeeper.AddCoins(suite.ctx, provider2, initCoins)
+
 	suite.setServiceDefinition()
 
 	moduleName := "oracle"
@@ -481,7 +489,6 @@ func (suite *KeeperTestSuite) TestRequestServiceFromModule() {
 
 func callback(ctx sdk.Context, requestContextID tmbytes.HexBytes, responses []string, err error) {
 	callbacked = true
-	return
 }
 
 func (suite *KeeperTestSuite) setRequestContext(

@@ -17,24 +17,24 @@ import (
 
 // RequestContext defines a context which holds request-related data
 type RequestContext struct {
-	ServiceName            string                   `json:"service_name"`
-	Providers              []sdk.AccAddress         `json:"providers"`
-	Consumer               sdk.AccAddress           `json:"consumer"`
-	Input                  string                   `json:"input"`
-	ServiceFeeCap          sdk.Coins                `json:"service_fee_cap"`
-	Timeout                int64                    `json:"timeout"`
-	SuperMode              bool                     `json:"super_mode"`
-	Repeated               bool                     `json:"repeated"`
-	RepeatedFrequency      uint64                   `json:"repeated_frequency"`
-	RepeatedTotal          int64                    `json:"repeated_total"`
-	BatchCounter           uint64                   `json:"batch_counter"`
-	BatchRequestCount      uint16                   `json:"batch_request_count"`
-	BatchResponseCount     uint16                   `json:"batch_response_count"`
-	BatchResponseThreshold uint16                   `json:"batch_response_threshold"`
-	BatchState             RequestContextBatchState `json:"batch_state"`
-	State                  RequestContextState      `json:"state"`
-	ResponseThreshold      uint16                   `json:"response_threshold"`
-	ModuleName             string                   `json:"module_name"`
+	ServiceName            string                   `json:"service_name" yaml:"service_name"`
+	Providers              []sdk.AccAddress         `json:"providers" yaml:"providers"`
+	Consumer               sdk.AccAddress           `json:"consumer" yaml:"consumer"`
+	ServiceFeeCap          sdk.Coins                `json:"service_fee_cap" yaml:"service_fee_cap"`
+	Input                  string                   `json:"input" yaml:"input"`
+	ModuleName             string                   `json:"module_name" yaml:"module_name"`
+	Timeout                int64                    `json:"timeout" yaml:"timeout"`
+	RepeatedFrequency      uint64                   `json:"repeated_frequency" yaml:"repeated_frequency"`
+	RepeatedTotal          int64                    `json:"repeated_total" yaml:"repeated_total"`
+	BatchCounter           uint64                   `json:"batch_counter" yaml:"batch_counter"`
+	BatchRequestCount      uint16                   `json:"batch_request_count" yaml:"batch_request_count"`
+	BatchResponseCount     uint16                   `json:"batch_response_count" yaml:"batch_response_count"`
+	BatchResponseThreshold uint16                   `json:"batch_response_threshold" yaml:"batch_response_threshold"`
+	ResponseThreshold      uint16                   `json:"response_threshold" yaml:"response_threshold"`
+	SuperMode              bool                     `json:"super_mode" yaml:"super_mode"`
+	Repeated               bool                     `json:"repeated" yaml:"repeated"`
+	BatchState             RequestContextBatchState `json:"batch_state" yaml:"batch_state"`
+	State                  RequestContextState      `json:"state" yaml:"state"`
 }
 
 // NewRequestContext creates a new RequestContext instance
