@@ -40,6 +40,7 @@ type KeeperTestSuite struct {
 
 	cdc    *codec.Codec
 	ctx    sdk.Context
+	keeper *keeper.Keeper
 	app    *simapp.SimApp
 }
 
