@@ -48,10 +48,6 @@ func NewKeeper(
 		panic(fmt.Sprintf("%s module account has not been set", types.RequestAccName))
 	}
 
-	if addr := supplyKeeper.GetModuleAddress(types.TaxAccName); addr == nil {
-		panic(fmt.Sprintf("%s module account has not been set", types.TaxAccName))
-	}
-
 	keeper := Keeper{
 		storeKey:         key,
 		cdc:              cdc,
@@ -79,9 +75,4 @@ func (k Keeper) GetServiceDepositAccount(ctx sdk.Context) exported.ModuleAccount
 // GetServiceRequestAccount returns the service request ModuleAccount
 func (k Keeper) GetServiceRequestAccount(ctx sdk.Context) exported.ModuleAccountI {
 	return k.supplyKeeper.GetModuleAccount(ctx, types.RequestAccName)
-}
-
-// GetServiceTaxAccount returns the service tax ModuleAccount
-func (k Keeper) GetServiceTaxAccount(ctx sdk.Context) exported.ModuleAccountI {
-	return k.supplyKeeper.GetModuleAccount(ctx, types.TaxAccName)
 }

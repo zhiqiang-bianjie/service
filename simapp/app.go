@@ -76,7 +76,6 @@ var (
 		gov.ModuleName:            {supply.Burner},
 		service.DepositAccName:    {supply.Burner},
 		service.RequestAccName:    nil,
-		service.TaxAccName:        nil,
 	}
 
 	// module accounts that are allowed to receive tokens

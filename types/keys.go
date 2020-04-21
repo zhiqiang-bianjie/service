@@ -26,9 +26,6 @@ const (
 	// RequestAccName is the root string for the service request account address
 	RequestAccName = "service_request_account"
 
-	// TaxAccName is the root string for the service tax account address
-	TaxAccName = "service_tax_account"
-
 	// ServiceDepositCoinDenom is the coin denom for service deposit
 	ServiceDepositCoinDenom = sdk.DefaultBondDenom
 

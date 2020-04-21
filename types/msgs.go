@@ -865,62 +865,6 @@ func (msg MsgWithdrawEarnedFees) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Provider}
 }
 
-//______________________________________________________________________
-
-// MsgWithdrawTax defines a message to withdraw the service tax
-type MsgWithdrawTax struct {
-	Trustee     sdk.AccAddress `json:"trustee"`
-	DestAddress sdk.AccAddress `json:"dest_address"`
-	Amount      sdk.Coins      `json:"amount"`
-}
-
-// NewMsgWithdrawTax creates a new MsgWithdrawTax instance
-func NewMsgWithdrawTax(trustee, destAddress sdk.AccAddress, amount sdk.Coins) MsgWithdrawTax {
-	return MsgWithdrawTax{
-		Trustee:     trustee,
-		DestAddress: destAddress,
-		Amount:      amount,
-	}
-}
-
-// Route implements Msg.
-func (msg MsgWithdrawTax) Route() string { return RouterKey }
-
-// Type implements Msg.
-func (msg MsgWithdrawTax) Type() string { return TypeMsgWithdrawTax }
-
-// GetSignBytes implements Msg.
-func (msg MsgWithdrawTax) GetSignBytes() []byte {
-	if msg.Amount.Empty() {
-		msg.Amount = nil
-	}
-
-	b, err := ModuleCdc.MarshalJSON(msg)
-	if err != nil {
-		panic(err)
-	}
-
-	return sdk.MustSortJSON(b)
-}
-
-// ValidateBasic implements Msg.
-func (msg MsgWithdrawTax) ValidateBasic() error {
-	if err := ValidateTrustee(msg.Trustee); err != nil {
-		return err
-	}
-
-	if err := ValidateDestAddress(msg.DestAddress); err != nil {
-		return err
-	}
-
-	return ValidateWithdrawAmount(msg.Amount)
-}
-
-// GetSigners implements Msg.
-func (msg MsgWithdrawTax) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{msg.Trustee}
-}
-
 func ValidateAuthor(author sdk.AccAddress) error {
 	if author.Empty() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "author missing")

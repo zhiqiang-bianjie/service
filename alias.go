@@ -15,7 +15,6 @@ const (
 	DefaultParamspace            = types.DefaultParamspace
 	DepositAccName               = types.DepositAccName
 	RequestAccName               = types.RequestAccName
-	TaxAccName                   = types.TaxAccName
 	QueryDefinition              = types.QueryDefinition
 	QueryBinding                 = types.QueryBinding
 	QueryBindings                = types.QueryBindings
@@ -75,7 +74,6 @@ type (
 	MsgKillRequestContext      = types.MsgKillRequestContext
 	MsgUpdateRequestContext    = types.MsgUpdateRequestContext
 	MsgWithdrawEarnedFees      = types.MsgWithdrawEarnedFees
-	MsgWithdrawTax             = types.MsgWithdrawTax
 	QueryDefinitionParams      = types.QueryDefinitionParams
 	QueryBindingParams         = types.QueryBindingParams
 	QueryBindingsParams        = types.QueryBindingsParams
