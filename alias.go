@@ -51,4 +51,6 @@ type (
 	QueryBindingsParams        = types.QueryBindingsParams
 	QueryWithdrawAddressParams = types.QueryWithdrawAddressParams
 	TokenI                     = types.TokenI
+	MockToken                  = types.MockToken
+	MockTokenKeeper            = keeper.MockTokenKeeper
 )
