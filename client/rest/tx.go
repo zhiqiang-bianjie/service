@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"encoding/hex"
 	"fmt"
 	"net/http"
 
@@ -22,6 +23,18 @@ func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc(fmt.Sprintf("/service/bindings/{%s}/{%s}/disable", RestServiceName, RestProvider), disableServiceBindingHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc(fmt.Sprintf("/service/bindings/{%s}/{%s}/enable", RestServiceName, RestProvider), enableServiceBindingHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc(fmt.Sprintf("/service/bindings/{%s}/{%s}/refund-deposit", RestServiceName, RestProvider), refundServiceDepositHandlerFn(cliCtx)).Methods("POST")
+	// initiate a service call
+	r.HandleFunc("/service/contexts", requestServiceHandlerFn(cliCtx)).Methods("POST")
+	// respond to a service request
+	r.HandleFunc("/service/responses", respondServiceHandlerFn(cliCtx)).Methods("POST")
+	// pause a request context
+	r.HandleFunc(fmt.Sprintf("/service/contexts/{%s}/pause", RestRequestContextID), pauseRequestContextHandlerFn(cliCtx)).Methods("POST")
+	// start a paused request context
+	r.HandleFunc(fmt.Sprintf("/service/contexts/{%s}/start", RestRequestContextID), startRequestContextHandlerFn(cliCtx)).Methods("POST")
+	// kill a request context
+	r.HandleFunc(fmt.Sprintf("/service/contexts/{%s}/kill", RestRequestContextID), killRequestContextHandlerFn(cliCtx)).Methods("POST")
+	// update a request context
+	r.HandleFunc(fmt.Sprintf("/service/contexts/{%s}", RestRequestContextID), updateRequestContextHandlerFn(cliCtx)).Methods("PUT")
 }
 
 // DefineServiceReq defines the properties of a define service request's body.
@@ -73,6 +86,57 @@ type EnableServiceBindingReq struct {
 // RefundServiceDepositReq defines the properties of a refund service deposit request's body.
 type RefundServiceDepositReq struct {
 	BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
+}
+
+type callServiceReq struct {
+	BaseReq           rest.BaseReq `json:"base_req"` // basic tx info
+	ServiceName       string       `json:"service_name"`
+	Providers         []string     `json:"providers"`
+	Consumer          string       `json:"consumer"`
+	Input             string       `json:"input"`
+	ServiceFeeCap     string       `json:"service_fee_cap"`
+	Timeout           int64        `json:"timeout"`
+	SuperMode         bool         `json:"super_mode"`
+	Repeated          bool         `json:"repeated"`
+	RepeatedFrequency uint64       `json:"repeated_frequency"`
+	RepeatedTotal     int64        `json:"repeated_total"`
+}
+
+type respondServiceReq struct {
+	BaseReq   rest.BaseReq `json:"base_req"` // basic tx info
+	RequestID string       `json:"request_id"`
+	Provider  string       `json:"provider"`
+	Result    string       `json:"result"`
+	Output    string       `json:"output"`
+}
+
+type pauseRequestContextReq struct {
+	BaseReq  rest.BaseReq `json:"base_req"` // basic tx info
+	Consumer string       `json:"consumer"`
+}
+
+type startRequestContextReq struct {
+	BaseReq  rest.BaseReq `json:"base_req"` // basic tx info
+	Consumer string       `json:"consumer"`
+}
+
+type killRequestContextReq struct {
+	BaseReq  rest.BaseReq `json:"base_req"` // basic tx info
+	Consumer string       `json:"consumer"`
+}
+
+type updateRequestContextReq struct {
+	BaseReq           rest.BaseReq `json:"base_req"` // basic tx info
+	Providers         []string     `json:"providers"`
+	ServiceFeeCap     string       `json:"service_fee_cap"`
+	Timeout           int64        `json:"timeout"`
+	RepeatedFrequency uint64       `json:"repeated_frequency"`
+	RepeatedTotal     int64        `json:"repeated_total"`
+	Consumer          string       `json:"consumer"`
+}
+
+type withdrawEarnedFeesReq struct {
+	BaseReq rest.BaseReq `json:"base_req"` // basic tx info
 }
 
 func defineServiceHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
@@ -311,6 +375,292 @@ func refundServiceDepositHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		msg := types.NewMsgRefundServiceDeposit(serviceName, provider)
+		if err = msg.ValidateBasic(); err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		utils.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
+	}
+}
+
+func requestServiceHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req callServiceReq
+		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+			return
+		}
+
+		req.BaseReq = req.BaseReq.Sanitize()
+		if !req.BaseReq.ValidateBasic(w) {
+			return
+		}
+
+		consumer, err := sdk.AccAddressFromBech32(req.Consumer)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		serviceFeeCap, err := sdk.ParseCoins(req.ServiceFeeCap)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		var providers []sdk.AccAddress
+		for _, p := range req.Providers {
+			provider, err := sdk.AccAddressFromBech32(p)
+			if err != nil {
+				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+				return
+			}
+
+			providers = append(providers, provider)
+		}
+
+		msg := types.NewMsgCallService(
+			req.ServiceName, providers, consumer, req.Input, serviceFeeCap,
+			req.Timeout, req.SuperMode, req.Repeated, req.RepeatedFrequency, req.RepeatedTotal,
+		)
+		if err = msg.ValidateBasic(); err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		utils.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
+	}
+}
+
+func respondServiceHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req respondServiceReq
+		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+			return
+		}
+
+		req.BaseReq = req.BaseReq.Sanitize()
+		if !req.BaseReq.ValidateBasic(w) {
+			return
+		}
+
+		requestIDStr := req.RequestID
+		requestID, err := types.ConvertRequestID(requestIDStr)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		provider, err := sdk.AccAddressFromBech32(req.Provider)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		msg := types.NewMsgRespondService(requestID, provider, req.Result, req.Output)
+		if err = msg.ValidateBasic(); err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		utils.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
+	}
+}
+
+func pauseRequestContextHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		requestContextIDStr := vars[RestRequestContextID]
+
+		requestContextID, err := hex.DecodeString(requestContextIDStr)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		var req pauseRequestContextReq
+		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+			return
+		}
+
+		req.BaseReq = req.BaseReq.Sanitize()
+		if !req.BaseReq.ValidateBasic(w) {
+			return
+		}
+
+		consumer, err := sdk.AccAddressFromBech32(req.Consumer)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		msg := types.NewMsgPauseRequestContext(requestContextID, consumer)
+		if err = msg.ValidateBasic(); err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		utils.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
+	}
+}
+
+func startRequestContextHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		requestContextIDStr := vars[RestRequestContextID]
+
+		requestContextID, err := hex.DecodeString(requestContextIDStr)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		var req startRequestContextReq
+		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+			return
+		}
+
+		req.BaseReq = req.BaseReq.Sanitize()
+		if !req.BaseReq.ValidateBasic(w) {
+			return
+		}
+
+		consumer, err := sdk.AccAddressFromBech32(req.Consumer)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		msg := types.NewMsgStartRequestContext(requestContextID, consumer)
+		if err = msg.ValidateBasic(); err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		utils.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
+	}
+}
+
+func killRequestContextHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		requestContextIDStr := vars[RestRequestContextID]
+
+		requestContextID, err := hex.DecodeString(requestContextIDStr)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		var req killRequestContextReq
+		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+			return
+		}
+
+		req.BaseReq = req.BaseReq.Sanitize()
+		if !req.BaseReq.ValidateBasic(w) {
+			return
+		}
+
+		consumer, err := sdk.AccAddressFromBech32(req.Consumer)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		msg := types.NewMsgKillRequestContext(requestContextID, consumer)
+		if err = msg.ValidateBasic(); err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		utils.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
+	}
+}
+
+func updateRequestContextHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		requestContextIDStr := vars[RestRequestContextID]
+
+		requestContextID, err := hex.DecodeString(requestContextIDStr)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		var req updateRequestContextReq
+		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+			return
+		}
+
+		req.BaseReq = req.BaseReq.Sanitize()
+		if !req.BaseReq.ValidateBasic(w) {
+			return
+		}
+
+		consumer, err := sdk.AccAddressFromBech32(req.Consumer)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		var serviceFeeCap sdk.Coins
+
+		if len(req.ServiceFeeCap) != 0 {
+			serviceFeeCap, err = sdk.ParseCoins(req.ServiceFeeCap)
+			if err != nil {
+				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+				return
+			}
+		}
+
+		var providers []sdk.AccAddress
+		for _, p := range req.Providers {
+			provider, err := sdk.AccAddressFromBech32(p)
+			if err != nil {
+				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+				return
+			}
+
+			providers = append(providers, provider)
+		}
+
+		msg := types.NewMsgUpdateRequestContext(
+			requestContextID, providers, serviceFeeCap, req.Timeout,
+			req.RepeatedFrequency, req.RepeatedTotal, consumer,
+		)
+		if err = msg.ValidateBasic(); err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		utils.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
+	}
+}
+
+func withdrawEarnedFeesHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		providerStr := vars[RestProvider]
+
+		provider, err := sdk.AccAddressFromBech32(providerStr)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		var req withdrawEarnedFeesReq
+		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+			return
+		}
+
+		req.BaseReq = req.BaseReq.Sanitize()
+		if !req.BaseReq.ValidateBasic(w) {
+			return
+		}
+
+		msg := types.NewMsgWithdrawEarnedFees(provider)
 		if err = msg.ValidateBasic(); err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
