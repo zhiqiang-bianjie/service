@@ -14,13 +14,13 @@ import (
 var (
 	DefaultMaxRequestTimeout    = int64(100)
 	DefaultMinDepositMultiple   = int64(1000)
-	DefaultMinDeposit           = sdk.NewCoins(sdk.NewCoin(ServiceDepositCoinDenom, sdk.NewIntWithDecimal(10000, ServiceDepositCoinDecimal))) // 10000stake
-	DefaultServiceFeeTax        = sdk.NewDecWithPrec(1, 2)                                                                                    // 1%
-	DefaultSlashFraction        = sdk.NewDecWithPrec(1, 3)                                                                                    // 0.1%
-	DefaultComplaintRetrospect  = 15 * 24 * time.Hour                                                                                         // 15 days
-	DefaultArbitrationTimeLimit = 5 * 24 * time.Hour                                                                                          // 5 days
+	DefaultMinDeposit           = sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10000))) // 10000stake
+	DefaultServiceFeeTax        = sdk.NewDecWithPrec(1, 2)                                           // 1%
+	DefaultSlashFraction        = sdk.NewDecWithPrec(1, 3)                                           // 0.1%
+	DefaultComplaintRetrospect  = 15 * 24 * time.Hour                                                // 15 days
+	DefaultArbitrationTimeLimit = 5 * 24 * time.Hour                                                 // 5 days
 	DefaultTxSizeLimit          = uint64(4000)
-	DefaultBaseDenom            = ServiceDepositCoinDenom
+	DefaultBaseDenom            = sdk.DefaultBondDenom
 )
 
 // no lint

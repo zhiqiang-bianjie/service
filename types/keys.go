@@ -26,13 +26,10 @@ const (
 	// RequestAccName is the root string for the service request account address
 	RequestAccName = "service_request_account"
 
-	// ServiceDepositCoinDenom is the coin denom for service deposit
-	ServiceDepositCoinDenom = sdk.DefaultBondDenom
+	// TxHash is the context key for tx hash
+	TxHash = "tx_hash"
 
-	// ServiceDepositCoinDecimal is the coin decimal for service deposit
-	ServiceDepositCoinDecimal = 6
-
-	TxHash   = "tx_hash"
+	// MsgIndex is the context key for msg index
 	MsgIndex = "msg_index"
 )
 
@@ -45,17 +42,17 @@ var (
 	ServiceBindingKey            = []byte{0x02} // prefix for service binding
 	PricingKey                   = []byte{0x03} // prefix for pricing
 	WithdrawAddrKey              = []byte{0x04} // prefix for withdrawal address
-	RequestContextKey            = []byte{0x05}
-	ExpiredRequestBatchKey       = []byte{0x06}
-	NewRequestBatchKey           = []byte{0x07}
-	ExpiredRequestBatchHeightKey = []byte{0x08}
-	NewRequestBatchHeightKey     = []byte{0x09}
-	RequestKey                   = []byte{0x10}
-	ActiveRequestKey             = []byte{0x11}
-	ActiveRequestByIDKey         = []byte{0x12}
-	ResponseKey                  = []byte{0x13}
-	RequestVolumeKey             = []byte{0x14}
-	EarnedFeesKey                = []byte{0x15}
+	RequestContextKey            = []byte{0x05} // prefix for request context
+	ExpiredRequestBatchKey       = []byte{0x06} // prefix for expired request batch
+	NewRequestBatchKey           = []byte{0x07} // prefix for new request batch
+	ExpiredRequestBatchHeightKey = []byte{0x08} // prefix for expired request batch height
+	NewRequestBatchHeightKey     = []byte{0x09} // prefix for new request batch height
+	RequestKey                   = []byte{0x10} // prefix for request
+	ActiveRequestKey             = []byte{0x11} // prefix for active request
+	ActiveRequestByIDKey         = []byte{0x12} // prefix for active requests by ID
+	ResponseKey                  = []byte{0x13} // prefix for response
+	RequestVolumeKey             = []byte{0x14} // prefix for request volume
+	EarnedFeesKey                = []byte{0x15} // prefix for earned fees
 )
 
 // GetServiceDefinitionKey gets the key for the service definition with the specified service name

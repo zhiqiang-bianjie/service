@@ -28,6 +28,10 @@ func (k Keeper) AddServiceBinding(
 		return sdkerrors.Wrap(types.ErrServiceBindingExists, "")
 	}
 
+	if err := k.validateDeposit(ctx, deposit); err != nil {
+		return err
+	}
+
 	maxReqTimeout := k.MaxRequestTimeout(ctx)
 	if minRespTime > uint64(maxReqTimeout) {
 		return sdkerrors.Wrapf(types.ErrInvalidMinRespTime, "minimum response time [%d] must not be greater than maximum request timeout [%d]", minRespTime, maxReqTimeout)
@@ -93,6 +97,10 @@ func (k Keeper) UpdateServiceBinding(
 
 	// add the deposit
 	if !deposit.Empty() {
+		if err := k.validateDeposit(ctx, deposit); err != nil {
+			return err
+		}
+
 		binding.Deposit = binding.Deposit.Add(deposit...)
 		updated = true
 	}
@@ -172,6 +180,10 @@ func (k Keeper) EnableServiceBinding(ctx sdk.Context, serviceName string, provid
 
 	// add the deposit
 	if !deposit.Empty() {
+		if err := k.validateDeposit(ctx, deposit); err != nil {
+			return err
+		}
+
 		binding.Deposit = binding.Deposit.Add(deposit...)
 	}
 
@@ -403,14 +415,26 @@ func (k Keeper) IterateServiceBindings(
 func (k Keeper) getMinDeposit(ctx sdk.Context, pricing types.Pricing) sdk.Coins {
 	minDepositMultiple := sdk.NewInt(k.MinDepositMultiple(ctx))
 	minDepositParam := k.MinDeposit(ctx)
+	baseDenom := k.BaseDenom(ctx)
 
-	price := pricing.Price.AmountOf(types.ServiceDepositCoinDenom)
+	price := pricing.Price.AmountOf(baseDenom)
 
 	// minimum deposit = max(price * minDepositMultiple, minDepositParam)
-	minDeposit := sdk.NewCoins(sdk.NewCoin(types.ServiceDepositCoinDenom, price.Mul(minDepositMultiple)))
+	minDeposit := sdk.NewCoins(sdk.NewCoin(baseDenom, price.Mul(minDepositMultiple)))
 	if minDeposit.IsAllLT(minDepositParam) {
 		minDeposit = minDepositParam
 	}
 
 	return minDeposit
+}
+
+// validateDeposit validates the given deposit
+func (k Keeper) validateDeposit(ctx sdk.Context, deposit sdk.Coins) error {
+	baseDenom := k.BaseDenom(ctx)
+
+	if len(deposit) != 1 || deposit[0].Denom != baseDenom {
+		return sdkerrors.Wrapf(types.ErrInvalidDeposit, "deposit only accepts %s", baseDenom)
+	}
+
+	return nil
 }

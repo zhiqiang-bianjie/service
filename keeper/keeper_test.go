@@ -19,10 +19,10 @@ import (
 )
 
 var (
-	initCoins = sdk.NewCoins(sdk.NewCoin(types.ServiceDepositCoinDenom, sdk.NewIntWithDecimal(10000, types.ServiceDepositCoinDecimal)))
-	testCoin1 = sdk.NewCoin(types.ServiceDepositCoinDenom, sdk.NewIntWithDecimal(10000, types.ServiceDepositCoinDecimal))
-	testCoin2 = sdk.NewCoin(types.ServiceDepositCoinDenom, sdk.NewIntWithDecimal(100, types.ServiceDepositCoinDecimal))
-	testCoin3 = sdk.NewCoin(types.ServiceDepositCoinDenom, sdk.NewIntWithDecimal(1, types.ServiceDepositCoinDecimal))
+	initCoins = sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10000)))
+	testCoin1 = sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10000))
+	testCoin2 = sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100))
+	testCoin3 = sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(2))
 
 	testServiceName = "test-service"
 	testServiceDesc = "test-service-desc"
@@ -35,7 +35,7 @@ var (
 	testProvider     = sdk.AccAddress([]byte("test-provider"))
 	testProvider1    = sdk.AccAddress([]byte("test-provider-1"))
 	testDeposit      = sdk.NewCoins(testCoin1)
-	testPricing      = `{"price":"1stake","promotions_by_volume":[{"volume":1,"discount":"0.8"}]}`
+	testPricing      = `{"price":"2stake","promotions_by_volume":[{"volume":1,"discount":"0.5"}]}`
 	testMinRespTime  = uint64(50)
 	testWithdrawAddr = sdk.AccAddress([]byte("test-withdrawal-address"))
 	testAddedDeposit = sdk.NewCoins(testCoin2)
@@ -124,7 +124,7 @@ func (suite *KeeperTestSuite) TestBindService() {
 	suite.True(svcBinding.DisabledTime.IsZero())
 
 	// update binding
-	newPricing := `{"price":"2stake"}`
+	newPricing := `{"price":"1stake"}`
 	newMinRespTime := uint64(80)
 
 	err = suite.keeper.UpdateServiceBinding(suite.ctx, svcBinding.ServiceName, svcBinding.Provider, testAddedDeposit, newPricing, newMinRespTime)
@@ -318,7 +318,7 @@ func (suite *KeeperTestSuite) TestKeeperRequestService() {
 
 	newProviders, totalServiceFees := suite.keeper.FilterServiceProviders(ctx, testServiceName, providers, testTimeout, testServiceFeeCap, consumer)
 	suite.Equal(providers, newProviders)
-	suite.Equal("2000000stake", totalServiceFees.String())
+	suite.Equal("4stake", totalServiceFees.String())
 
 	err := suite.keeper.DeductServiceFees(ctx, consumer, totalServiceFees)
 	suite.NoError(err)
@@ -365,7 +365,7 @@ func (suite *KeeperTestSuite) TestKeeperRequestService() {
 
 	// service fees will change due to the increased volume
 	_, totalServiceFees = suite.keeper.FilterServiceProviders(ctx, testServiceName, providers, testTimeout, testServiceFeeCap, consumer)
-	suite.Equal("1600000stake", totalServiceFees.String())
+	suite.Equal("2stake", totalServiceFees.String())
 
 	// satifying providers will change due to the condition changed
 	newTimeout := int64(40)

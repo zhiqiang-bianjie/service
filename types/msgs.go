@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"regexp"
 
+	tmbytes "github.com/tendermint/tendermint/libs/bytes"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 )
 
 // Message types for the service module
@@ -33,7 +34,7 @@ const (
 	MaxTagsNum           = 10  // maximum total number of the tags
 	MaxTagLength         = 70  // maximum length of the tag
 
-	MaxProvidersNum = 10 // max total number of the providers to request
+	MaxProvidersNum = 10 // maximum total number of the providers to request
 )
 
 // the service name only accepts alphanumeric characters, _ and -, beginning with alpha character
@@ -929,8 +930,8 @@ func ValidateProvider(provider sdk.AccAddress) error {
 }
 
 func ValidateServiceDeposit(deposit sdk.Coins) error {
-	if deposit.Empty() || len(deposit) != 1 || deposit[0].Denom != ServiceDepositCoinDenom || !deposit[0].IsPositive() {
-		return sdkerrors.Wrap(ErrInvalidDeposit, "")
+	if !deposit.IsValid() || !deposit.IsAllPositive() {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "invalid deposit")
 	}
 
 	return nil

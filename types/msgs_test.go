@@ -13,8 +13,8 @@ import (
 )
 
 var (
-	testCoin1 = sdk.NewCoin(ServiceDepositCoinDenom, sdk.NewInt(10000))
-	testCoin2 = sdk.NewCoin(ServiceDepositCoinDenom, sdk.NewInt(100))
+	testCoin1 = sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10000))
+	testCoin2 = sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100))
 
 	testServiceName = "test-service"
 	testServiceDesc = "test-service-desc"
@@ -160,7 +160,6 @@ func TestMsgBindServiceValidation(t *testing.T) {
 	invalidName := "invalid/service/name"
 	invalidLongName := strings.Repeat("s", MaxNameLength+1)
 	invalidDeposit := sdk.Coins{}
-	invalidDenomDeposit := sdk.NewCoins(sdk.NewCoin("nonstake", sdk.NewInt(1000)))
 	invalidMinRespTime := uint64(0)
 
 	invalidPricing := `{"price":"1stake","other":"notallowedfield"}`
@@ -176,7 +175,6 @@ func TestMsgBindServiceValidation(t *testing.T) {
 		NewMsgBindService(invalidName, testProvider, testDeposit, testPricing, testMinRespTime),                     // service name contains illegal characters
 		NewMsgBindService(invalidLongName, testProvider, testDeposit, testPricing, testMinRespTime),                 // too long service name
 		NewMsgBindService(testServiceName, testProvider, invalidDeposit, testPricing, testMinRespTime),              // invalid deposit
-		NewMsgBindService(testServiceName, testProvider, invalidDenomDeposit, testPricing, testMinRespTime),         // invalid deposit denom
 		NewMsgBindService(testServiceName, testProvider, testDeposit, "", testMinRespTime),                          // missing pricing
 		NewMsgBindService(testServiceName, testProvider, testDeposit, invalidPricing, testMinRespTime),              // invalid Pricing JSON Schema instance
 		NewMsgBindService(testServiceName, testProvider, testDeposit, invalidSymbolPricing, testMinRespTime),        // invalid pricing symbol
@@ -195,13 +193,12 @@ func TestMsgBindServiceValidation(t *testing.T) {
 		{testMsgs[2], false, "service name contains illegal characters"},
 		{testMsgs[3], false, "too long service name"},
 		{testMsgs[4], false, "invalid deposit"},
-		{testMsgs[5], false, "invalid deposit denom"},
-		{testMsgs[6], false, "missing pricing"},
-		{testMsgs[7], false, "invalid Pricing JSON Schema instance"},
-		{testMsgs[8], false, "invalid pricing symbol"},
-		{testMsgs[9], false, "invalid promotion time lack of time zone"},
-		{testMsgs[10], false, "invalid promotion volume"},
-		{testMsgs[11], false, "invalid minimum response time"},
+		{testMsgs[5], false, "missing pricing"},
+		{testMsgs[6], false, "invalid Pricing JSON Schema instance"},
+		{testMsgs[7], false, "invalid pricing symbol"},
+		{testMsgs[8], false, "invalid promotion time lack of time zone"},
+		{testMsgs[9], false, "invalid promotion volume"},
+		{testMsgs[10], false, "invalid minimum response time"},
 	}
 
 	for i, tc := range testCases {
@@ -253,7 +250,6 @@ func TestMsgUpdateServiceBindingValidation(t *testing.T) {
 
 	invalidName := "invalid/service/name"
 	invalidLongName := strings.Repeat("s", MaxNameLength+1)
-	invalidDenomDeposit := sdk.NewCoins(sdk.NewCoin("nonstake", sdk.NewInt(1000)))
 
 	invalidPricing := `{"price":"1stake","other":"notallowedfield"}`
 	invalidSymbolPricing := `{"price":"1invalidsymbol"}`
@@ -271,7 +267,6 @@ func TestMsgUpdateServiceBindingValidation(t *testing.T) {
 		NewMsgUpdateServiceBinding(testServiceName, emptyAddress, testAddedDeposit, testPricing, testMinRespTime),                 // missing provider address
 		NewMsgUpdateServiceBinding(invalidName, testProvider, testAddedDeposit, testPricing, testMinRespTime),                     // service name contains illegal characters
 		NewMsgUpdateServiceBinding(invalidLongName, testProvider, testAddedDeposit, testPricing, testMinRespTime),                 // too long service name
-		NewMsgUpdateServiceBinding(testServiceName, testProvider, invalidDenomDeposit, testPricing, testMinRespTime),              // invalid deposit denom
 		NewMsgUpdateServiceBinding(testServiceName, testProvider, testAddedDeposit, invalidPricing, testMinRespTime),              // invalid Pricing JSON Schema instance
 		NewMsgUpdateServiceBinding(testServiceName, testProvider, testAddedDeposit, invalidSymbolPricing, testMinRespTime),        // invalid pricing symbol
 		NewMsgUpdateServiceBinding(testServiceName, testProvider, testAddedDeposit, invalidPromotionTimePricing, testMinRespTime), // invalid promotion time lack of time zone
@@ -291,11 +286,10 @@ func TestMsgUpdateServiceBindingValidation(t *testing.T) {
 		{testMsgs[5], false, "missing provider address"},
 		{testMsgs[6], false, "service name contains illegal characters"},
 		{testMsgs[7], false, "too long service name"},
-		{testMsgs[8], false, "invalid deposit denom"},
-		{testMsgs[9], false, "invalid Pricing JSON Schema instance"},
-		{testMsgs[10], false, "invalid pricing symbol"},
-		{testMsgs[11], false, "invalid promotion time lack of time zone"},
-		{testMsgs[12], false, "invalid promotion volume"},
+		{testMsgs[8], false, "invalid Pricing JSON Schema instance"},
+		{testMsgs[9], false, "invalid pricing symbol"},
+		{testMsgs[10], false, "invalid promotion time lack of time zone"},
+		{testMsgs[11], false, "invalid promotion volume"},
 	}
 
 	for i, tc := range testCases {
@@ -476,15 +470,13 @@ func TestMsgEnableServiceBindingValidation(t *testing.T) {
 
 	invalidName := "invalid/service/name"
 	invalidLongName := strings.Repeat("s", MaxNameLength+1)
-	invalidDenomDeposit := sdk.NewCoins(sdk.NewCoin("nonstake", sdk.NewInt(1000)))
 
 	testMsgs := []MsgEnableServiceBinding{
-		NewMsgEnableServiceBinding(testServiceName, testProvider, testAddedDeposit),    // valid msg
-		NewMsgEnableServiceBinding(testServiceName, testProvider, emptyAddedDeposit),   // empty deposit is allowed
-		NewMsgEnableServiceBinding(testServiceName, emptyAddress, testAddedDeposit),    // missing provider address
-		NewMsgEnableServiceBinding(invalidName, testProvider, testAddedDeposit),        // service name contains illegal characters
-		NewMsgEnableServiceBinding(invalidLongName, testProvider, testAddedDeposit),    // too long service name
-		NewMsgEnableServiceBinding(testServiceName, testProvider, invalidDenomDeposit), // invalid deposit denom
+		NewMsgEnableServiceBinding(testServiceName, testProvider, testAddedDeposit),  // valid msg
+		NewMsgEnableServiceBinding(testServiceName, testProvider, emptyAddedDeposit), // empty deposit is allowed
+		NewMsgEnableServiceBinding(testServiceName, emptyAddress, testAddedDeposit),  // missing provider address
+		NewMsgEnableServiceBinding(invalidName, testProvider, testAddedDeposit),      // service name contains illegal characters
+		NewMsgEnableServiceBinding(invalidLongName, testProvider, testAddedDeposit),  // too long service name
 	}
 
 	testCases := []struct {
@@ -497,7 +489,6 @@ func TestMsgEnableServiceBindingValidation(t *testing.T) {
 		{testMsgs[2], false, "missing provider address"},
 		{testMsgs[3], false, "service name contains illegal characters"},
 		{testMsgs[4], false, "too long service name"},
-		{testMsgs[5], false, "invalid deposit denom"},
 	}
 
 	for i, tc := range testCases {

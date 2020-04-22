@@ -833,7 +833,7 @@ func (k Keeper) GetPrice(
 	basePrice := pricing.Price.AmountOf(baseDenom)
 	price := sdk.NewDecFromInt(basePrice).Mul(discountByTime).Mul(discountByVolume)
 
-	// set to 1 if price < 1 iris-atto
+	// set to 1 if price < 1
 	if price.LT(sdk.OneDec()) {
 		price = sdk.OneDec()
 	}

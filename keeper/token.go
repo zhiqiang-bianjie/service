@@ -16,7 +16,7 @@ func (k MockTokenKeeper) GetToken(ctx sdk.Context, denom string) (types.TokenI, 
 	if denom == sdk.DefaultBondDenom {
 		return types.MockToken{
 			MinUnit: sdk.DefaultBondDenom,
-			Scale:   6,
+			Scale:   0,
 		}, nil
 	}
 
