@@ -205,6 +205,12 @@ func queryRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
+
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
 		params := types.QueryRequestParams{
 			RequestID: requestID,
 		}
@@ -255,6 +261,11 @@ func queryRequestsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			queryByBinding = false
 		}
 
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
 		var res types.Requests
 		var height int64
 
@@ -282,6 +293,11 @@ func queryResponseHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		requestID, err := types.ConvertRequestID(requestIDStr)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
 			return
 		}
 
@@ -333,6 +349,11 @@ func queryRequestContextHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
 		params := types.QueryRequestContextParams{
 			RequestContextID: requestContextID,
 		}
@@ -362,6 +383,11 @@ func queryResponsesHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		batchCounter, err := strconv.ParseUint(batchCounterStr, 10, 64)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
 			return
 		}
 
@@ -399,6 +425,11 @@ func queryEarnedFeesHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
 		params := types.QueryEarnedFeesParams{
 			Provider: provider,
 		}
@@ -424,6 +455,11 @@ func queryEarnedFeesHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 func querySchemaHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
+
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
 
 		params := types.QuerySchemaParams{
 			SchemaName: vars[RestSchemaName],
