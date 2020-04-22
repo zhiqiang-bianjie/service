@@ -110,32 +110,41 @@ func QueryRequestByTxQuery(cliCtx context.CLIContext, queryRoute string, params 
 
 	for _, event := range blockResult.EndBlockEvents {
 		if event.Type == types.EventTypeNewBatchRequest {
+			var found bool
+			var requests []types.CompactRequest
+			var requestsBz []byte
 			for _, attribute := range event.Attributes {
-				if string(attribute.GetValue()) == contextID.String() {
-					var requests []types.CompactRequest
-					err := json.Unmarshal(attribute.GetValue(), &requests)
-					if err != nil {
-						return request, err
-					}
+				if string(attribute.Key) == types.AttributeKeyRequests {
+					requestsBz = attribute.GetValue()
+				}
+				if string(attribute.Key) == types.AttributeKeyRequestContextID &&
+					string(attribute.GetValue()) == contextID.String() {
+					found = true
+				}
+			}
+			if found {
+				err := json.Unmarshal(requestsBz, &requests)
+				if err != nil {
+					return request, err
+				}
 
-					if len(requests) > int(batchRequestIndex) {
-						compactRequest := requests[batchRequestIndex]
-						request = types.NewRequest(
-							requestID,
-							requestContext.ServiceName,
-							compactRequest.Provider,
-							requestContext.Consumer,
-							requestContext.Input,
-							compactRequest.ServiceFee,
-							requestContext.SuperMode,
-							compactRequest.RequestHeight,
-							compactRequest.RequestHeight+requestContext.Timeout,
-							compactRequest.RequestContextID,
-							compactRequest.RequestContextBatchCounter,
-						)
+				if len(requests) > int(batchRequestIndex) {
+					compactRequest := requests[batchRequestIndex]
+					request = types.NewRequest(
+						requestID,
+						requestContext.ServiceName,
+						compactRequest.Provider,
+						requestContext.Consumer,
+						requestContext.Input,
+						compactRequest.ServiceFee,
+						requestContext.SuperMode,
+						compactRequest.RequestHeight,
+						compactRequest.RequestHeight+requestContext.Timeout,
+						compactRequest.RequestContextID,
+						compactRequest.RequestContextBatchCounter,
+					)
 
-						return request, nil
-					}
+					return request, nil
 				}
 			}
 		}

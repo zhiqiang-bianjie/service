@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"reflect"
 	"strings"
 
 	tmbytes "github.com/tendermint/tendermint/libs/bytes"
@@ -107,7 +106,8 @@ func (rc RequestContext) Validate() error {
 
 // Empty returns true if empty
 func (rc RequestContext) Empty() bool {
-	return reflect.DeepEqual(rc, RequestContext{})
+	// TODO: use rc.ID
+	return len(rc.Consumer) == 0
 }
 
 // String implements Stringer
