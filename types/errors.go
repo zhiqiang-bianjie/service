@@ -47,6 +47,5 @@ var (
 	ErrInvalidResponseOutput = sdkerrors.Register(ModuleName, 36, "invalid response output")
 	ErrInvalidResponseResult = sdkerrors.Register(ModuleName, 37, "invalid response result")
 
-	ErrInvalidProfiler = sdkerrors.Register(ModuleName, 38, "invalid profiler")
-	ErrInvalidTrustee  = sdkerrors.Register(ModuleName, 39, "invalid trustee")
+	ErrInvalidSchemaName = sdkerrors.Register(ModuleName, 38, "invalid service schema name")
 )

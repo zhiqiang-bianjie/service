@@ -1,11 +1,13 @@
 package keeper
 
 import (
-	abci "github.com/tendermint/tendermint/abci/types"
+	"strings"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	abci "github.com/tendermint/tendermint/abci/types"
+	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 
 	"github.com/irismod/service/types"
 )
@@ -25,6 +27,30 @@ func NewQuerier(k Keeper) sdk.Querier {
 
 		case types.QueryWithdrawAddress:
 			return queryWithdrawAddress(ctx, req, k)
+
+		case types.QueryRequest:
+			return queryRequest(ctx, req, k)
+
+		case types.QueryRequests:
+			return queryRequests(ctx, req, k)
+
+		case types.QueryResponse:
+			return queryResponse(ctx, req, k)
+
+		case types.QueryRequestContext:
+			return queryRequestContext(ctx, req, k)
+
+		case types.QueryRequestsByReqCtx:
+			return queryRequestsByReqCtx(ctx, req, k)
+
+		case types.QueryResponses:
+			return queryResponses(ctx, req, k)
+
+		case types.QueryEarnedFees:
+			return queryEarnedFees(ctx, req, k)
+
+		case types.QuerySchema:
+			return querySchema(ctx, req, k)
 
 		default:
 			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unknown %s query path: %s", types.ModuleName, path[0])
@@ -105,6 +131,187 @@ func queryWithdrawAddress(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]b
 	withdrawAddr := k.GetWithdrawAddress(ctx, params.Provider)
 
 	bz, err := codec.MarshalJSONIndent(k.cdc, withdrawAddr)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+	}
+
+	return bz, nil
+}
+
+func queryRequest(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, error) {
+	var params types.QueryRequestParams
+	if err := k.cdc.UnmarshalJSON(req.Data, &params); err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
+	}
+
+	if len(params.RequestID) != types.RequestIDLen {
+		return nil, sdkerrors.Wrapf(types.ErrInvalidRequestID, "invalid length, expected: %d, got: %d",
+			types.RequestIDLen, len(params.RequestID))
+	}
+
+	request, _ := k.GetRequest(ctx, params.RequestID)
+
+	bz, err := codec.MarshalJSONIndent(k.cdc, request)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+	}
+
+	return bz, nil
+}
+
+func queryRequests(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, error) {
+	var params types.QueryRequestsParams
+	if err := k.cdc.UnmarshalJSON(req.Data, &params); err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
+	}
+
+	iterator := k.ActiveRequestsIterator(ctx, params.ServiceName, params.Provider)
+	defer iterator.Close()
+
+	requests := make([]types.Request, 0)
+
+	for ; iterator.Valid(); iterator.Next() {
+		var requestID tmbytes.HexBytes
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(iterator.Value(), &requestID)
+
+		request, _ := k.GetRequest(ctx, requestID)
+		requests = append(requests, request)
+	}
+
+	bz, err := codec.MarshalJSONIndent(k.cdc, requests)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+	}
+
+	return bz, nil
+}
+
+func queryResponse(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, error) {
+	var params types.QueryResponseParams
+	if err := k.cdc.UnmarshalJSON(req.Data, &params); err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
+	}
+
+	if len(params.RequestID) != types.RequestIDLen {
+		return nil, sdkerrors.Wrapf(types.ErrInvalidRequestID, "invalid length, expected: %d, got: %d",
+			types.RequestIDLen, len(params.RequestID))
+	}
+
+	response, _ := k.GetResponse(ctx, params.RequestID)
+
+	bz, err := codec.MarshalJSONIndent(k.cdc, response)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+	}
+
+	return bz, nil
+}
+
+func queryRequestContext(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, error) {
+	var params types.QueryRequestContextParams
+	if err := k.cdc.UnmarshalJSON(req.Data, &params); err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
+	}
+
+	requestContext, _ := k.GetRequestContext(ctx, params.RequestContextID)
+	bz, err := codec.MarshalJSONIndent(k.cdc, requestContext)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+	}
+
+	return bz, nil
+}
+
+func queryRequestsByReqCtx(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, error) {
+	var params types.QueryRequestsByReqCtxParams
+	if err := k.cdc.UnmarshalJSON(req.Data, &params); err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
+	}
+
+	iterator := k.RequestsIteratorByReqCtx(ctx, params.RequestContextID, params.BatchCounter)
+	defer iterator.Close()
+
+	requests := make([]types.Request, 0)
+
+	for ; iterator.Valid(); iterator.Next() {
+		requestID := iterator.Key()[1:]
+		request, _ := k.GetRequest(ctx, requestID)
+
+		requests = append(requests, request)
+	}
+
+	bz, err := codec.MarshalJSONIndent(k.cdc, requests)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+	}
+
+	return bz, nil
+}
+
+func queryResponses(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, error) {
+	var params types.QueryResponsesParams
+	if err := k.cdc.UnmarshalJSON(req.Data, &params); err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
+	}
+
+	iterator := k.ResponsesIteratorByReqCtx(ctx, params.RequestContextID, params.BatchCounter)
+	defer iterator.Close()
+
+	responses := make([]types.Response, 0)
+
+	for ; iterator.Valid(); iterator.Next() {
+		var response types.Response
+		k.cdc.MustUnmarshalBinaryLengthPrefixed(iterator.Value(), &response)
+
+		responses = append(responses, response)
+	}
+
+	bz, err := codec.MarshalJSONIndent(k.cdc, responses)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+	}
+
+	return bz, nil
+}
+
+func queryEarnedFees(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, error) {
+	var params types.QueryEarnedFeesParams
+	if err := k.cdc.UnmarshalJSON(req.Data, &params); err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
+	}
+
+	fees, found := k.GetEarnedFees(ctx, params.Provider)
+	if !found {
+		return nil, sdkerrors.Wrapf(types.ErrNoEarnedFees, "no earned fees for %s",
+			params.Provider.String())
+	}
+
+	bz, err := codec.MarshalJSONIndent(k.cdc, fees)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+	}
+
+	return bz, nil
+}
+
+func querySchema(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, error) {
+	var params types.QuerySchemaParams
+	if err := k.cdc.UnmarshalJSON(req.Data, &params); err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
+	}
+
+	var schemaName = strings.ToLower(params.SchemaName)
+	var schema string
+
+	if schemaName == "pricing" {
+		schema = types.PricingSchema
+	} else if schemaName == "result" {
+		schema = types.ResultSchema
+	} else {
+		return nil, sdkerrors.Wrap(types.ErrInvalidSchemaName, schema)
+	}
+
+	bz, err := codec.MarshalJSONIndent(k.cdc, schema)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
