@@ -76,7 +76,6 @@ var (
 		gov.ModuleName:            {supply.Burner},
 		service.DepositAccName:    {supply.Burner},
 		service.RequestAccName:    nil,
-		service.TaxAccName:        nil,
 	}
 
 	// module accounts that are allowed to receive tokens
@@ -235,6 +234,7 @@ func NewSimApp(
 
 	app.ServiceKeeper = service.NewKeeper(
 		app.cdc, keys[service.StoreKey], app.SupplyKeeper, service.MockTokenKeeper{}, app.subspaces[service.ModuleName],
+		auth.FeeCollectorName,
 	)
 
 	// NOTE: Any module instantiated in the module manager that is later modified

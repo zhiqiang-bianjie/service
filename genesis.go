@@ -1,7 +1,11 @@
 package service
 
 import (
+	"encoding/hex"
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 )
 
 // InitGenesis - store genesis parameters
@@ -11,11 +15,88 @@ func InitGenesis(ctx sdk.Context, k Keeper, data GenesisState) {
 	}
 
 	k.SetParams(ctx, data.Params)
+
+	for _, definition := range data.Definitions {
+		k.SetServiceDefinition(ctx, definition)
+	}
+
+	for _, binding := range data.Bindings {
+		k.SetServiceBinding(ctx, binding)
+	}
+
+	for providerAddressStr, withdrawAddress := range data.WithdrawAddresses {
+		providerAddress, _ := sdk.AccAddressFromBech32(providerAddressStr)
+		k.SetWithdrawAddress(ctx, providerAddress, withdrawAddress)
+	}
+
+	for reqContextIDStr, requestContext := range data.RequestContexts {
+		requestContextID, _ := hex.DecodeString(reqContextIDStr)
+		k.SetRequestContext(ctx, requestContextID, requestContext)
+	}
 }
 
 // ExportGenesis - output genesis parameters
 func ExportGenesis(ctx sdk.Context, k Keeper) GenesisState {
-	return GenesisState{
-		Params: k.GetParams(ctx),
+	definitions := []ServiceDefinition{}
+	bindings := []ServiceBinding{}
+	withdrawAddresses := make(map[string]sdk.AccAddress)
+	requestContexts := make(map[string]RequestContext)
+
+	k.IterateServiceDefinitions(
+		ctx,
+		func(definition ServiceDefinition) bool {
+			definitions = append(definitions, definition)
+			return false
+		},
+	)
+
+	k.IterateServiceBindings(
+		ctx,
+		func(binding ServiceBinding) bool {
+			bindings = append(bindings, binding)
+			return false
+		},
+	)
+
+	k.IterateWithdrawAddresses(
+		ctx,
+		func(providerAddress sdk.AccAddress, withdrawAddress sdk.AccAddress) bool {
+			withdrawAddresses[providerAddress.String()] = withdrawAddress
+			return false
+		},
+	)
+
+	k.IterateRequestContexts(
+		ctx,
+		func(requestContextID tmbytes.HexBytes, requestContext RequestContext) bool {
+			requestContexts[requestContextID.String()] = requestContext
+			return false
+		},
+	)
+
+	return NewGenesisState(
+		k.GetParams(ctx),
+		definitions,
+		bindings,
+		withdrawAddresses,
+		requestContexts,
+	)
+}
+
+// PrepForZeroHeightGenesis refunds the deposits, service fees and earned fees
+func PrepForZeroHeightGenesis(ctx sdk.Context, k Keeper) {
+	// refund service fees from all active requests
+	if err := k.RefundServiceFees(ctx); err != nil {
+		panic(fmt.Sprintf("failed to refund the service fees: %s", err))
+	}
+
+	// refund all the earned fees
+	if err := k.RefundEarnedFees(ctx); err != nil {
+		panic(fmt.Sprintf("failed to refund the earned fees: %s", err))
+	}
+
+	// reset request contexts state and batch
+	if err := k.ResetRequestContextsStateAndBatch(ctx); err != nil {
+		panic(fmt.Sprintf("failed to reset the request context state: %s", err))
 	}
 }

@@ -28,7 +28,7 @@ func (k Keeper) AddServiceBinding(
 		return sdkerrors.Wrap(types.ErrServiceBindingExists, "")
 	}
 
-	maxReqTimeout := k.GetParams(ctx).MaxRequestTimeout
+	maxReqTimeout := k.MaxRequestTimeout(ctx)
 	if minRespTime > uint64(maxReqTimeout) {
 		return sdkerrors.Wrapf(types.ErrInvalidMinRespTime, "minimum response time [%d] must not be greater than maximum request timeout [%d]", minRespTime, maxReqTimeout)
 	}
@@ -82,7 +82,7 @@ func (k Keeper) UpdateServiceBinding(
 	updated := false
 
 	if minRespTime != 0 {
-		maxReqTimeout := k.GetParams(ctx).MaxRequestTimeout
+		maxReqTimeout := k.MaxRequestTimeout(ctx)
 		if minRespTime > uint64(maxReqTimeout) {
 			return sdkerrors.Wrapf(types.ErrInvalidMinRespTime, "minimum response time [%d] must not be greater than maximum request timeout [%d]", minRespTime, maxReqTimeout)
 		}
@@ -212,8 +212,7 @@ func (k Keeper) RefundDeposit(ctx sdk.Context, serviceName string, provider sdk.
 		return sdkerrors.Wrap(types.ErrInvalidDeposit, "the deposit of the service binding is zero")
 	}
 
-	params := k.GetParams(ctx)
-	refundableTime := binding.DisabledTime.Add(params.ArbitrationTimeLimit).Add(params.ComplaintRetrospect)
+	refundableTime := binding.DisabledTime.Add(k.ArbitrationTimeLimit(ctx)).Add(k.ComplaintRetrospect(ctx))
 
 	currentTime := ctx.BlockHeader().Time
 	if currentTime.Before(refundableTime) {
@@ -402,9 +401,8 @@ func (k Keeper) IterateServiceBindings(
 
 // getMinDeposit gets the minimum deposit required for the service binding
 func (k Keeper) getMinDeposit(ctx sdk.Context, pricing types.Pricing) sdk.Coins {
-	params := k.GetParams(ctx)
-	minDepositMultiple := sdk.NewInt(params.MinDepositMultiple)
-	minDepositParam := params.MinDeposit
+	minDepositMultiple := sdk.NewInt(k.MinDepositMultiple(ctx))
+	minDepositParam := k.MinDeposit(ctx)
 
 	price := pricing.Price.AmountOf(types.ServiceDepositCoinDenom)
 

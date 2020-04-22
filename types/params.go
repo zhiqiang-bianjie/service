@@ -20,6 +20,7 @@ var (
 	DefaultComplaintRetrospect  = 15 * 24 * time.Hour                                                                                         // 15 days
 	DefaultArbitrationTimeLimit = 5 * 24 * time.Hour                                                                                          // 5 days
 	DefaultTxSizeLimit          = uint64(4000)
+	DefaultBaseDenom            = ServiceDepositCoinDenom
 )
 
 // no lint
@@ -48,6 +49,7 @@ var (
 	KeyComplaintRetrospect  = []byte("ComplaintRetrospect")
 	KeyArbitrationTimeLimit = []byte("ArbitrationTimeLimit")
 	KeyTxSizeLimit          = []byte("TxSizeLimit")
+	KeyBaseDenom            = []byte("BaseDenom")
 )
 
 var _ params.ParamSet = (*Params)(nil)
@@ -62,6 +64,7 @@ type Params struct {
 	ComplaintRetrospect  time.Duration `json:"complaint_retrospect" yaml:"complaint_retrospect"`
 	ArbitrationTimeLimit time.Duration `json:"arbitration_time_limit" yaml:"arbitration_time_limit"`
 	TxSizeLimit          uint64        `json:"tx_size_limit" yaml:"tx_size_limit"`
+	BaseDenom            string        `json:"base_denom" yaml:"base_denom"`
 }
 
 // NewParams creates a new Params instance
@@ -74,6 +77,7 @@ func NewParams(
 	complaintRetrospect,
 	arbitrationTimeLimit time.Duration,
 	txSizeLimit uint64,
+	baseDenom string,
 ) Params {
 	return Params{
 		MaxRequestTimeout:    maxRequestTimeout,
@@ -84,6 +88,7 @@ func NewParams(
 		ComplaintRetrospect:  complaintRetrospect,
 		ArbitrationTimeLimit: arbitrationTimeLimit,
 		TxSizeLimit:          txSizeLimit,
+		BaseDenom:            baseDenom,
 	}
 }
 
@@ -98,6 +103,7 @@ func (p *Params) ParamSetPairs() params.ParamSetPairs {
 		params.NewParamSetPair(KeyComplaintRetrospect, &p.ComplaintRetrospect, validateComplaintRetrospect),
 		params.NewParamSetPair(KeyArbitrationTimeLimit, &p.ArbitrationTimeLimit, validateArbitrationTimeLimit),
 		params.NewParamSetPair(KeyTxSizeLimit, &p.TxSizeLimit, validateTxSizeLimit),
+		params.NewParamSetPair(KeyBaseDenom, &p.BaseDenom, validateTxBaseDenom),
 	}
 }
 
@@ -120,6 +126,7 @@ func DefaultParams() Params {
 		DefaultComplaintRetrospect,
 		DefaultArbitrationTimeLimit,
 		DefaultTxSizeLimit,
+		DefaultBaseDenom,
 	)
 }
 
@@ -133,9 +140,10 @@ func (p Params) String() string {
   Slash Fraction:          %s
   Complaint Retrospect:    %s
   Arbitration Time Limit:  %s
-  Tx Size Limit:           %d`,
+  Tx Size Limit:           %d
+  Base Denom:              %s`,
 		p.MaxRequestTimeout, p.MinDepositMultiple, p.MinDeposit.String(), p.ServiceFeeTax.String(), p.SlashFraction.String(),
-		p.ComplaintRetrospect, p.ArbitrationTimeLimit, p.TxSizeLimit)
+		p.ComplaintRetrospect, p.ArbitrationTimeLimit, p.TxSizeLimit, p.BaseDenom)
 }
 
 // MustUnmarshalParams unmarshals the current service params value from store key or panic
@@ -175,6 +183,9 @@ func (p Params) Validate() error {
 		return err
 	}
 	if err := validateArbitrationTimeLimit(p.ArbitrationTimeLimit); err != nil {
+		return err
+	}
+	if err := sdk.ValidateDenom(p.BaseDenom); err != nil {
 		return err
 	}
 
@@ -283,4 +294,13 @@ func validateTxSizeLimit(i interface{}) error {
 	}
 
 	return nil
+}
+
+func validateTxBaseDenom(i interface{}) error {
+	v, ok := i.(string)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	return sdk.ValidateDenom(v)
 }

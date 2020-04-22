@@ -20,6 +20,14 @@ type Keeper struct {
 	supplyKeeper types.SupplyKeeper
 	tokenKeeper  types.TokenKeeper
 	paramstore   params.Subspace
+
+	feeCollectorName string // name of the FeeCollector ModuleAccount
+
+	// used to map the module name to response callback
+	respCallbacks map[string]types.ResponseCallback
+
+	// used to map the module name to state callback
+	stateCallbacks map[string]types.StateCallback
 }
 
 // NewKeeper creates a new service Keeper instance
@@ -29,6 +37,7 @@ func NewKeeper(
 	supplyKeeper types.SupplyKeeper,
 	tokenKeeper types.TokenKeeper,
 	paramstore params.Subspace,
+	feeCollectorName string,
 ) Keeper {
 	// ensure service module accounts are set
 	if addr := supplyKeeper.GetModuleAddress(types.DepositAccName); addr == nil {
@@ -39,17 +48,18 @@ func NewKeeper(
 		panic(fmt.Sprintf("%s module account has not been set", types.RequestAccName))
 	}
 
-	if addr := supplyKeeper.GetModuleAddress(types.TaxAccName); addr == nil {
-		panic(fmt.Sprintf("%s module account has not been set", types.TaxAccName))
+	keeper := Keeper{
+		storeKey:         key,
+		cdc:              cdc,
+		supplyKeeper:     supplyKeeper,
+		tokenKeeper:      tokenKeeper,
+		feeCollectorName: feeCollectorName,
+		paramstore:       paramstore.WithKeyTable(ParamKeyTable()),
 	}
 
-	return Keeper{
-		storeKey:     key,
-		cdc:          cdc,
-		supplyKeeper: supplyKeeper,
-		tokenKeeper:  tokenKeeper,
-		paramstore:   paramstore.WithKeyTable(ParamKeyTable()),
-	}
+	keeper.respCallbacks = make(map[string]types.ResponseCallback)
+	keeper.stateCallbacks = make(map[string]types.StateCallback)
+	return keeper
 }
 
 // Logger returns a module-specific logger.
@@ -65,9 +75,4 @@ func (k Keeper) GetServiceDepositAccount(ctx sdk.Context) exported.ModuleAccount
 // GetServiceRequestAccount returns the service request ModuleAccount
 func (k Keeper) GetServiceRequestAccount(ctx sdk.Context) exported.ModuleAccountI {
 	return k.supplyKeeper.GetModuleAccount(ctx, types.RequestAccName)
-}
-
-// GetServiceTaxAccount returns the service tax ModuleAccount
-func (k Keeper) GetServiceTaxAccount(ctx sdk.Context) exported.ModuleAccountI {
-	return k.supplyKeeper.GetModuleAccount(ctx, types.TaxAccName)
 }
