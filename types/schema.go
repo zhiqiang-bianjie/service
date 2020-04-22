@@ -181,8 +181,7 @@ func validateDocument(schema []byte, document string) error {
 
 const (
 	// PricingSchema is the Pricing JSON Schema
-	PricingSchema = `
-{
+	PricingSchema = `{
 	"$schema": "http://json-schema.org/draft-04/schema#",
 	"title": "service-pricing",
 	"description": "Service Pricing Schema",
@@ -267,12 +266,10 @@ const (
 	"required": [
 	  "price"
 	]
-}
-`
+}`
 
 	// ResultSchema is the JSON Schema for the response result
-	ResultSchema = `
-{
+	ResultSchema = `{
 	"$schema": "http://json-schema.org/draft-04/schema#",
 	"title": "service-result",
 	"description": "Service Result Schema",
@@ -293,6 +290,5 @@ const (
 	  "code",
 	  "message"
 	]
-}
-`
+}`
 )

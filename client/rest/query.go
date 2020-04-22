@@ -485,6 +485,6 @@ func querySchemaHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		cliCtx = cliCtx.WithHeight(height)
-		rest.PostProcessResponse(w, cliCtx, res)
+		rest.PostProcessResponse(w, cliCtx, schema)
 	}
 }

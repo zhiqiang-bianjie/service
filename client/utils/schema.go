@@ -17,6 +17,11 @@ func (schema SchemaType) MarshalJSON() ([]byte, error) {
 	return []byte(schema.String()), nil
 }
 
+// MarshalYAML returns the YAML representation
+func (schema SchemaType) MarshalYAML() (interface{}, error) {
+	return schema.String(), nil
+}
+
 // UnmarshalJSON unmarshals the data to the schema
 func (schema *SchemaType) UnmarshalJSON(data []byte) error {
 	var s string
