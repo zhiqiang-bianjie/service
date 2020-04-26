@@ -57,8 +57,7 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 // GetCmdDefineService implements defining a service command
 func GetCmdDefineService(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "define",
-		Short: "Define a new service",
+		Use: "define",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Define a new service based on the given params.
 
@@ -122,8 +121,7 @@ $ %s tx service define --name=<service name> --description=<service description>
 // GetCmdBindService implements binding a service command
 func GetCmdBindService(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "bind",
-		Short: "Bind a service",
+		Use: "bind",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Bind an existing service definition.
 
@@ -193,8 +191,7 @@ $ %s tx service bind --service-name=<service-name> --deposit=1stake
 // GetCmdUpdateServiceBinding implements updating a service binding command
 func GetCmdUpdateServiceBinding(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "update-binding [service-name]",
-		Short: "Update an existing service binding",
+		Use: "update-binding [service-name]",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Update an existing service binding.
 
@@ -267,8 +264,7 @@ $ %s tx service update-binding <service-name> --deposit=1stake
 // GetCmdSetWithdrawAddr implements setting a withdrawal address command
 func GetCmdSetWithdrawAddr(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "set-withdraw-addr [withdrawal-address]",
-		Short: "Set a withdrawal address for a provider",
+		Use: "set-withdraw-addr [withdrawal-address]",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Set a withdrawal address for a provider.
 
@@ -306,8 +302,7 @@ $ %s tx service set-withdraw-addr <withdrawal-address> --from mykey
 // GetCmdDisableServiceBinding implements disabling a service binding command
 func GetCmdDisableServiceBinding(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "disable [service-name]",
-		Short: "Disable an available service binding",
+		Use: "disable [service-name]",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Disable an available service binding.
 
@@ -340,8 +335,7 @@ $ %s tx service disable <service-name> --from mykey
 // GetCmdEnableServiceBinding implements enabling a service binding command
 func GetCmdEnableServiceBinding(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "enable [service-name]",
-		Short: "Enable an unavailable service binding",
+		Use: "enable [service-name]",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Enable an unavailable service binding.
 
@@ -387,8 +381,7 @@ $ %s tx service enable <service-name> --deposit=1stake --from mykey
 // GetCmdRefundServiceDeposit implements refunding deposit command
 func GetCmdRefundServiceDeposit(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "refund-deposit [service-name]",
-		Short: "Refund all deposit from a service binding",
+		Use: "refund-deposit [service-name]",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Refund all deposit from a service binding.
 
@@ -421,10 +414,18 @@ $ %s tx service refund-deposit <service-name> --from mykey
 // GetCmdCallService implements initiating a service call command
 func GetCmdCallService(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "call",
-		Short: "Initiate a service call",
-		Example: "iriscli service call --chain-id=<chain-id> --from=<key-name> --fee=0.3iris --service-name=<service-name> " +
-			"--providers=<provider list> --service-fee-cap=1iris --data=<input content or path/to/input.json> --timeout=100 --repeated --frequency=150 --total=100",
+		Use: "call",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Initiate a service call.
+
+Example:
+$ %s tx service call --service-name=<service-name> --providers=<provider list> 
+--service-fee-cap=1stake --data=<input content or path/to/input.json> --timeout=100 
+--repeated --frequency=150 --total=100 --from mykey
+`,
+				version.ClientName,
+			),
+		),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			inBuf := bufio.NewReader(cmd.InOrStdin())
 			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(auth.DefaultTxEncoder(cdc))
@@ -509,10 +510,17 @@ func GetCmdCallService(cdc *codec.Codec) *cobra.Command {
 // GetCmdRespondService implements responding to a service request command
 func GetCmdRespondService(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "respond",
-		Short: "Respond to a service request",
-		Example: "iriscli service respond --chain-id=<chain-id> --from=<key-name> --fee=0.3iris " +
-			"--request-id=<request-id> --result=<result content or path/to/result.json> --data=<output content or path/to/output.json>",
+		Use: "respond",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Respond to an active service request.
+
+Example:
+$ %s tx service respond --request-id=<request-id> --result=<result content or path/to/result.json>
+--data=<output content or path/to/output.json> --from mykey
+`,
+				version.ClientName,
+			),
+		),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			inBuf := bufio.NewReader(cmd.InOrStdin())
 			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(auth.DefaultTxEncoder(cdc))
@@ -592,10 +600,17 @@ func GetCmdRespondService(cdc *codec.Codec) *cobra.Command {
 // GetCmdPauseRequestContext implements pausing a request context command
 func GetCmdPauseRequestContext(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "pause [request-context-id]",
-		Short:   "Pause a running request context",
-		Example: "iriscli service pause <request-context-id> --chain-id=<chain-id> --from=<key-name> --fee=0.3iris",
-		Args:    cobra.ExactArgs(1),
+		Use: "pause [request-context-id]",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Pause a running request context.
+
+Example:
+$ %s tx service pause <request-context-id> --from mykey
+`,
+				version.ClientName,
+			),
+		),
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			inBuf := bufio.NewReader(cmd.InOrStdin())
 			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(auth.DefaultTxEncoder(cdc))
@@ -623,10 +638,17 @@ func GetCmdPauseRequestContext(cdc *codec.Codec) *cobra.Command {
 // GetCmdStartRequestContext implements restarting a request context command
 func GetCmdStartRequestContext(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "start [request-context-id]",
-		Short:   "Start a paused request context",
-		Example: "iriscli service start <request-context-id> --chain-id=<chain-id> --from=<key-name> --fee=0.3iris",
-		Args:    cobra.ExactArgs(1),
+		Use: "start [request-context-id]",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Start a paused request context.
+
+Example:
+$ %s tx service start <request-context-id> --from mykey
+`,
+				version.ClientName,
+			),
+		),
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			inBuf := bufio.NewReader(cmd.InOrStdin())
 			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(auth.DefaultTxEncoder(cdc))
@@ -654,10 +676,17 @@ func GetCmdStartRequestContext(cdc *codec.Codec) *cobra.Command {
 // GetCmdKillRequestContext implements terminating a request context command
 func GetCmdKillRequestContext(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "kill [request-context-id]",
-		Short:   "Terminate a request context",
-		Example: "iriscli service kill <request-context-id> --chain-id=<chain-id> --from=<key-name> --fee=0.3iris",
-		Args:    cobra.ExactArgs(1),
+		Use: "kill [request-context-id]",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Terminate a request context.
+
+Example:
+$ %s tx service kill <request-context-id> --from mykey
+`,
+				version.ClientName,
+			),
+		),
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			inBuf := bufio.NewReader(cmd.InOrStdin())
 			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(auth.DefaultTxEncoder(cdc))
@@ -685,10 +714,17 @@ func GetCmdKillRequestContext(cdc *codec.Codec) *cobra.Command {
 // GetCmdUpdateRequestContext implements updating a request context command
 func GetCmdUpdateRequestContext(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "update [request-context-id]",
-		Short: "Update a request context",
-		Example: "iriscli service update <request-context-id> --chain-id=<chain-id> --from=<key-name> --fee=0.3iris " +
-			"--providers=<new providers> --service-fee-cap=2iris --timeout=0 --frequency=200 --total=200",
+		Use: "update [request-context-id]",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Update a request context.
+
+Example:
+$ %s tx service update <request-context-id> --providers=<new providers> 
+--service-fee-cap=2iris --timeout=0 --frequency=200 --total=200 --from mykey
+`,
+				version.ClientName,
+			),
+		),
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			inBuf := bufio.NewReader(cmd.InOrStdin())
@@ -748,8 +784,16 @@ func GetCmdUpdateRequestContext(cdc *codec.Codec) *cobra.Command {
 // GetCmdWithdrawEarnedFees implements withdrawing earned fees command
 func GetCmdWithdrawEarnedFees(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "withdraw-fees",
-		Short:   "Withdraw the earned fees of a provider",
+		Use: "withdraw-fees",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Withdraw the earned fees of a provider.
+
+Example:
+$ %s tx service withdraw-fees --providers=<new providers> --from mykey
+`,
+				version.ClientName,
+			),
+		),
 		Example: "iriscli service withdraw-fees --chain-id=<chain-id> --from=<key-name> --fee=0.3iris",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			inBuf := bufio.NewReader(cmd.InOrStdin())
