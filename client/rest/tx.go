@@ -35,6 +35,8 @@ func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc(fmt.Sprintf("/service/contexts/{%s}/kill", RestRequestContextID), killRequestContextHandlerFn(cliCtx)).Methods("POST")
 	// update a request context
 	r.HandleFunc(fmt.Sprintf("/service/contexts/{%s}", RestRequestContextID), updateRequestContextHandlerFn(cliCtx)).Methods("PUT")
+	// withdraw the earned fees of a provider
+	r.HandleFunc(fmt.Sprintf("/service/fees/{%s}/withdraw", RestProvider), withdrawEarnedFeesHandlerFn(cliCtx)).Methods("POST")
 }
 
 // DefineServiceReq defines the properties of a define service request's body.

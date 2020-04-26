@@ -52,6 +52,9 @@ func NewQuerier(k Keeper) sdk.Querier {
 		case types.QuerySchema:
 			return querySchema(ctx, req, k)
 
+		case types.QueryParameters:
+			return queryParams(ctx, k)
+
 		default:
 			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unknown %s query path: %s", types.ModuleName, path[0])
 		}
@@ -312,6 +315,17 @@ func querySchema(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, erro
 	}
 
 	bz, err := codec.MarshalJSONIndent(k.cdc, schema)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+	}
+
+	return bz, nil
+}
+
+func queryParams(ctx sdk.Context, k Keeper) ([]byte, error) {
+	params := k.GetParams(ctx)
+
+	bz, err := codec.MarshalJSONIndent(k.cdc, params)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}

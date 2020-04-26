@@ -40,6 +40,7 @@ func GetQueryCmd(queryRoute string, cdc *codec.Codec) *cobra.Command {
 		GetCmdQueryServiceResponses(queryRoute, cdc),
 		GetCmdQueryEarnedFees(queryRoute, cdc),
 		GetCmdQuerySchema(queryRoute, cdc),
+		GetCmdQueryParams(queryRoute, cdc),
 	)...)
 
 	return serviceQueryCmd
@@ -519,4 +520,35 @@ func GetCmdQuerySchema(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	}
 
 	return cmd
+}
+
+// GetCmdQueryParams implements the query params command.
+func GetCmdQueryParams(queryRoute string, cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "params",
+		Args:  cobra.NoArgs,
+		Short: "Query the current service parameter values",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Query values set as service parameters.
+Example:
+$ %s query service params
+`,
+				version.ClientName,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryParameters)
+			bz, _, err := cliCtx.QueryWithData(route, nil)
+			if err != nil {
+				return err
+			}
+
+			var params types.Params
+			cdc.MustUnmarshalJSON(bz, &params)
+
+			return cliCtx.PrintOutput(params)
+		},
+	}
 }

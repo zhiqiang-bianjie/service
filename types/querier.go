@@ -19,6 +19,7 @@ const (
 	QueryResponses        = "responses"        // query responses
 	QueryEarnedFees       = "fees"             // query earned fees
 	QuerySchema           = "schema"           // query schema
+	QueryParameters       = "parameters"       // query parameters
 )
 
 // QueryDefinitionParams defines the params to query a service definition

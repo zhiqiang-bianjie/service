@@ -82,5 +82,7 @@ type (
 	MockToken                  = types.MockToken
 	MockTokenKeeper            = keeper.MockTokenKeeper
 	Request                    = types.Request
+	Response                   = types.Response
 	RequestContext             = types.RequestContext
+	EarnedFees                 = types.EarnedFees
 )

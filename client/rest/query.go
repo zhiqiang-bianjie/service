@@ -13,14 +13,17 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/rest"
 
 	serviceutils "github.com/irismod/service/client/utils"
-
 	"github.com/irismod/service/types"
 )
 
 func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
+	// query definition
 	r.HandleFunc(fmt.Sprintf("/service/definitions/{%s}", RestServiceName), queryDefinitionHandlerFn(cliCtx)).Methods("GET")
+	// query binding
 	r.HandleFunc(fmt.Sprintf("/service/bindings/{%s}/{%s}", RestServiceName, RestProvider), queryBindingHandlerFn(cliCtx)).Methods("GET")
+	// query bindings
 	r.HandleFunc(fmt.Sprintf("/service/bindings/{%s}", RestServiceName), queryBindingsHandlerFn(cliCtx)).Methods("GET")
+	// query the withdrawal address
 	r.HandleFunc(fmt.Sprintf("/service/providers/{%s}/withdraw-address", RestProvider), queryWithdrawAddrHandlerFn(cliCtx)).Methods("GET")
 	// query a request by ID
 	r.HandleFunc(fmt.Sprintf("/service/requests/{%s}", RestRequestID), queryRequestHandlerFn(cliCtx)).Methods("GET")
@@ -36,6 +39,8 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc(fmt.Sprintf("/service/fees/{%s}", RestProvider), queryEarnedFeesHandlerFn(cliCtx)).Methods("GET")
 	// query the system schema by the schema name
 	r.HandleFunc(fmt.Sprintf("/service/schemas/{%s}", RestSchemaName), querySchemaHandlerFn(cliCtx)).Methods("GET")
+	// query the current service parameter values
+	r.HandleFunc(fmt.Sprintf("/service/parameters"), queryParamsHandlerFn(cliCtx)).Methods("GET")
 }
 
 func queryDefinitionHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
@@ -486,5 +491,24 @@ func querySchemaHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 		cliCtx = cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, schema)
+	}
+}
+
+func queryParamsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
+		route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryParameters)
+		res, height, err := cliCtx.QueryWithData(route, nil)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		cliCtx = cliCtx.WithHeight(height)
+		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }
