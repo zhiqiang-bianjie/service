@@ -2,14 +2,15 @@ package types
 
 // service module event types
 const (
-	EventTypeDefineService   = "define_service"
-	EventTypeCreateContext   = "create-context"
-	EventTypePauseContext    = "pause-context"
-	EventTypeCompleteContext = "complete-context"
-	EventTypeNewBatch        = "new-batch"
-	EventTypeNewBatchRequest = "new-batch-request"
-	EventTypeCompleteBatch   = "complete-batch"
-	EventTypeServiceSlash    = "service-slash"
+	EventTypeDefineService           = "define_service"
+	EventTypeCreateContext           = "create-context"
+	EventTypePauseContext            = "pause-context"
+	EventTypeCompleteContext         = "complete-context"
+	EventTypeNewBatch                = "new-batch"
+	EventTypeNewBatchRequest         = "new-batch-request"
+	EventTypeNewBatchRequestProvider = "new-batch-request-provider"
+	EventTypeCompleteBatch           = "complete-batch"
+	EventTypeServiceSlash            = "service-slash"
 
 	AttributeValueCategory          = ModuleName
 	AttributeKeyAuthor              = "author"

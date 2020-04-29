@@ -2,6 +2,7 @@ package service
 
 import (
 	"encoding/json"
+	"strings"
 
 	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 
@@ -108,11 +109,15 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 
 	for provider, requests := range providerRequests {
 		requestsJSON, _ := json.Marshal(requests)
-
+		str := strings.Split(provider, ".")
+		if len(str) != 2 {
+			continue
+		}
 		ctx.EventManager().EmitEvents(sdk.Events{
 			sdk.NewEvent(
-				types.EventTypeNewBatchRequest,
-				sdk.NewAttribute(types.AttributeKeyProvider, provider),
+				types.EventTypeNewBatchRequestProvider,
+				sdk.NewAttribute(types.AttributeKeyServiceName, str[0]),
+				sdk.NewAttribute(types.AttributeKeyProvider, str[1]),
 				sdk.NewAttribute(types.AttributeKeyRequests, string(requestsJSON)),
 			),
 		})
