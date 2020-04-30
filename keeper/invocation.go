@@ -788,7 +788,7 @@ func (k Keeper) FilterServiceProviders(
 		binding, found := k.GetServiceBinding(ctx, serviceName, provider)
 
 		if found && binding.Available {
-			if binding.MinRespTime <= uint64(timeout) {
+			if binding.QoS <= uint64(timeout) {
 				price := k.GetPrice(ctx, consumer, binding)
 
 				if price.IsAllLTE(serviceFeeCap) {
@@ -874,7 +874,9 @@ func (k Keeper) AddResponse(
 			panic(err)
 		}
 	} else {
-		if err := k.AddEarnedFee(ctx, provider, request.ServiceFee); err != nil {
+		binding, _ := k.GetServiceBinding(ctx, request.ServiceName, provider)
+
+		if err := k.AddEarnedFee(ctx, binding.Owner, provider, request.ServiceFee); err != nil {
 			return request, response, err
 		}
 	}

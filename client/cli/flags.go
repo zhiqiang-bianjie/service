@@ -12,9 +12,11 @@ const (
 	FlagAuthorDescription = "author-description"
 	FlagSchemas           = "schemas"
 	FlagServiceName       = "service-name"
+	FlagOwner             = "owner"
+	FlagProvider          = "provider"
 	FlagDeposit           = "deposit"
 	FlagPricing           = "pricing"
-	FlagMinRespTime       = "min-resp-time"
+	FlagQoS               = "qos"
 	FlagProviders         = "providers"
 	FlagServiceFeeCap     = "service-fee-cap"
 	FlagTimeout           = "timeout"
@@ -36,6 +38,7 @@ var (
 	FsCallService          = flag.NewFlagSet("", flag.ContinueOnError)
 	FsRespondService       = flag.NewFlagSet("", flag.ContinueOnError)
 	FsUpdateRequestContext = flag.NewFlagSet("", flag.ContinueOnError)
+	FsQueryServiceBindings = flag.NewFlagSet("", flag.ContinueOnError)
 )
 
 func init() {
@@ -46,13 +49,14 @@ func init() {
 	FsDefineService.String(FlagSchemas, "", "interface schemas content or file path")
 
 	FsBindService.String(FlagServiceName, "", "service name")
+	FsBindService.String(FlagProvider, "", "provider address, default to the owner")
 	FsBindService.String(FlagDeposit, "", "deposit of the binding")
 	FsBindService.String(FlagPricing, "", "pricing content or file path, which is an instance of the Service Pricing schema")
-	FsBindService.Uint64(FlagMinRespTime, 0, "minimum response time")
+	FsBindService.Uint64(FlagQoS, 0, "quality of service, in terms of minimum response time")
 
 	FsUpdateServiceBinding.String(FlagDeposit, "", "added deposit for the binding")
 	FsUpdateServiceBinding.String(FlagPricing, "", "pricing content or file path, which is an instance of the Service Pricing schema")
-	FsUpdateServiceBinding.Uint64(FlagMinRespTime, 0, "minimum response time, not updated if set to 0")
+	FsUpdateServiceBinding.Uint64(FlagQoS, 0, "quality of service, in terms of minimum response time, not updated if set to 0")
 
 	FsEnableServiceBinding.String(FlagDeposit, "", "added deposit for enabling the binding")
 
@@ -75,4 +79,6 @@ func init() {
 	FsUpdateRequestContext.Uint64(FlagTimeout, 0, "request timeout, not updated if set to 0")
 	FsUpdateRequestContext.Uint64(FlagFrequency, 0, "request frequency, not updated if set to 0")
 	FsUpdateRequestContext.Int64(FlagTotal, 0, "request count, not updated if set to 0")
+
+	FsQueryServiceBindings.String(FlagOwner, "", "the owner of bindings, which is optional")
 }

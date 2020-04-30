@@ -4,8 +4,9 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	tmbytes "github.com/tendermint/tendermint/libs/bytes"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // InitGenesis - store genesis parameters
@@ -22,11 +23,12 @@ func InitGenesis(ctx sdk.Context, k Keeper, data GenesisState) {
 
 	for _, binding := range data.Bindings {
 		k.SetServiceBinding(ctx, binding)
+		k.SetOwnerServiceBinding(ctx, binding)
 	}
 
-	for providerAddressStr, withdrawAddress := range data.WithdrawAddresses {
-		providerAddress, _ := sdk.AccAddressFromBech32(providerAddressStr)
-		k.SetWithdrawAddress(ctx, providerAddress, withdrawAddress)
+	for ownerAddressStr, withdrawAddress := range data.WithdrawAddresses {
+		ownerAddress, _ := sdk.AccAddressFromBech32(ownerAddressStr)
+		k.SetWithdrawAddress(ctx, ownerAddress, withdrawAddress)
 	}
 
 	for reqContextIDStr, requestContext := range data.RequestContexts {
@@ -60,8 +62,8 @@ func ExportGenesis(ctx sdk.Context, k Keeper) GenesisState {
 
 	k.IterateWithdrawAddresses(
 		ctx,
-		func(providerAddress sdk.AccAddress, withdrawAddress sdk.AccAddress) bool {
-			withdrawAddresses[providerAddress.String()] = withdrawAddress
+		func(ownerAddress sdk.AccAddress, withdrawAddress sdk.AccAddress) bool {
+			withdrawAddresses[ownerAddress.String()] = withdrawAddress
 			return false
 		},
 	)

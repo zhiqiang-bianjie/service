@@ -11,6 +11,7 @@ import (
 const (
 	RestServiceName      = "service-name"
 	RestRequestID        = "request-id"
+	RestOwner            = "owner"
 	RestProvider         = "provider"
 	RestConsumer         = "consumer"
 	RestRequestContextID = "request-context-id"

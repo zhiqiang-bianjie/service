@@ -368,28 +368,9 @@ func ParseResult(result string) (Result, error) {
 	return r, nil
 }
 
-// EarnedFees defines a struct for the fees earned by the provider
-type EarnedFees struct {
-	Address sdk.AccAddress `json:"address"`
-	Coins   sdk.Coins      `json:"coins"`
-}
-
-// NewEarnedFees creates a new EarnedFees instance
-func NewEarnedFees(address sdk.AccAddress, coins sdk.Coins) EarnedFees {
-	return EarnedFees{
-		Address: address,
-		Coins:   coins,
-	}
-}
-
-// String implements Stringer
-func (e EarnedFees) String() string {
-	return fmt.Sprintf(`EarnedFees:
-	Address:                 %s
-	Coins:                   %s`,
-		e.Address,
-		e.Coins.String(),
-	)
+// EarnedFeesOutput wrappers the earned fees for output
+type EarnedFeesOutput struct {
+	EarnedFees sdk.Coins `json:"earned_fees" yaml:"earned_fees"`
 }
 
 // RequestContextState defines the state for the request context

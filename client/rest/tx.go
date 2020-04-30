@@ -19,7 +19,7 @@ func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc("/service/definitions", defineServiceHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/service/bindings", bindServiceHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc(fmt.Sprintf("/service/bindings/{%s}/{%s}", RestServiceName, RestProvider), updateServiceBindingHandlerFn(cliCtx)).Methods("PUT")
-	r.HandleFunc(fmt.Sprintf("/service/providers/{%s}/withdraw-address", RestProvider), setWithdrawAddrHandlerFn(cliCtx)).Methods("POST")
+	r.HandleFunc(fmt.Sprintf("/service/owners/{%s}/withdraw-address", RestOwner), setWithdrawAddrHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc(fmt.Sprintf("/service/bindings/{%s}/{%s}/disable", RestServiceName, RestProvider), disableServiceBindingHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc(fmt.Sprintf("/service/bindings/{%s}/{%s}/enable", RestServiceName, RestProvider), enableServiceBindingHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc(fmt.Sprintf("/service/bindings/{%s}/{%s}/refund-deposit", RestServiceName, RestProvider), refundServiceDepositHandlerFn(cliCtx)).Methods("POST")
@@ -57,15 +57,17 @@ type BindServiceReq struct {
 	Provider    string       `json:"provider" yaml:"provider"`
 	Deposit     string       `json:"deposit" yaml:"deposit"`
 	Pricing     string       `json:"pricing" yaml:"pricing"`
-	MinRespTime uint64       `json:"min_resp_time" yaml:"min_resp_time"`
+	QoS         uint64       `json:"qos" yaml:"qos"`
+	Owner       string       `json:"owner" yaml:"owner"`
 }
 
 // UpdateServiceBindingReq defines the properties of an update service binding request's body.
 type UpdateServiceBindingReq struct {
-	BaseReq     rest.BaseReq `json:"base_req" yaml:"base_req"`
-	Deposit     string       `json:"deposit" yaml:"deposit"`
-	Pricing     string       `json:"pricing" yaml:"pricing"`
-	MinRespTime uint64       `json:"min_resp_time" yaml:"min_resp_time"`
+	BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
+	Deposit string       `json:"deposit" yaml:"deposit"`
+	Pricing string       `json:"pricing" yaml:"pricing"`
+	QoS     uint64       `json:"qos" yaml:"qos"`
+	Owner   string       `json:"owner" yaml:"owner"`
 }
 
 // SetWithdrawAddrReq defines the properties of a set withdraw address request's body.
@@ -77,21 +79,24 @@ type SetWithdrawAddrReq struct {
 // DisableServiceBindingReq defines the properties of a disable service binding request's body.
 type DisableServiceBindingReq struct {
 	BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
+	Owner   string       `json:"owner" yaml:"owner"`
 }
 
 // EnableServiceBindingReq defines the properties of an enable service binding request's body.
 type EnableServiceBindingReq struct {
 	BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
 	Deposit string       `json:"deposit" yaml:"deposit"`
+	Owner   string       `json:"owner" yaml:"owner"`
 }
 
 // RefundServiceDepositReq defines the properties of a refund service deposit request's body.
 type RefundServiceDepositReq struct {
 	BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
+	Owner   string       `json:"owner" yaml:"owner"`
 }
 
 type callServiceReq struct {
-	BaseReq           rest.BaseReq `json:"base_req"` // basic tx info
+	BaseReq           rest.BaseReq `json:"base_req"`
 	ServiceName       string       `json:"service_name"`
 	Providers         []string     `json:"providers"`
 	Consumer          string       `json:"consumer"`
@@ -105,7 +110,7 @@ type callServiceReq struct {
 }
 
 type respondServiceReq struct {
-	BaseReq   rest.BaseReq `json:"base_req"` // basic tx info
+	BaseReq   rest.BaseReq `json:"base_req"`
 	RequestID string       `json:"request_id"`
 	Provider  string       `json:"provider"`
 	Result    string       `json:"result"`
@@ -113,22 +118,22 @@ type respondServiceReq struct {
 }
 
 type pauseRequestContextReq struct {
-	BaseReq  rest.BaseReq `json:"base_req"` // basic tx info
+	BaseReq  rest.BaseReq `json:"base_req"`
 	Consumer string       `json:"consumer"`
 }
 
 type startRequestContextReq struct {
-	BaseReq  rest.BaseReq `json:"base_req"` // basic tx info
+	BaseReq  rest.BaseReq `json:"base_req"`
 	Consumer string       `json:"consumer"`
 }
 
 type killRequestContextReq struct {
-	BaseReq  rest.BaseReq `json:"base_req"` // basic tx info
+	BaseReq  rest.BaseReq `json:"base_req"`
 	Consumer string       `json:"consumer"`
 }
 
 type updateRequestContextReq struct {
-	BaseReq           rest.BaseReq `json:"base_req"` // basic tx info
+	BaseReq           rest.BaseReq `json:"base_req"`
 	Providers         []string     `json:"providers"`
 	ServiceFeeCap     string       `json:"service_fee_cap"`
 	Timeout           int64        `json:"timeout"`
@@ -138,7 +143,8 @@ type updateRequestContextReq struct {
 }
 
 type withdrawEarnedFeesReq struct {
-	BaseReq rest.BaseReq `json:"base_req"` // basic tx info
+	BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
+	Owner   string       `json:"owner" yaml:"owner"`
 }
 
 func defineServiceHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
@@ -181,10 +187,22 @@ func bindServiceHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		provider, err := sdk.AccAddressFromBech32(req.Provider)
+		owner, err := sdk.AccAddressFromBech32(req.Owner)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
+		}
+
+		var provider sdk.AccAddress
+
+		if len(req.Provider) > 0 {
+			provider, err = sdk.AccAddressFromBech32(req.Provider)
+			if err != nil {
+				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+				return
+			}
+		} else {
+			provider = owner
 		}
 
 		deposit, err := sdk.ParseCoins(req.Deposit)
@@ -193,7 +211,7 @@ func bindServiceHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		msg := types.NewMsgBindService(req.ServiceName, provider, deposit, req.Pricing, req.MinRespTime)
+		msg := types.NewMsgBindService(req.ServiceName, provider, deposit, req.Pricing, req.QoS, owner)
 		if err := msg.ValidateBasic(); err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
@@ -225,6 +243,18 @@ func updateServiceBindingHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		var owner sdk.AccAddress
+
+		if len(req.Owner) > 0 {
+			owner, err = sdk.AccAddressFromBech32(req.Owner)
+			if err != nil {
+				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+				return
+			}
+		} else {
+			owner = provider
+		}
+
 		var deposit sdk.Coins
 		if req.Deposit != "" {
 			deposit, err = sdk.ParseCoins(req.Deposit)
@@ -234,7 +264,7 @@ func updateServiceBindingHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			}
 		}
 
-		msg := types.NewMsgUpdateServiceBinding(serviceName, provider, deposit, req.Pricing, req.MinRespTime)
+		msg := types.NewMsgUpdateServiceBinding(serviceName, provider, deposit, req.Pricing, req.QoS, owner)
 		if err := msg.ValidateBasic(); err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
@@ -247,9 +277,9 @@ func updateServiceBindingHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 func setWithdrawAddrHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-		providerStr := vars[RestProvider]
+		ownerStr := vars[RestOwner]
 
-		provider, err := sdk.AccAddressFromBech32(providerStr)
+		owner, err := sdk.AccAddressFromBech32(ownerStr)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
@@ -271,7 +301,7 @@ func setWithdrawAddrHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		msg := types.NewMsgSetWithdrawAddress(provider, withdrawAddr)
+		msg := types.NewMsgSetWithdrawAddress(owner, withdrawAddr)
 		if err := msg.ValidateBasic(); err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
@@ -303,7 +333,19 @@ func disableServiceBindingHandlerFn(cliCtx context.CLIContext) http.HandlerFunc 
 			return
 		}
 
-		msg := types.NewMsgDisableServiceBinding(serviceName, provider)
+		var owner sdk.AccAddress
+
+		if len(req.Owner) > 0 {
+			owner, err = sdk.AccAddressFromBech32(req.Owner)
+			if err != nil {
+				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+				return
+			}
+		} else {
+			owner = provider
+		}
+
+		msg := types.NewMsgDisableServiceBinding(serviceName, provider, owner)
 		if err := msg.ValidateBasic(); err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
@@ -335,6 +377,18 @@ func enableServiceBindingHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		var owner sdk.AccAddress
+
+		if len(req.Owner) > 0 {
+			owner, err = sdk.AccAddressFromBech32(req.Owner)
+			if err != nil {
+				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+				return
+			}
+		} else {
+			owner = provider
+		}
+
 		var deposit sdk.Coins
 		if len(req.Deposit) != 0 {
 			deposit, err = sdk.ParseCoins(req.Deposit)
@@ -344,7 +398,7 @@ func enableServiceBindingHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			}
 		}
 
-		msg := types.NewMsgEnableServiceBinding(serviceName, provider, deposit)
+		msg := types.NewMsgEnableServiceBinding(serviceName, provider, deposit, owner)
 		if err := msg.ValidateBasic(); err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
@@ -376,7 +430,19 @@ func refundServiceDepositHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		msg := types.NewMsgRefundServiceDeposit(serviceName, provider)
+		var owner sdk.AccAddress
+
+		if len(req.Owner) > 0 {
+			owner, err = sdk.AccAddressFromBech32(req.Owner)
+			if err != nil {
+				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+				return
+			}
+		} else {
+			owner = provider
+		}
+
+		msg := types.NewMsgRefundServiceDeposit(serviceName, provider, owner)
 		if err = msg.ValidateBasic(); err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
@@ -662,7 +728,19 @@ func withdrawEarnedFeesHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		msg := types.NewMsgWithdrawEarnedFees(provider)
+		var owner sdk.AccAddress
+
+		if len(req.Owner) > 0 {
+			owner, err = sdk.AccAddressFromBech32(req.Owner)
+			if err != nil {
+				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+				return
+			}
+		} else {
+			owner = provider
+		}
+
+		msg := types.NewMsgWithdrawEarnedFees(owner, provider)
 		if err = msg.ValidateBasic(); err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return

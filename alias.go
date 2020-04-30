@@ -84,5 +84,5 @@ type (
 	Request                    = types.Request
 	Response                   = types.Response
 	RequestContext             = types.RequestContext
-	EarnedFees                 = types.EarnedFees
+	EarnedFeesOutput           = types.EarnedFeesOutput
 )

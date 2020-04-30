@@ -17,14 +17,14 @@ import (
 )
 
 func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
-	// query definition
+	// query a service definition
 	r.HandleFunc(fmt.Sprintf("/service/definitions/{%s}", RestServiceName), queryDefinitionHandlerFn(cliCtx)).Methods("GET")
-	// query binding
+	// query a service binding
 	r.HandleFunc(fmt.Sprintf("/service/bindings/{%s}/{%s}", RestServiceName, RestProvider), queryBindingHandlerFn(cliCtx)).Methods("GET")
-	// query bindings
+	// query all bindings of a service definition with an optional owner
 	r.HandleFunc(fmt.Sprintf("/service/bindings/{%s}", RestServiceName), queryBindingsHandlerFn(cliCtx)).Methods("GET")
-	// query the withdrawal address
-	r.HandleFunc(fmt.Sprintf("/service/providers/{%s}/withdraw-address", RestProvider), queryWithdrawAddrHandlerFn(cliCtx)).Methods("GET")
+	// query the withdrawal address of an owner
+	r.HandleFunc(fmt.Sprintf("/service/owners/{%s}/withdraw-address", RestOwner), queryWithdrawAddrHandlerFn(cliCtx)).Methods("GET")
 	// query a request by ID
 	r.HandleFunc(fmt.Sprintf("/service/requests/{%s}", RestRequestID), queryRequestHandlerFn(cliCtx)).Methods("GET")
 	// query active requests by the service binding or request context ID
@@ -129,10 +129,22 @@ func queryBindingsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		serviceName := vars[RestServiceName]
+		ownerStr := r.FormValue("owner")
 
 		if err := types.ValidateServiceName(serviceName); err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
+		}
+
+		var err error
+		var owner sdk.AccAddress
+
+		if len(ownerStr) > 0 {
+			owner, err = sdk.AccAddressFromBech32(ownerStr)
+			if err != nil {
+				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+				return
+			}
 		}
 
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
@@ -142,6 +154,7 @@ func queryBindingsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 		params := types.QueryBindingsParams{
 			ServiceName: serviceName,
+			Owner:       owner,
 		}
 
 		bz, err := cliCtx.Codec.MarshalJSON(params)
@@ -165,9 +178,9 @@ func queryBindingsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 func queryWithdrawAddrHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-		providerStr := vars[RestProvider]
+		ownerStr := vars[RestOwner]
 
-		provider, err := sdk.AccAddressFromBech32(providerStr)
+		owner, err := sdk.AccAddressFromBech32(ownerStr)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
@@ -179,7 +192,7 @@ func queryWithdrawAddrHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		params := types.QueryWithdrawAddressParams{
-			Provider: provider,
+			Owner: owner,
 		}
 
 		bz, err := cliCtx.Codec.MarshalJSON(params)

@@ -83,7 +83,7 @@ func handleMsgDefineService(ctx sdk.Context, k Keeper, msg MsgDefineService) (*s
 }
 
 func handleMsgBindService(ctx sdk.Context, k Keeper, msg MsgBindService) (*sdk.Result, error) {
-	err := k.AddServiceBinding(ctx, msg.ServiceName, msg.Provider, msg.Deposit, msg.Pricing, msg.MinRespTime)
+	err := k.AddServiceBinding(ctx, msg.ServiceName, msg.Provider, msg.Deposit, msg.Pricing, msg.QoS, msg.Owner)
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +92,7 @@ func handleMsgBindService(ctx sdk.Context, k Keeper, msg MsgBindService) (*sdk.R
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, AttributeValueCategory),
-			sdk.NewAttribute(sdk.AttributeKeySender, msg.Provider.String()),
+			sdk.NewAttribute(sdk.AttributeKeySender, msg.Owner.String()),
 		),
 	})
 
@@ -100,7 +100,7 @@ func handleMsgBindService(ctx sdk.Context, k Keeper, msg MsgBindService) (*sdk.R
 }
 
 func handleMsgUpdateServiceBinding(ctx sdk.Context, k Keeper, msg MsgUpdateServiceBinding) (*sdk.Result, error) {
-	err := k.UpdateServiceBinding(ctx, msg.ServiceName, msg.Provider, msg.Deposit, msg.Pricing, msg.MinRespTime)
+	err := k.UpdateServiceBinding(ctx, msg.ServiceName, msg.Provider, msg.Deposit, msg.Pricing, msg.QoS, msg.Owner)
 	if err != nil {
 		return nil, err
 	}
@@ -109,7 +109,7 @@ func handleMsgUpdateServiceBinding(ctx sdk.Context, k Keeper, msg MsgUpdateServi
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, AttributeValueCategory),
-			sdk.NewAttribute(sdk.AttributeKeySender, msg.Provider.String()),
+			sdk.NewAttribute(sdk.AttributeKeySender, msg.Owner.String()),
 		),
 	})
 
@@ -117,13 +117,13 @@ func handleMsgUpdateServiceBinding(ctx sdk.Context, k Keeper, msg MsgUpdateServi
 }
 
 func handleMsgSetWithdrawAddress(ctx sdk.Context, k Keeper, msg MsgSetWithdrawAddress) (*sdk.Result, error) {
-	k.SetWithdrawAddress(ctx, msg.Provider, msg.WithdrawAddress)
+	k.SetWithdrawAddress(ctx, msg.Owner, msg.WithdrawAddress)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, AttributeValueCategory),
-			sdk.NewAttribute(sdk.AttributeKeySender, msg.Provider.String()),
+			sdk.NewAttribute(sdk.AttributeKeySender, msg.Owner.String()),
 		),
 	})
 
@@ -131,7 +131,7 @@ func handleMsgSetWithdrawAddress(ctx sdk.Context, k Keeper, msg MsgSetWithdrawAd
 }
 
 func handleMsgDisableServiceBinding(ctx sdk.Context, k Keeper, msg MsgDisableServiceBinding) (*sdk.Result, error) {
-	err := k.DisableServiceBinding(ctx, msg.ServiceName, msg.Provider)
+	err := k.DisableServiceBinding(ctx, msg.ServiceName, msg.Provider, msg.Owner)
 	if err != nil {
 		return nil, err
 	}
@@ -140,7 +140,7 @@ func handleMsgDisableServiceBinding(ctx sdk.Context, k Keeper, msg MsgDisableSer
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, AttributeValueCategory),
-			sdk.NewAttribute(sdk.AttributeKeySender, msg.Provider.String()),
+			sdk.NewAttribute(sdk.AttributeKeySender, msg.Owner.String()),
 		),
 	})
 
@@ -148,7 +148,7 @@ func handleMsgDisableServiceBinding(ctx sdk.Context, k Keeper, msg MsgDisableSer
 }
 
 func handleMsgEnableServiceBinding(ctx sdk.Context, k Keeper, msg MsgEnableServiceBinding) (*sdk.Result, error) {
-	err := k.EnableServiceBinding(ctx, msg.ServiceName, msg.Provider, msg.Deposit)
+	err := k.EnableServiceBinding(ctx, msg.ServiceName, msg.Provider, msg.Deposit, msg.Owner)
 	if err != nil {
 		return nil, err
 	}
@@ -157,7 +157,7 @@ func handleMsgEnableServiceBinding(ctx sdk.Context, k Keeper, msg MsgEnableServi
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, AttributeValueCategory),
-			sdk.NewAttribute(sdk.AttributeKeySender, msg.Provider.String()),
+			sdk.NewAttribute(sdk.AttributeKeySender, msg.Owner.String()),
 		),
 	})
 
@@ -165,7 +165,7 @@ func handleMsgEnableServiceBinding(ctx sdk.Context, k Keeper, msg MsgEnableServi
 }
 
 func handleMsgRefundServiceDeposit(ctx sdk.Context, k Keeper, msg MsgRefundServiceDeposit) (*sdk.Result, error) {
-	err := k.RefundDeposit(ctx, msg.ServiceName, msg.Provider)
+	err := k.RefundDeposit(ctx, msg.ServiceName, msg.Provider, msg.Owner)
 	if err != nil {
 		return nil, err
 	}
@@ -174,7 +174,7 @@ func handleMsgRefundServiceDeposit(ctx sdk.Context, k Keeper, msg MsgRefundServi
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, AttributeValueCategory),
-			sdk.NewAttribute(sdk.AttributeKeySender, msg.Provider.String()),
+			sdk.NewAttribute(sdk.AttributeKeySender, msg.Owner.String()),
 		),
 	})
 
@@ -311,7 +311,7 @@ func handleMsgUpdateRequestContext(ctx sdk.Context, k Keeper, msg MsgUpdateReque
 
 // handleMsgWithdrawEarnedFees handles MsgWithdrawEarnedFees
 func handleMsgWithdrawEarnedFees(ctx sdk.Context, k Keeper, msg MsgWithdrawEarnedFees) (*sdk.Result, error) {
-	if err := k.WithdrawEarnedFees(ctx, msg.Provider); err != nil {
+	if err := k.WithdrawEarnedFees(ctx, msg.Owner, msg.Provider); err != nil {
 		return nil, err
 	}
 
@@ -319,7 +319,7 @@ func handleMsgWithdrawEarnedFees(ctx sdk.Context, k Keeper, msg MsgWithdrawEarne
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, AttributeValueCategory),
-			sdk.NewAttribute(sdk.AttributeKeySender, msg.Provider.String()),
+			sdk.NewAttribute(sdk.AttributeKeySender, msg.Owner.String()),
 		),
 	})
 

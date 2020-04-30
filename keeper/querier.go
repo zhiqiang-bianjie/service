@@ -3,11 +3,12 @@ package keeper
 import (
 	"strings"
 
+	abci "github.com/tendermint/tendermint/abci/types"
+	tmbytes "github.com/tendermint/tendermint/libs/bytes"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	abci "github.com/tendermint/tendermint/abci/types"
-	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 
 	"github.com/irismod/service/types"
 )
@@ -105,16 +106,20 @@ func queryBindings(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, er
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 
-	iterator := k.ServiceBindingsIterator(ctx, params.ServiceName)
-	defer iterator.Close()
-
 	bindings := make([]types.ServiceBinding, 0)
 
-	for ; iterator.Valid(); iterator.Next() {
-		var binding types.ServiceBinding
-		k.cdc.MustUnmarshalBinaryLengthPrefixed(iterator.Value(), &binding)
+	if params.Owner.Empty() {
+		iterator := k.ServiceBindingsIterator(ctx, params.ServiceName)
+		defer iterator.Close()
 
-		bindings = append(bindings, binding)
+		for ; iterator.Valid(); iterator.Next() {
+			var binding types.ServiceBinding
+			k.cdc.MustUnmarshalBinaryLengthPrefixed(iterator.Value(), &binding)
+
+			bindings = append(bindings, binding)
+		}
+	} else {
+		bindings = k.GetOwnerServiceBindings(ctx, params.Owner, params.ServiceName)
 	}
 
 	bz, err := codec.MarshalJSONIndent(k.cdc, bindings)
@@ -131,7 +136,7 @@ func queryWithdrawAddress(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]b
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 
-	withdrawAddr := k.GetWithdrawAddress(ctx, params.Provider)
+	withdrawAddr := k.GetWithdrawAddress(ctx, params.Owner)
 
 	bz, err := codec.MarshalJSONIndent(k.cdc, withdrawAddr)
 	if err != nil {

@@ -139,17 +139,26 @@ type MsgBindService struct {
 	Provider    sdk.AccAddress `json:"provider" yaml:"provider"`
 	Deposit     sdk.Coins      `json:"deposit" yaml:"deposit"`
 	Pricing     string         `json:"pricing" yaml:"pricing"`
-	MinRespTime uint64         `json:"min_resp_time" yaml:"min_resp_time"`
+	QoS         uint64         `json:"qos" yaml:"qos"`
+	Owner       sdk.AccAddress `json:"owner" yaml:"owner"`
 }
 
 // NewMsgBindService creates a new MsgBindService instance
-func NewMsgBindService(serviceName string, provider sdk.AccAddress, deposit sdk.Coins, pricing string, minRespTime uint64) MsgBindService {
+func NewMsgBindService(
+	serviceName string,
+	provider sdk.AccAddress,
+	deposit sdk.Coins,
+	pricing string,
+	qos uint64,
+	owner sdk.AccAddress,
+) MsgBindService {
 	return MsgBindService{
 		ServiceName: serviceName,
 		Provider:    provider,
 		Deposit:     deposit,
 		Pricing:     pricing,
-		MinRespTime: minRespTime,
+		QoS:         qos,
+		Owner:       owner,
 	}
 }
 
@@ -175,6 +184,10 @@ func (msg MsgBindService) ValidateBasic() error {
 		return err
 	}
 
+	if err := ValidateOwner(msg.Owner); err != nil {
+		return err
+	}
+
 	if err := ValidateServiceName(msg.ServiceName); err != nil {
 		return err
 	}
@@ -183,7 +196,7 @@ func (msg MsgBindService) ValidateBasic() error {
 		return err
 	}
 
-	if err := ValidateMinRespTime(msg.MinRespTime); err != nil {
+	if err := ValidateQoS(msg.QoS); err != nil {
 		return err
 	}
 
@@ -192,7 +205,7 @@ func (msg MsgBindService) ValidateBasic() error {
 
 // GetSigners implements Msg.
 func (msg MsgBindService) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{msg.Provider}
+	return []sdk.AccAddress{msg.Owner}
 }
 
 //______________________________________________________________________
@@ -203,7 +216,8 @@ type MsgUpdateServiceBinding struct {
 	Provider    sdk.AccAddress `json:"provider" yaml:"provider"`
 	Deposit     sdk.Coins      `json:"deposit" yaml:"deposit"`
 	Pricing     string         `json:"pricing" yaml:"pricing"`
-	MinRespTime uint64         `json:"min_resp_time" yaml:"min_resp_time"`
+	QoS         uint64         `json:"qos" yaml:"qos"`
+	Owner       sdk.AccAddress `json:"owner" yaml:"owner"`
 }
 
 // NewMsgUpdateServiceBinding creates a new MsgUpdateServiceBinding instance
@@ -212,14 +226,16 @@ func NewMsgUpdateServiceBinding(
 	provider sdk.AccAddress,
 	deposit sdk.Coins,
 	pricing string,
-	minRespTime uint64,
+	qos uint64,
+	owner sdk.AccAddress,
 ) MsgUpdateServiceBinding {
 	return MsgUpdateServiceBinding{
 		ServiceName: serviceName,
 		Provider:    provider,
 		Deposit:     deposit,
 		Pricing:     pricing,
-		MinRespTime: minRespTime,
+		QoS:         qos,
+		Owner:       owner,
 	}
 }
 
@@ -245,6 +261,10 @@ func (msg MsgUpdateServiceBinding) ValidateBasic() error {
 		return err
 	}
 
+	if err := ValidateOwner(msg.Owner); err != nil {
+		return err
+	}
+
 	if err := ValidateServiceName(msg.ServiceName); err != nil {
 		return err
 	}
@@ -264,21 +284,21 @@ func (msg MsgUpdateServiceBinding) ValidateBasic() error {
 
 // GetSigners implements Msg.
 func (msg MsgUpdateServiceBinding) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{msg.Provider}
+	return []sdk.AccAddress{msg.Owner}
 }
 
 //______________________________________________________________________
 
 // MsgSetWithdrawAddress defines a message to set the withdrawal address for a provider
 type MsgSetWithdrawAddress struct {
-	Provider        sdk.AccAddress `json:"provider" yaml:"provider"`
+	Owner           sdk.AccAddress `json:"owner" yaml:"owner"`
 	WithdrawAddress sdk.AccAddress `json:"withdraw_address" yaml:"withdraw_address"`
 }
 
 // NewMsgSetWithdrawAddress creates a new MsgSetWithdrawAddress instance
-func NewMsgSetWithdrawAddress(provider sdk.AccAddress, withdrawAddr sdk.AccAddress) MsgSetWithdrawAddress {
+func NewMsgSetWithdrawAddress(owner, withdrawAddr sdk.AccAddress) MsgSetWithdrawAddress {
 	return MsgSetWithdrawAddress{
-		Provider:        provider,
+		Owner:           owner,
 		WithdrawAddress: withdrawAddr,
 	}
 }
@@ -297,7 +317,7 @@ func (msg MsgSetWithdrawAddress) GetSignBytes() []byte {
 
 // ValidateBasic implements Msg.
 func (msg MsgSetWithdrawAddress) ValidateBasic() error {
-	if err := ValidateProvider(msg.Provider); err != nil {
+	if err := ValidateOwner(msg.Owner); err != nil {
 		return err
 	}
 
@@ -306,7 +326,7 @@ func (msg MsgSetWithdrawAddress) ValidateBasic() error {
 
 // GetSigners implements Msg.
 func (msg MsgSetWithdrawAddress) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{msg.Provider}
+	return []sdk.AccAddress{msg.Owner}
 }
 
 //______________________________________________________________________
@@ -315,13 +335,19 @@ func (msg MsgSetWithdrawAddress) GetSigners() []sdk.AccAddress {
 type MsgDisableServiceBinding struct {
 	ServiceName string         `json:"service_name" yaml:"service_name"`
 	Provider    sdk.AccAddress `json:"provider" yaml:"provider"`
+	Owner       sdk.AccAddress `json:"owner" yaml:"owner"`
 }
 
 // NewMsgDisableServiceBinding creates a new MsgDisableServiceBinding instance
-func NewMsgDisableServiceBinding(serviceName string, provider sdk.AccAddress) MsgDisableServiceBinding {
+func NewMsgDisableServiceBinding(
+	serviceName string,
+	provider,
+	owner sdk.AccAddress,
+) MsgDisableServiceBinding {
 	return MsgDisableServiceBinding{
 		ServiceName: serviceName,
 		Provider:    provider,
+		Owner:       owner,
 	}
 }
 
@@ -343,12 +369,16 @@ func (msg MsgDisableServiceBinding) ValidateBasic() error {
 		return err
 	}
 
+	if err := ValidateOwner(msg.Owner); err != nil {
+		return err
+	}
+
 	return ValidateServiceName(msg.ServiceName)
 }
 
 // GetSigners implements Msg.
 func (msg MsgDisableServiceBinding) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{msg.Provider}
+	return []sdk.AccAddress{msg.Owner}
 }
 
 //______________________________________________________________________
@@ -358,14 +388,21 @@ type MsgEnableServiceBinding struct {
 	ServiceName string         `json:"service_name" yaml:"service_name"`
 	Provider    sdk.AccAddress `json:"provider" yaml:"provider"`
 	Deposit     sdk.Coins      `json:"deposit" yaml:"deposit"`
+	Owner       sdk.AccAddress `json:"owner" yaml:"owner"`
 }
 
 // NewMsgEnableServiceBinding creates a new MsgEnableServiceBinding instance
-func NewMsgEnableServiceBinding(serviceName string, provider sdk.AccAddress, deposit sdk.Coins) MsgEnableServiceBinding {
+func NewMsgEnableServiceBinding(
+	serviceName string,
+	provider sdk.AccAddress,
+	deposit sdk.Coins,
+	owner sdk.AccAddress,
+) MsgEnableServiceBinding {
 	return MsgEnableServiceBinding{
 		ServiceName: serviceName,
 		Provider:    provider,
 		Deposit:     deposit,
+		Owner:       owner,
 	}
 }
 
@@ -391,6 +428,10 @@ func (msg MsgEnableServiceBinding) ValidateBasic() error {
 		return err
 	}
 
+	if err := ValidateOwner(msg.Owner); err != nil {
+		return err
+	}
+
 	if err := ValidateServiceName(msg.ServiceName); err != nil {
 		return err
 	}
@@ -406,7 +447,7 @@ func (msg MsgEnableServiceBinding) ValidateBasic() error {
 
 // GetSigners implements Msg.
 func (msg MsgEnableServiceBinding) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{msg.Provider}
+	return []sdk.AccAddress{msg.Owner}
 }
 
 //______________________________________________________________________
@@ -415,13 +456,19 @@ func (msg MsgEnableServiceBinding) GetSigners() []sdk.AccAddress {
 type MsgRefundServiceDeposit struct {
 	ServiceName string         `json:"service_name" yaml:"service_name"`
 	Provider    sdk.AccAddress `json:"provider" yaml:"provider"`
+	Owner       sdk.AccAddress `json:"owner" yaml:"owner"`
 }
 
 // NewMsgRefundServiceDeposit creates a new MsgRefundServiceDeposit instance
-func NewMsgRefundServiceDeposit(serviceName string, provider sdk.AccAddress) MsgRefundServiceDeposit {
+func NewMsgRefundServiceDeposit(
+	serviceName string,
+	provider,
+	owner sdk.AccAddress,
+) MsgRefundServiceDeposit {
 	return MsgRefundServiceDeposit{
 		ServiceName: serviceName,
 		Provider:    provider,
+		Owner:       owner,
 	}
 }
 
@@ -443,12 +490,16 @@ func (msg MsgRefundServiceDeposit) ValidateBasic() error {
 		return err
 	}
 
+	if err := ValidateOwner(msg.Owner); err != nil {
+		return err
+	}
+
 	return ValidateServiceName(msg.ServiceName)
 }
 
 // GetSigners implements Msg.
 func (msg MsgRefundServiceDeposit) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{msg.Provider}
+	return []sdk.AccAddress{msg.Owner}
 }
 
 //______________________________________________________________________
@@ -828,14 +879,16 @@ func (msg MsgUpdateRequestContext) GetSigners() []sdk.AccAddress {
 
 //______________________________________________________________________
 
-// MsgWithdrawEarnedFees defines a message to withdraw the fees earned by the provider
+// MsgWithdrawEarnedFees defines a message to withdraw the fees earned by the provider or owner
 type MsgWithdrawEarnedFees struct {
-	Provider sdk.AccAddress `json:"provider"`
+	Owner    sdk.AccAddress `json:"owner" yaml:"owner"`
+	Provider sdk.AccAddress `json:"provider" yaml:"provider"`
 }
 
 // NewMsgWithdrawEarnedFees creates a new MsgWithdrawEarnedFees instance
-func NewMsgWithdrawEarnedFees(provider sdk.AccAddress) MsgWithdrawEarnedFees {
+func NewMsgWithdrawEarnedFees(owner, provider sdk.AccAddress) MsgWithdrawEarnedFees {
 	return MsgWithdrawEarnedFees{
+		Owner:    owner,
 		Provider: provider,
 	}
 }
@@ -848,22 +901,18 @@ func (msg MsgWithdrawEarnedFees) Type() string { return TypeMsgWithdrawEarnedFee
 
 // GetSignBytes implements Msg.
 func (msg MsgWithdrawEarnedFees) GetSignBytes() []byte {
-	b, err := ModuleCdc.MarshalJSON(msg)
-	if err != nil {
-		panic(err)
-	}
-
+	b := ModuleCdc.MustMarshalJSON(msg)
 	return sdk.MustSortJSON(b)
 }
 
 // ValidateBasic implements Msg.
 func (msg MsgWithdrawEarnedFees) ValidateBasic() error {
-	return ValidateProvider(msg.Provider)
+	return ValidateOwner(msg.Owner)
 }
 
 // GetSigners implements Msg.
 func (msg MsgWithdrawEarnedFees) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{msg.Provider}
+	return []sdk.AccAddress{msg.Owner}
 }
 
 func ValidateAuthor(author sdk.AccAddress) error {
@@ -929,6 +978,14 @@ func ValidateProvider(provider sdk.AccAddress) error {
 	return nil
 }
 
+func ValidateOwner(owner sdk.AccAddress) error {
+	if len(owner) == 0 {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "owner missing")
+	}
+
+	return nil
+}
+
 func ValidateServiceDeposit(deposit sdk.Coins) error {
 	if !deposit.IsValid() || !deposit.IsAllPositive() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "invalid deposit")
@@ -937,9 +994,9 @@ func ValidateServiceDeposit(deposit sdk.Coins) error {
 	return nil
 }
 
-func ValidateMinRespTime(minRespTime uint64) error {
-	if minRespTime == 0 {
-		return sdkerrors.Wrap(ErrInvalidMinRespTime, "minimum response time must be greater than 0")
+func ValidateQoS(qos uint64) error {
+	if qos == 0 {
+		return sdkerrors.Wrap(ErrInvalidQoS, "qos must be greater than 0")
 	}
 
 	return nil

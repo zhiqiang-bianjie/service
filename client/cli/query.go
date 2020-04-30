@@ -6,13 +6,15 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/version"
-	"github.com/spf13/cobra"
 
 	"github.com/irismod/service/client/utils"
 	"github.com/irismod/service/types"
@@ -92,12 +94,13 @@ $ %s query service definition <service-name>
 // GetCmdQueryServiceBinding implements the query service binding command
 func GetCmdQueryServiceBinding(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "binding [service-name] [provider]",
+		Use:   "binding [service-name] [provider-address]",
+		Short: "Query a service binding",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Query details of a service binding.
 
 Example:
-$ %s query service binding <service-name> <provider>
+$ %s query service binding <service-name> <provider-address>
 `,
 				version.ClientName,
 			),
@@ -141,12 +144,13 @@ $ %s query service binding <service-name> <provider>
 // GetCmdQueryServiceBindings implements the query service bindings command
 func GetCmdQueryServiceBindings(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "bindings [service-name]",
+		Use:   "bindings [service-name]",
+		Short: "Query all bindings of a service definition with an optional owner",
 		Long: strings.TrimSpace(
-			fmt.Sprintf(`Query all bindings of a service definition.
+			fmt.Sprintf(`Query all bindings of a service definition with an optional owner.
 
 Example:
-$ %s query service bindings <service-name>
+$ %s query service bindings <service-name> --owner=<address>
 `,
 				version.ClientName,
 			),
@@ -159,7 +163,23 @@ $ %s query service bindings <service-name>
 				return err
 			}
 
-			bz, err := cdc.MarshalJSON(types.QueryBindingsParams{ServiceName: args[0]})
+			var err error
+			var owner sdk.AccAddress
+
+			ownerStr := viper.GetString(FlagOwner)
+			if len(ownerStr) > 0 {
+				owner, err = sdk.AccAddressFromBech32(ownerStr)
+				if err != nil {
+					return err
+				}
+			}
+
+			params := types.QueryBindingsParams{
+				ServiceName: args[0],
+				Owner:       owner,
+			}
+
+			bz, err := cdc.MarshalJSON(params)
 			if err != nil {
 				return err
 			}
@@ -179,18 +199,21 @@ $ %s query service bindings <service-name>
 		},
 	}
 
+	cmd.Flags().AddFlagSet(FsQueryServiceBindings)
+
 	return cmd
 }
 
 // GetCmdQueryWithdrawAddr implements the query withdraw address command
 func GetCmdQueryWithdrawAddr(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "withdraw-addr [provider]",
+		Use:   "withdraw-addr [address]",
+		Short: "Query the withdrawal address of an owner",
 		Long: strings.TrimSpace(
-			fmt.Sprintf(`Query the withdrawal address of a provider.
+			fmt.Sprintf(`Query the withdrawal address of an owner.
 
 Example:
-$ %s query service withdraw-addr <provider>
+$ %s query service withdraw-addr <address>
 `,
 				version.ClientName,
 			),
@@ -199,12 +222,12 @@ $ %s query service withdraw-addr <provider>
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			provider, err := sdk.AccAddressFromBech32(args[0])
+			owner, err := sdk.AccAddressFromBech32(args[0])
 			if err != nil {
 				return err
 			}
 
-			bz, err := cdc.MarshalJSON(types.QueryWithdrawAddressParams{Provider: provider})
+			bz, err := cdc.MarshalJSON(types.QueryWithdrawAddressParams{Owner: owner})
 			if err != nil {
 				return err
 			}
@@ -478,12 +501,13 @@ $ %s query service request-context <request-context-id>
 // GetCmdQueryEarnedFees implements the query earned fees command
 func GetCmdQueryEarnedFees(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "fees [provider]",
+		Use:   "fees [provider-address]",
+		Short: "Query the earned fees of a provider",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Query the earned fees of a provider.
 
 Example:
-$ %s query service fees <provider>
+$ %s query service fees <provider-address>
 `,
 				version.ClientName,
 			),
@@ -497,11 +521,7 @@ $ %s query service fees <provider>
 				return err
 			}
 
-			params := types.QueryEarnedFeesParams{
-				Provider: provider,
-			}
-
-			bz, err := cdc.MarshalJSON(params)
+			bz, err := cdc.MarshalJSON(types.QueryEarnedFeesParams{Provider: provider})
 			if err != nil {
 				return err
 			}
@@ -512,12 +532,12 @@ $ %s query service fees <provider>
 				return err
 			}
 
-			var fees types.EarnedFees
-			if err := cdc.UnmarshalJSON(res, &fees); err != nil {
+			var feesOut types.EarnedFeesOutput
+			if err := cdc.UnmarshalJSON(res, &feesOut); err != nil {
 				return err
 			}
 
-			return cliCtx.PrintOutput(fees)
+			return cliCtx.PrintOutput(feesOut)
 		},
 	}
 
@@ -571,8 +591,8 @@ $ %s query service schema <schema-name>
 // GetCmdQueryParams implements the query params command.
 func GetCmdQueryParams(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:  "params",
-		Args: cobra.NoArgs,
+		Use:   "params",
+		Short: "Query the current service parameter values",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Query values set as service parameters.
 Example:
@@ -581,6 +601,7 @@ $ %s query service params
 				version.ClientName,
 			),
 		),
+		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 

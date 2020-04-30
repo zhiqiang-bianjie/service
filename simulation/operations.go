@@ -168,7 +168,7 @@ func SimulateMsgBindService(ak types.AccountKeeper, k keeper.Keeper) simulation.
 		serviceName := simulation.RandStringOfLength(r, 20)
 		deposit := sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(int64(simulation.RandIntBetween(r, 1000000, 2000000)))))
 		pricing := fmt.Sprintf(`{"price":"%d%s"`, simulation.RandIntBetween(r, 100, 1000), sdk.DefaultBondDenom)
-		minRespTime := uint64(simulation.RandIntBetween(r, 10, 100))
+		qos := uint64(simulation.RandIntBetween(r, 10, 100))
 
 		account := ak.GetAccount(ctx, simAccount.Address)
 		fees, err := simulation.RandomFees(r, ctx, account.SpendableCoins(ctx.BlockTime()))
@@ -176,7 +176,7 @@ func SimulateMsgBindService(ak types.AccountKeeper, k keeper.Keeper) simulation.
 			return simulation.NoOpMsg(types.ModuleName), nil, err
 		}
 
-		msg := types.NewMsgBindService(serviceName, simAccount.Address, deposit, pricing, minRespTime)
+		msg := types.NewMsgBindService(serviceName, simAccount.Address, deposit, pricing, qos, simAccount.Address)
 
 		tx := helpers.GenTx(
 			[]sdk.Msg{msg},
@@ -207,7 +207,7 @@ func SimulateMsgUpdateServiceBinding(ak types.AccountKeeper, k keeper.Keeper) si
 		serviceName := simulation.RandStringOfLength(r, 20)
 		deposit := sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(int64(simulation.RandIntBetween(r, 100, 1000)))))
 		pricing := fmt.Sprintf(`{"price":"%d%s"`, simulation.RandIntBetween(r, 100, 1000), sdk.DefaultBondDenom)
-		minRespTime := uint64(simulation.RandIntBetween(r, 10, 100))
+		qos := uint64(simulation.RandIntBetween(r, 10, 100))
 
 		account := ak.GetAccount(ctx, simAccount.Address)
 		fees, err := simulation.RandomFees(r, ctx, account.SpendableCoins(ctx.BlockTime()))
@@ -215,7 +215,7 @@ func SimulateMsgUpdateServiceBinding(ak types.AccountKeeper, k keeper.Keeper) si
 			return simulation.NoOpMsg(types.ModuleName), nil, err
 		}
 
-		msg := types.NewMsgUpdateServiceBinding(serviceName, simAccount.Address, deposit, pricing, minRespTime)
+		msg := types.NewMsgUpdateServiceBinding(serviceName, simAccount.Address, deposit, pricing, qos, simAccount.Address)
 
 		tx := helpers.GenTx(
 			[]sdk.Msg{msg},
@@ -285,7 +285,7 @@ func SimulateMsgDisableServiceBinding(ak types.AccountKeeper, k keeper.Keeper) s
 			return simulation.NoOpMsg(types.ModuleName), nil, err
 		}
 
-		msg := types.NewMsgDisableServiceBinding(serviceName, simAccount.Address)
+		msg := types.NewMsgDisableServiceBinding(serviceName, simAccount.Address, simAccount.Address)
 
 		tx := helpers.GenTx(
 			[]sdk.Msg{msg},
@@ -322,7 +322,7 @@ func SimulateMsgEnableServiceBinding(ak types.AccountKeeper, k keeper.Keeper) si
 			return simulation.NoOpMsg(types.ModuleName), nil, err
 		}
 
-		msg := types.NewMsgEnableServiceBinding(serviceName, simAccount.Address, deposit)
+		msg := types.NewMsgEnableServiceBinding(serviceName, simAccount.Address, deposit, simAccount.Address)
 
 		tx := helpers.GenTx(
 			[]sdk.Msg{msg},
@@ -357,7 +357,7 @@ func SimulateMsgRefundServiceDeposit(ak types.AccountKeeper, k keeper.Keeper) si
 			return simulation.NoOpMsg(types.ModuleName), nil, err
 		}
 
-		msg := types.NewMsgRefundServiceDeposit(serviceName, simAccount.Address)
+		msg := types.NewMsgRefundServiceDeposit(serviceName, simAccount.Address, simAccount.Address)
 
 		tx := helpers.GenTx(
 			[]sdk.Msg{msg},

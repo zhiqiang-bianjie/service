@@ -33,14 +33,15 @@ type QueryBindingParams struct {
 	Provider    sdk.AccAddress
 }
 
-// QueryBindingsParams defines the params to query all bindings of a service definition
+// QueryBindingsParams defines the params to query all bindings of a service definition with an optional owner
 type QueryBindingsParams struct {
 	ServiceName string
+	Owner       sdk.AccAddress
 }
 
-// QueryWithdrawAddressParams defines the params to query the withdrawal address of a provider
+// QueryWithdrawAddressParams defines the params to query the withdrawal address of an owner
 type QueryWithdrawAddressParams struct {
-	Provider sdk.AccAddress
+	Owner sdk.AccAddress
 }
 
 // QueryRequestParams defines the params to query the request by ID

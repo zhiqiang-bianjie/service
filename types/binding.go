@@ -13,9 +13,10 @@ type ServiceBinding struct {
 	Provider     sdk.AccAddress `json:"provider" yaml:"provider"`
 	Deposit      sdk.Coins      `json:"deposit" yaml:"deposit"`
 	Pricing      string         `json:"pricing" yaml:"pricing"`
-	MinRespTime  uint64         `json:"min_resp_time" yaml:"min_resp_time"`
+	QoS          uint64         `json:"qos" yaml:"qos"`
 	Available    bool           `json:"available" yaml:"available"`
 	DisabledTime time.Time      `json:"disabled_time" yaml:"disabled_time"`
+	Owner        sdk.AccAddress `json:"owner" yaml:"owner"`
 }
 
 // NewServiceBinding creates a new ServiceBinding instance
@@ -24,18 +25,20 @@ func NewServiceBinding(
 	provider sdk.AccAddress,
 	deposit sdk.Coins,
 	pricing string,
-	minRespTime uint64,
+	qos uint64,
 	available bool,
 	disabledTime time.Time,
+	owner sdk.AccAddress,
 ) ServiceBinding {
 	return ServiceBinding{
 		ServiceName:  serviceName,
 		Provider:     provider,
 		Deposit:      deposit,
 		Pricing:      pricing,
-		MinRespTime:  minRespTime,
+		QoS:          qos,
 		Available:    available,
 		DisabledTime: disabledTime,
+		Owner:        owner,
 	}
 }
 
@@ -128,6 +131,10 @@ func (binding ServiceBinding) Validate() error {
 		return err
 	}
 
+	if err := ValidateOwner(binding.Owner); err != nil {
+		return err
+	}
+
 	if err := ValidateServiceName(binding.ServiceName); err != nil {
 		return err
 	}
@@ -136,7 +143,7 @@ func (binding ServiceBinding) Validate() error {
 		return err
 	}
 
-	if err := ValidateMinRespTime(binding.MinRespTime); err != nil {
+	if err := ValidateQoS(binding.QoS); err != nil {
 		return err
 	}
 

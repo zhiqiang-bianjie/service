@@ -28,7 +28,7 @@ func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(CompactRequest{}, "irismod/service/CompactRequest", nil)
 	cdc.RegisterConcrete(Request{}, "irismod/service/Request", nil)
 	cdc.RegisterConcrete(Response{}, "irismod/service/Response", nil)
-	cdc.RegisterConcrete(EarnedFees{}, "irismod/service/EarnedFees", nil)
+	cdc.RegisterConcrete(EarnedFeesOutput{}, "irismod/service/EarnedFeesOutput", nil)
 
 	cdc.RegisterConcrete(&Params{}, "irismod/service/Params", nil)
 }

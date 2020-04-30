@@ -31,12 +31,13 @@ var (
 	testAuthorDesc  = "test-author-desc"
 	testSchemas     = `{"input":{"type":"object"},"output":{"type":"object"}}`
 
+	testOwner        = sdk.AccAddress([]byte("test-owner"))
 	testConsumer     = sdk.AccAddress([]byte("test-consumer"))
 	testProvider     = sdk.AccAddress([]byte("test-provider"))
 	testProvider1    = sdk.AccAddress([]byte("test-provider-1"))
 	testDeposit      = sdk.NewCoins(testCoin1)
 	testPricing      = `{"price":"2stake","promotions_by_volume":[{"volume":1,"discount":"0.5"}]}`
-	testMinRespTime  = uint64(50)
+	testQoS          = uint64(50)
 	testWithdrawAddr = sdk.AccAddress([]byte("test-withdrawal-address"))
 	testAddedDeposit = sdk.NewCoins(testCoin2)
 
@@ -82,9 +83,13 @@ func (suite *KeeperTestSuite) setServiceDefinition() {
 	suite.keeper.SetServiceDefinition(suite.ctx, svcDef)
 }
 
-func (suite *KeeperTestSuite) setServiceBinding(available bool, disabledTime time.Time, provider sdk.AccAddress) {
-	svcBinding := types.NewServiceBinding(testServiceName, provider, testDeposit, testPricing, testMinRespTime, available, disabledTime)
+func (suite *KeeperTestSuite) setServiceBinding(available bool, disabledTime time.Time, provider, owner sdk.AccAddress) {
+	svcBinding := types.NewServiceBinding(testServiceName, provider, testDeposit, testPricing, testQoS, available, disabledTime, owner)
 	suite.keeper.SetServiceBinding(suite.ctx, svcBinding)
+	suite.keeper.SetOwnerServiceBinding(suite.ctx, svcBinding)
+
+	suite.keeper.SetOwner(suite.ctx, provider, owner)
+	suite.keeper.SetOwnerProvider(suite.ctx, owner, provider)
 
 	pricing, _ := suite.keeper.ParsePricing(suite.ctx, testPricing)
 	suite.keeper.SetPricing(suite.ctx, testServiceName, provider, pricing)
@@ -107,9 +112,9 @@ func (suite *KeeperTestSuite) TestDefineService() {
 
 func (suite *KeeperTestSuite) TestBindService() {
 	suite.setServiceDefinition()
-	suite.app.BankKeeper.AddCoins(suite.ctx, testProvider, testDeposit.Add(testAddedDeposit...))
+	suite.app.BankKeeper.AddCoins(suite.ctx, testOwner, testDeposit.Add(testAddedDeposit...))
 
-	err := suite.keeper.AddServiceBinding(suite.ctx, testServiceName, testProvider, testDeposit, testPricing, testMinRespTime)
+	err := suite.keeper.AddServiceBinding(suite.ctx, testServiceName, testProvider, testDeposit, testPricing, testQoS, testOwner)
 	suite.NoError(err)
 
 	svcBinding, found := suite.keeper.GetServiceBinding(suite.ctx, testServiceName, testProvider)
@@ -119,15 +124,31 @@ func (suite *KeeperTestSuite) TestBindService() {
 	suite.Equal(testProvider, svcBinding.Provider)
 	suite.Equal(testDeposit, svcBinding.Deposit)
 	suite.Equal(testPricing, svcBinding.Pricing)
-	suite.Equal(testMinRespTime, svcBinding.MinRespTime)
+	suite.Equal(testQoS, svcBinding.QoS)
 	suite.True(svcBinding.Available)
 	suite.True(svcBinding.DisabledTime.IsZero())
+	suite.Equal(testOwner, svcBinding.Owner)
+
+	svcBindings := suite.keeper.GetOwnerServiceBindings(suite.ctx, testOwner, testServiceName)
+	suite.Equal(1, len(svcBindings))
+	suite.Equal(svcBinding, svcBindings[0])
+
+	providerOwner, found := suite.keeper.GetOwner(suite.ctx, testProvider)
+	suite.True(found)
+	suite.Equal(testOwner, providerOwner)
+
+	iterator := suite.keeper.OwnerProvidersIterator(suite.ctx, testOwner)
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		suite.Equal(testProvider, sdk.AccAddress(iterator.Key()[sdk.AddrLen+1:]))
+	}
 
 	// update binding
 	newPricing := `{"price":"1stake"}`
-	newMinRespTime := uint64(80)
+	newQoS := uint64(80)
 
-	err = suite.keeper.UpdateServiceBinding(suite.ctx, svcBinding.ServiceName, svcBinding.Provider, testAddedDeposit, newPricing, newMinRespTime)
+	err = suite.keeper.UpdateServiceBinding(suite.ctx, svcBinding.ServiceName, svcBinding.Provider, testAddedDeposit, newPricing, newQoS, testOwner)
 	suite.NoError(err)
 
 	updatedSvcBinding, found := suite.keeper.GetServiceBinding(suite.ctx, svcBinding.ServiceName, svcBinding.Provider)
@@ -135,28 +156,28 @@ func (suite *KeeperTestSuite) TestBindService() {
 
 	suite.True(updatedSvcBinding.Deposit.IsEqual(svcBinding.Deposit.Add(testAddedDeposit...)))
 	suite.Equal(newPricing, updatedSvcBinding.Pricing)
-	suite.Equal(newMinRespTime, updatedSvcBinding.MinRespTime)
+	suite.Equal(newQoS, updatedSvcBinding.QoS)
 }
 
 func (suite *KeeperTestSuite) TestSetWithdrawAddress() {
-	suite.setServiceBinding(true, time.Time{}, testProvider)
+	suite.setServiceBinding(true, time.Time{}, testProvider, testOwner)
 
-	withdrawAddr := suite.keeper.GetWithdrawAddress(suite.ctx, testProvider)
-	suite.Equal(testProvider, withdrawAddr)
+	withdrawAddr := suite.keeper.GetWithdrawAddress(suite.ctx, testOwner)
+	suite.Equal(testOwner, withdrawAddr)
 
-	suite.keeper.SetWithdrawAddress(suite.ctx, testProvider, testWithdrawAddr)
+	suite.keeper.SetWithdrawAddress(suite.ctx, testOwner, testWithdrawAddr)
 
-	withdrawAddr = suite.keeper.GetWithdrawAddress(suite.ctx, testProvider)
+	withdrawAddr = suite.keeper.GetWithdrawAddress(suite.ctx, testOwner)
 	suite.Equal(testWithdrawAddr, withdrawAddr)
 }
 
 func (suite *KeeperTestSuite) TestDisableServiceBinding() {
-	suite.setServiceBinding(true, time.Time{}, testProvider)
+	suite.setServiceBinding(true, time.Time{}, testProvider, testOwner)
 
 	currentTime := time.Now().UTC()
 	suite.ctx = suite.ctx.WithBlockTime(currentTime)
 
-	err := suite.keeper.DisableServiceBinding(suite.ctx, testServiceName, testProvider)
+	err := suite.keeper.DisableServiceBinding(suite.ctx, testServiceName, testProvider, testOwner)
 	suite.NoError(err)
 
 	svcBinding, found := suite.keeper.GetServiceBinding(suite.ctx, testServiceName, testProvider)
@@ -168,9 +189,9 @@ func (suite *KeeperTestSuite) TestDisableServiceBinding() {
 
 func (suite *KeeperTestSuite) TestEnableServiceBinding() {
 	disabledTime := time.Now().UTC()
-	suite.setServiceBinding(false, disabledTime, testProvider)
+	suite.setServiceBinding(false, disabledTime, testProvider, testOwner)
 
-	err := suite.keeper.EnableServiceBinding(suite.ctx, testServiceName, testProvider, nil)
+	err := suite.keeper.EnableServiceBinding(suite.ctx, testServiceName, testProvider, nil, testOwner)
 	suite.NoError(err)
 
 	svcBinding, found := suite.keeper.GetServiceBinding(suite.ctx, testServiceName, testProvider)
@@ -182,7 +203,7 @@ func (suite *KeeperTestSuite) TestEnableServiceBinding() {
 
 func (suite *KeeperTestSuite) TestRefundDeposit() {
 	disabledTime := time.Now().UTC()
-	suite.setServiceBinding(false, disabledTime, testProvider)
+	suite.setServiceBinding(false, disabledTime, testProvider, testOwner)
 
 	_, err := suite.app.BankKeeper.AddCoins(suite.ctx, suite.keeper.GetServiceDepositAccount(suite.ctx).GetAddress(), testDeposit)
 	suite.NoError(err)
@@ -191,7 +212,7 @@ func (suite *KeeperTestSuite) TestRefundDeposit() {
 	blockTime := disabledTime.Add(params.ArbitrationTimeLimit).Add(params.ComplaintRetrospect)
 	suite.ctx = suite.ctx.WithBlockTime(blockTime)
 
-	err = suite.keeper.RefundDeposit(suite.ctx, testServiceName, testProvider)
+	err = suite.keeper.RefundDeposit(suite.ctx, testServiceName, testProvider, testOwner)
 	suite.NoError(err)
 
 	svcBinding, found := suite.keeper.GetServiceBinding(suite.ctx, testServiceName, testProvider)
@@ -306,7 +327,7 @@ func (suite *KeeperTestSuite) TestKeeperRequestService() {
 	suite.setServiceDefinition()
 
 	for _, provider := range providers {
-		suite.setServiceBinding(true, time.Time{}, provider)
+		suite.setServiceBinding(true, time.Time{}, provider, testOwner)
 	}
 
 	blockHeight := int64(1000)
@@ -429,7 +450,11 @@ func (suite *KeeperTestSuite) TestKeeper_Respond_Service() {
 
 	earnedFees, found := suite.keeper.GetEarnedFees(ctx, provider)
 	suite.True(found)
-	suite.False(earnedFees.Coins.Empty())
+	suite.False(earnedFees.Empty())
+
+	ownerEarnedFees, found := suite.keeper.GetOwnerEarnedFees(ctx, testOwner)
+	suite.True(found)
+	suite.Equal(earnedFees, ownerEarnedFees)
 
 	suite.False(suite.keeper.IsRequestActive(ctx, requestID1))
 	suite.False(suite.keeper.IsRequestActive(ctx, requestID2))
