@@ -11,7 +11,7 @@ The service module emits the following events:
 | Type              | Attribute Key          | Attribute Value    |
 | ----------------- | ---------------------- | ------------------ |
 | new_batch         | request_context_id     | {requestContextID} |
-| new_batch_request | requests               | {requests}         |
+| new_batch_request_provider | requests               | {requests}         |
 | complete_batch    | batch_state            | {batchState}       |
 | pause_context     | request_context_id     | {requestContextID} |
 | service_slash     | slashed_coins          | {slashedCoins}     |

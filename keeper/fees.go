@@ -21,7 +21,7 @@ func (k Keeper) RefundServiceFee(ctx sdk.Context, consumer sdk.AccAddress, servi
 }
 
 // AddEarnedFee adds the earned fee for the given provider
-func (k Keeper) AddEarnedFee(ctx sdk.Context, owner, provider sdk.AccAddress, fee sdk.Coins) error {
+func (k Keeper) AddEarnedFee(ctx sdk.Context, provider sdk.AccAddress, fee sdk.Coins) error {
 	taxRate := k.ServiceFeeTax(ctx)
 
 	taxCoins := sdk.Coins{}
@@ -45,6 +45,7 @@ func (k Keeper) AddEarnedFee(ctx sdk.Context, owner, provider sdk.AccAddress, fe
 	k.SetEarnedFees(ctx, provider, earnedFees.Add(earnedFee...))
 
 	// add the owner's earned fees
+	owner, _ := k.GetOwner(ctx, provider)
 	ownerEarnedFees, _ := k.GetOwnerEarnedFees(ctx, owner)
 	k.SetOwnerEarnedFees(ctx, owner, ownerEarnedFees.Add(earnedFee...))
 

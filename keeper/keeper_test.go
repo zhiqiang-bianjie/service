@@ -19,22 +19,23 @@ import (
 )
 
 var (
-	initCoins = sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10000)))
-	testCoin1 = sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10000))
-	testCoin2 = sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100))
-	testCoin3 = sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(2))
+	initCoinAmt = sdk.NewInt(100000)
+	testCoin1   = sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10000))
+	testCoin2   = sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100))
+	testCoin3   = sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(2))
+
+	testAuthor    sdk.AccAddress
+	testOwner     sdk.AccAddress
+	testProvider  sdk.AccAddress
+	testProvider1 sdk.AccAddress
+	testConsumer  sdk.AccAddress
 
 	testServiceName = "test-service"
 	testServiceDesc = "test-service-desc"
 	testServiceTags = []string{"tag1", "tag2"}
-	testAuthor      = sdk.AccAddress([]byte("test-author"))
 	testAuthorDesc  = "test-author-desc"
 	testSchemas     = `{"input":{"type":"object"},"output":{"type":"object"}}`
 
-	testOwner        = sdk.AccAddress([]byte("test-owner"))
-	testConsumer     = sdk.AccAddress([]byte("test-consumer"))
-	testProvider     = sdk.AccAddress([]byte("test-provider"))
-	testProvider1    = sdk.AccAddress([]byte("test-provider-1"))
 	testDeposit      = sdk.NewCoins(testCoin1)
 	testPricing      = `{"price":"2stake","promotions_by_volume":[{"volume":1,"discount":"0.5"}]}`
 	testQoS          = uint64(50)
@@ -76,6 +77,18 @@ func (suite *KeeperTestSuite) SetupTest() {
 	suite.keeper = &app.ServiceKeeper
 
 	suite.keeper.SetParams(suite.ctx, types.DefaultParams())
+
+	suite.setTestAddrs()
+}
+
+func (suite *KeeperTestSuite) setTestAddrs() {
+	testAddrs := simapp.AddTestAddrs(suite.app, suite.ctx, 5, initCoinAmt)
+
+	testAuthor = testAddrs[0]
+	testOwner = testAddrs[1]
+	testProvider = testAddrs[2]
+	testProvider1 = testAddrs[3]
+	testConsumer = testAddrs[4]
 }
 
 func (suite *KeeperTestSuite) setServiceDefinition() {
@@ -112,7 +125,6 @@ func (suite *KeeperTestSuite) TestDefineService() {
 
 func (suite *KeeperTestSuite) TestBindService() {
 	suite.setServiceDefinition()
-	suite.app.BankKeeper.AddCoins(suite.ctx, testOwner, testDeposit.Add(testAddedDeposit...))
 
 	err := suite.keeper.AddServiceBinding(suite.ctx, testServiceName, testProvider, testDeposit, testPricing, testQoS, testOwner)
 	suite.NoError(err)
@@ -322,7 +334,6 @@ func (suite *KeeperTestSuite) TestKeeperRequestContext() {
 func (suite *KeeperTestSuite) TestKeeperRequestService() {
 	providers := []sdk.AccAddress{testProvider, testProvider1}
 	consumer := testConsumer
-	_, _ = suite.app.BankKeeper.AddCoins(suite.ctx, consumer, initCoins)
 
 	suite.setServiceDefinition()
 
@@ -397,12 +408,12 @@ func (suite *KeeperTestSuite) TestKeeperRequestService() {
 
 func (suite *KeeperTestSuite) TestKeeper_Respond_Service() {
 	ctx := suite.ctx.WithValue(types.TxHash, tmhash.Sum([]byte("tx_hash")))
+
 	provider := testProvider
 	consumer := testConsumer
-	_, _ = suite.app.BankKeeper.AddCoins(suite.ctx, consumer, initCoins)
-	_, _ = suite.app.BankKeeper.AddCoins(suite.ctx, provider, initCoins)
 
 	suite.setServiceDefinition()
+	suite.keeper.SetOwner(suite.ctx, provider, testOwner)
 
 	blockHeight := int64(1000)
 	ctx = ctx.WithBlockHeight(blockHeight)
@@ -467,10 +478,6 @@ func (suite *KeeperTestSuite) TestRequestServiceFromModule() {
 	provider2 := testProvider1
 	providers := []sdk.AccAddress{provider1, provider2}
 	consumer := testConsumer
-
-	_, _ = suite.app.BankKeeper.AddCoins(suite.ctx, consumer, initCoins)
-	_, _ = suite.app.BankKeeper.AddCoins(suite.ctx, provider1, initCoins)
-	_, _ = suite.app.BankKeeper.AddCoins(suite.ctx, provider2, initCoins)
 
 	suite.setServiceDefinition()
 

@@ -118,7 +118,7 @@ func GetOwnerBindingsSubspace(owner sdk.AccAddress, serviceName string) []byte {
 
 // GetOwnerProvidersSubspace gets the key prefix for iterating through providers of the specified owner
 func GetOwnerProvidersSubspace(owner sdk.AccAddress) []byte {
-	return append(OwnerProviderKey, []byte(owner)...)
+	return append(OwnerProviderKey, owner.Bytes()...)
 }
 
 // GetRequestContextKey returns the key for the request context with the specified ID
