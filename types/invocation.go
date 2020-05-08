@@ -234,11 +234,6 @@ func ParseResult(result string) (Result, error) {
 	return r, nil
 }
 
-// EarnedFeesOutput wrappers the earned fees for output
-type EarnedFeesOutput struct {
-	EarnedFees sdk.Coins `json:"earned_fees" yaml:"earned_fees"`
-}
-
 // RequestContextState defines the state for the request context
 type RequestContextState byte
 

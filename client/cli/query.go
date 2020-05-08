@@ -539,12 +539,12 @@ $ %s query service fees <provider-address>
 				return err
 			}
 
-			var feesOut types.EarnedFeesOutput
-			if err := cdc.UnmarshalJSON(res, &feesOut); err != nil {
+			var fees sdk.Coins
+			if err := cdc.UnmarshalJSON(res, &fees); err != nil {
 				return err
 			}
 
-			return cliCtx.PrintOutput(feesOut)
+			return cliCtx.PrintOutput(fees)
 		},
 	}
 

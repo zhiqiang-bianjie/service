@@ -341,9 +341,10 @@ func (k Keeper) GetOwnerServiceBindings(ctx sdk.Context, owner sdk.AccAddress, s
 	defer iterator.Close()
 
 	for ; iterator.Valid(); iterator.Next() {
-		bindingKey := bytes.Split(iterator.Key()[sdk.AddrLen+1:], types.EmptyByte)
-		serviceName := string(bindingKey[0])
-		provider := sdk.AccAddress(bindingKey[1])
+		bindingKey := iterator.Key()[sdk.AddrLen+1:]
+		sepIndex := bytes.Index(bindingKey, types.EmptyByte)
+		serviceName := string(bindingKey[0:sepIndex])
+		provider := sdk.AccAddress(bindingKey[sepIndex+1:])
 
 		binding, found := k.GetServiceBinding(ctx, serviceName, provider)
 		if found {
