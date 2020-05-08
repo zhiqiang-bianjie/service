@@ -13,29 +13,14 @@ import (
 // Service params default values
 var (
 	DefaultMaxRequestTimeout    = int64(100)
-	DefaultMinDepositMultiple   = int64(1000)
-	DefaultMinDeposit           = sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10000))) // 10000stake
-	DefaultServiceFeeTax        = sdk.NewDecWithPrec(1, 2)                                           // 1%
-	DefaultSlashFraction        = sdk.NewDecWithPrec(1, 3)                                           // 0.1%
-	DefaultComplaintRetrospect  = 15 * 24 * time.Hour                                                // 15 days
-	DefaultArbitrationTimeLimit = 5 * 24 * time.Hour                                                 // 5 days
+	DefaultMinDepositMultiple   = int64(200)
+	DefaultMinDeposit           = sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(6000))) // 6000stake
+	DefaultServiceFeeTax        = sdk.NewDecWithPrec(1, 1)                                          // 10%
+	DefaultSlashFraction        = sdk.NewDecWithPrec(1, 3)                                          // 0.1%
+	DefaultComplaintRetrospect  = 15 * 24 * time.Hour                                               // 15 days
+	DefaultArbitrationTimeLimit = 5 * 24 * time.Hour                                                // 5 days
 	DefaultTxSizeLimit          = uint64(4000)
 	DefaultBaseDenom            = sdk.DefaultBondDenom
-)
-
-// no lint
-var (
-	MinRequestTimeout       = int64(2)
-	MinDepositMultiple      = int64(500)
-	MaxDepositMultiple      = int64(5000)
-	MaxServiceFeeTax        = sdk.NewDecWithPrec(2, 1)
-	MaxSlashFraction        = sdk.NewDecWithPrec(1, 2)
-	MinComplaintRetrospect  = 15 * 24 * time.Hour
-	MaxComplaintRetrospect  = 30 * 24 * time.Hour
-	MinArbitrationTimeLimit = 5 * 24 * time.Hour
-	MaxArbitrationTimeLimit = 10 * 24 * time.Hour
-	MinTxSizeLimit          = uint64(2000)
-	MaxTxSizeLimit          = uint64(6000)
 )
 
 // Keys for parameter access
@@ -198,8 +183,8 @@ func validateMaxRequestTimeout(i interface{}) error {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 
-	if v < MinRequestTimeout {
-		return fmt.Errorf("MaxRequestTimeout [%d] should be greater than or equal to %d", v, MinRequestTimeout)
+	if v <= 0 {
+		return fmt.Errorf("maximum request timeout must be positive: %d", v)
 	}
 
 	return nil
@@ -211,8 +196,8 @@ func validateMinDepositMultiple(i interface{}) error {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 
-	if v < MinDepositMultiple || v > MaxDepositMultiple {
-		return fmt.Errorf("MinDepositMultiple [%d] should be between [%d, %d]", v, MinDepositMultiple, MaxDepositMultiple)
+	if v <= 0 {
+		return fmt.Errorf("minimum deposit multiple must be positive: %d", v)
 	}
 
 	return nil
@@ -224,8 +209,8 @@ func validateMinDeposit(i interface{}) error {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 
-	if !v.IsAllPositive() {
-		return fmt.Errorf("minimum deposit should be positive")
+	if !v.IsValid() {
+		return fmt.Errorf("invalid minimum deposit: %s", v)
 	}
 
 	return nil
@@ -237,8 +222,8 @@ func validateSlashFraction(i interface{}) error {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 
-	if v.LTE(sdk.ZeroDec()) || v.GT(MaxSlashFraction) {
-		return fmt.Errorf("SlashFraction [%s] should be between (0, %s]", v, MaxSlashFraction)
+	if v.LT(sdk.ZeroDec()) || v.GT(sdk.OneDec()) {
+		return fmt.Errorf("slashing fraction must be between [0, 1]: %s", v)
 	}
 
 	return nil
@@ -250,8 +235,8 @@ func validateServiceFeeTax(i interface{}) error {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 
-	if v.LTE(sdk.ZeroDec()) || v.GT(MaxServiceFeeTax) {
-		return fmt.Errorf("ServiceFeeTax [%s] should be between (0, %s]", v, MaxServiceFeeTax)
+	if v.LT(sdk.ZeroDec()) || v.GTE(sdk.OneDec()) {
+		return fmt.Errorf("service fee tax must be between [0, 1): %s", v)
 	}
 
 	return nil
@@ -263,8 +248,8 @@ func validateComplaintRetrospect(i interface{}) error {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 
-	if v < MinComplaintRetrospect || v > MaxComplaintRetrospect {
-		return fmt.Errorf("ComplaintRetrospect [%s] should be between [%s, %s]", v, MinComplaintRetrospect, MaxComplaintRetrospect)
+	if v <= 0 {
+		return fmt.Errorf("complaint retrospect must be positive: %d", v)
 	}
 
 	return nil
@@ -276,8 +261,8 @@ func validateArbitrationTimeLimit(i interface{}) error {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 
-	if v < MinArbitrationTimeLimit || v > MaxArbitrationTimeLimit {
-		return fmt.Errorf("ArbitrationTimeLimit [%s] should be between [%s, %s]", v, MinArbitrationTimeLimit, MaxArbitrationTimeLimit)
+	if v <= 0 {
+		return fmt.Errorf("arbitration time limit must be positive: %d", v)
 	}
 
 	return nil
@@ -289,8 +274,8 @@ func validateTxSizeLimit(i interface{}) error {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 
-	if v < MinTxSizeLimit || v > MaxTxSizeLimit {
-		return fmt.Errorf("TxSizeLimit [%d] should be between [%d, %d]", v, MinTxSizeLimit, MaxTxSizeLimit)
+	if v == 0 {
+		return fmt.Errorf("tx size limit must be positive: %d", v)
 	}
 
 	return nil
