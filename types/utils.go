@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+
+	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 )
 
 var (
@@ -41,4 +43,16 @@ func ParseCoinParts(coinStr string) (denom, amount string, err error) {
 
 	denom, amount = matches[3], matches[1]
 	return
+}
+
+// HexBytes wrappers the tendermint HexBytes
+type HexBytes tmbytes.HexBytes
+
+func (bz HexBytes) String() string {
+	return tmbytes.HexBytes(bz).String()
+}
+
+// MarshalYAML returns the YAML representation
+func (bz HexBytes) MarshalYAML() (interface{}, error) {
+	return bz.String(), nil
 }

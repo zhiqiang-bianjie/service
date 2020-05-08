@@ -2,6 +2,11 @@ package utils
 
 import (
 	"encoding/json"
+	"regexp"
+)
+
+var (
+	reSchemaReplace = regexp.MustCompile(`[\n\t]`)
 )
 
 // SchemaType defines the schema type
@@ -12,17 +17,20 @@ func (schema SchemaType) String() string {
 	return string(schema)
 }
 
-// MarshalJSON marshals the schema to JSON
+// MarshalJSON returns the JSON representation
 func (schema SchemaType) MarshalJSON() ([]byte, error) {
 	return []byte(schema.String()), nil
 }
 
 // MarshalYAML returns the YAML representation
 func (schema SchemaType) MarshalYAML() (interface{}, error) {
-	return schema.String(), nil
+	rawStr := schema.String()
+	prettyStr := reSchemaReplace.ReplaceAllString(rawStr, "")
+
+	return prettyStr, nil
 }
 
-// UnmarshalJSON unmarshals the data to the schema
+// UnmarshalJSON unmarshals raw JSON bytes into a SchemaType.
 func (schema *SchemaType) UnmarshalJSON(data []byte) error {
 	var s string
 	if err := json.Unmarshal(data, &s); err != nil {

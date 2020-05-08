@@ -69,10 +69,6 @@ func handleMsgDefineService(ctx sdk.Context, k Keeper, msg MsgDefineService) (*s
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
-			EventTypeDefineService,
-			sdk.NewAttribute(AttributeKeyAuthor, msg.Author.String()),
-		),
-		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, AttributeValueCategory),
 			sdk.NewAttribute(sdk.AttributeKeySender, msg.Author.String()),

@@ -4,7 +4,6 @@ import (
 	"strings"
 
 	abci "github.com/tendermint/tendermint/abci/types"
-	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -179,7 +178,7 @@ func queryRequests(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, er
 	requests := make([]types.Request, 0)
 
 	for ; iterator.Valid(); iterator.Next() {
-		var requestID tmbytes.HexBytes
+		var requestID types.HexBytes
 		k.cdc.MustUnmarshalBinaryLengthPrefixed(iterator.Value(), &requestID)
 
 		request, _ := k.GetRequest(ctx, requestID)

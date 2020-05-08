@@ -19,7 +19,6 @@ const (
 	QueryBinding                 = types.QueryBinding
 	QueryBindings                = types.QueryBindings
 	QueryWithdrawAddress         = types.QueryWithdrawAddress
-	EventTypeDefineService       = types.EventTypeDefineService
 	EventTypeCreateContext       = types.EventTypeCreateContext
 	EventTypePauseContext        = types.EventTypePauseContext
 	EventTypeCompleteContext     = types.EventTypeCompleteContext

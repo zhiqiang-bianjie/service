@@ -284,7 +284,7 @@ func queryRequestsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		var res types.Requests
+		var res []types.Request
 		var height int64
 
 		if queryByBinding {

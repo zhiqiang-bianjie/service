@@ -210,7 +210,7 @@ func QueryResponseByTxQuery(cliCtx context.CLIContext, queryRoute string, params
 }
 
 // QueryRequestsByBinding queries active requests by the service binding
-func QueryRequestsByBinding(cliCtx context.CLIContext, queryRoute string, serviceName string, provider sdk.AccAddress) (types.Requests, int64, error) {
+func QueryRequestsByBinding(cliCtx context.CLIContext, queryRoute string, serviceName string, provider sdk.AccAddress) ([]types.Request, int64, error) {
 	params := types.QueryRequestsParams{
 		ServiceName: serviceName,
 		Provider:    provider,
@@ -227,7 +227,7 @@ func QueryRequestsByBinding(cliCtx context.CLIContext, queryRoute string, servic
 		return nil, 0, err
 	}
 
-	var requests types.Requests
+	var requests []types.Request
 	if err := cliCtx.Codec.UnmarshalJSON(res, &requests); err != nil {
 		return nil, 0, err
 	}
@@ -236,7 +236,7 @@ func QueryRequestsByBinding(cliCtx context.CLIContext, queryRoute string, servic
 }
 
 // QueryRequestsByReqCtx queries active requests by the request context ID
-func QueryRequestsByReqCtx(cliCtx context.CLIContext, queryRoute, reqCtxIDStr, batchCounterStr string) (types.Requests, int64, error) {
+func QueryRequestsByReqCtx(cliCtx context.CLIContext, queryRoute, reqCtxIDStr, batchCounterStr string) ([]types.Request, int64, error) {
 	requestContextID, err := hex.DecodeString(reqCtxIDStr)
 	if err != nil {
 		return nil, 0, err
@@ -263,7 +263,7 @@ func QueryRequestsByReqCtx(cliCtx context.CLIContext, queryRoute, reqCtxIDStr, b
 		return nil, 0, err
 	}
 
-	var requests types.Requests
+	var requests []types.Request
 	if err := cliCtx.Codec.UnmarshalJSON(res, &requests); err != nil {
 		return nil, 0, err
 	}

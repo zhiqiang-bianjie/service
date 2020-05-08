@@ -8,7 +8,6 @@ import (
 
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/tmhash"
-	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -519,7 +518,7 @@ func (suite *KeeperTestSuite) TestRequestServiceFromModule() {
 	suite.True(callbacked)
 }
 
-func callback(ctx sdk.Context, requestContextID tmbytes.HexBytes, responses []string, err error) {
+func callback(ctx sdk.Context, requestContextID types.HexBytes, responses []string, err error) {
 	callbacked = true
 }
 
@@ -527,7 +526,7 @@ func (suite *KeeperTestSuite) setRequestContext(
 	ctx sdk.Context, consumer sdk.AccAddress,
 	providers []sdk.AccAddress, state types.RequestContextState,
 	threshold uint16, moduleName string,
-) (tmbytes.HexBytes, types.RequestContext) {
+) (types.HexBytes, types.RequestContext) {
 	requestContext := types.NewRequestContext(
 		testServiceName, providers, consumer, testInput,
 		testServiceFeeCap, testTimeout, false, true, testRepeatedFreq,
@@ -541,7 +540,7 @@ func (suite *KeeperTestSuite) setRequestContext(
 	return requestContextID, requestContext
 }
 
-func (suite *KeeperTestSuite) setRequest(ctx sdk.Context, consumer sdk.AccAddress, provider sdk.AccAddress, requestContextID []byte) tmbytes.HexBytes {
+func (suite *KeeperTestSuite) setRequest(ctx sdk.Context, consumer sdk.AccAddress, provider sdk.AccAddress, requestContextID []byte) types.HexBytes {
 	requestContext, _ := suite.keeper.GetRequestContext(ctx, requestContextID)
 
 	_ = suite.keeper.DeductServiceFees(ctx, consumer, testServiceFee)

@@ -253,7 +253,8 @@ $ %s query service withdraw-addr <address>
 // GetCmdQueryServiceRequest implements the query service request command
 func GetCmdQueryServiceRequest(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "request [request-id]",
+		Use:   "request [request-id]",
+		Short: "Query a request by the request ID",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Query details of a service request.
 
@@ -271,6 +272,7 @@ $ %s query service request <request-id>
 			if err != nil {
 				return err
 			}
+
 			params := types.QueryRequestParams{
 				RequestID: requestID,
 			}
@@ -309,7 +311,8 @@ $ %s query service request <request-id>
 // GetCmdQueryServiceRequests implements the query service requests command
 func GetCmdQueryServiceRequests(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "requests [service-name] [provider] | [request-context-id] [batch-counter]",
+		Use:   "requests [service-name] [provider] | [request-context-id] [batch-counter]",
+		Short: "Query active requests by the service binding or request context ID",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Query active requests by the service binding or request context ID.
 
@@ -330,7 +333,7 @@ $ %s query service requests <service-name> <provider> | <request-context-id> <ba
 				queryByBinding = false
 			}
 
-			var requests types.Requests
+			var requests []types.Request
 
 			if queryByBinding {
 				requests, _, err = utils.QueryRequestsByBinding(cliCtx, queryRoute, args[0], provider)
@@ -352,7 +355,8 @@ $ %s query service requests <service-name> <provider> | <request-context-id> <ba
 // GetCmdQueryServiceResponse implements the query service response command
 func GetCmdQueryServiceResponse(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "response [request-id]",
+		Use:   "response [request-id]",
+		Short: "Query a response by the request ID",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Query details of a service response.
 
@@ -370,6 +374,7 @@ $ %s query service response <request-id>
 			if err != nil {
 				return err
 			}
+
 			params := types.QueryResponseParams{
 				RequestID: requestID,
 			}
@@ -408,7 +413,8 @@ $ %s query service response <request-id>
 // GetCmdQueryServiceResponses implements the query service responses command
 func GetCmdQueryServiceResponses(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "responses [request-context-id] [batch-counter]",
+		Use:   "responses [request-context-id] [batch-counter]",
+		Short: "Query active responses by the request context ID and batch counter",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Query active responses by the request context ID and batch counter.
 
@@ -448,7 +454,7 @@ $ %s query service responses <request-context-id> <batch-counter>
 				return err
 			}
 
-			var responses types.Responses
+			var responses []types.Response
 			if err := cdc.UnmarshalJSON(res, &responses); err != nil {
 				return err
 			}
@@ -463,7 +469,8 @@ $ %s query service responses <request-context-id> <batch-counter>
 // GetCmdQueryRequestContext implements the query request context command
 func GetCmdQueryRequestContext(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "request-context [request-context-id]",
+		Use:   "request-context [request-context-id]",
+		Short: "Query a request context",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Query a request context.
 
@@ -547,7 +554,8 @@ $ %s query service fees <provider-address>
 // GetCmdQuerySchema implements the query schema command
 func GetCmdQuerySchema(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "schema [schema-name]",
+		Use:   "schema [schema-name]",
+		Short: "Query the system schema by the schema name",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Query the system schema by the schema name, only pricing and result allowed.
 

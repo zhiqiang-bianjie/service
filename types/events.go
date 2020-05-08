@@ -2,29 +2,28 @@ package types
 
 // service module event types
 const (
-	EventTypeDefineService           = "define_service"
-	EventTypeCreateContext           = "create-context"
-	EventTypePauseContext            = "pause-context"
-	EventTypeCompleteContext         = "complete-context"
-	EventTypeNewBatch                = "new-batch"
-	EventTypeNewBatchRequest         = "new-batch-request"
-	EventTypeNewBatchRequestProvider = "new-batch-request-provider"
-	EventTypeCompleteBatch           = "complete-batch"
-	EventTypeServiceSlash            = "service-slash"
+	EventTypeCreateContext           = "create_context"
+	EventTypePauseContext            = "pause_context"
+	EventTypeCompleteContext         = "complete_context"
+	EventTypeNewBatch                = "new_batch"
+	EventTypeNewBatchRequest         = "new_batch_request"
+	EventTypeNewBatchRequestProvider = "new_batch_request_provider"
+	EventTypeCompleteBatch           = "complete_batch"
+	EventTypeServiceSlash            = "service_slash"
 
 	AttributeValueCategory          = ModuleName
 	AttributeKeyAuthor              = "author"
-	AttributeKeyServiceName         = "service-name"
+	AttributeKeyServiceName         = "service_name"
 	AttributeKeyProvider            = "provider"
 	AttributeKeyConsumer            = "consumer"
-	AttributeKeyRequestContextID    = "request-context-id"
-	AttributeKeyRequestContextState = "request-context-state"
+	AttributeKeyRequestContextID    = "request_context_id"
+	AttributeKeyRequestContextState = "request_context_state"
 	AttributeKeyRequests            = "requests"
-	AttributeKeyRequestID           = "request-id"
-	AttributeKeyServiceFee          = "service-fee"
-	AttributeKeyRequestHeight       = "request-height"
-	AttributeKeyExpirationHeight    = "expiration-height"
-	AttributeKeySlashedCoins        = "slashed-coins"
+	AttributeKeyRequestID           = "request_id"
+	AttributeKeyServiceFee          = "service_fee"
+	AttributeKeyRequestHeight       = "request_height"
+	AttributeKeyExpirationHeight    = "expiration_height"
+	AttributeKeySlashedCoins        = "slashed_coins"
 )
 
 type BatchState struct {
