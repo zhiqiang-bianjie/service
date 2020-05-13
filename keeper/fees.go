@@ -106,8 +106,15 @@ func (k Keeper) DeleteOwnerEarnedFees(ctx sdk.Context, owner sdk.AccAddress) {
 
 // WithdrawEarnedFees withdraws the earned fees of the specified provider or owner
 func (k Keeper) WithdrawEarnedFees(ctx sdk.Context, owner, provider sdk.AccAddress) error {
+	if !provider.Empty() {
+		providerOwner, _ := k.GetOwner(ctx, provider)
+		if !owner.Equals(providerOwner) {
+			return sdkerrors.Wrap(types.ErrNotAuthorized, "owner not matching")
+		}
+	}
+
 	ownerEarnedFees, found := k.GetOwnerEarnedFees(ctx, owner)
-	if !found || ownerEarnedFees.IsZero() {
+	if !found {
 		return sdkerrors.Wrap(types.ErrNoEarnedFees, owner.String())
 	}
 
@@ -120,7 +127,12 @@ func (k Keeper) WithdrawEarnedFees(ctx sdk.Context, owner, provider sdk.AccAddre
 		}
 
 		k.DeleteEarnedFees(ctx, provider)
-		k.SetOwnerEarnedFees(ctx, owner, ownerEarnedFees.Sub(earnedFees))
+
+		if earnedFees.IsEqual(ownerEarnedFees) {
+			k.DeleteOwnerEarnedFees(ctx, owner)
+		} else {
+			k.SetOwnerEarnedFees(ctx, owner, ownerEarnedFees.Sub(earnedFees))
+		}
 
 		withdrawFees = earnedFees
 	} else {
