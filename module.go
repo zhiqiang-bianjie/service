@@ -14,7 +14,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	sim "github.com/cosmos/cosmos-sdk/x/simulation"
+	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 
 	"github.com/irismod/service/client/cli"
 	"github.com/irismod/service/client/rest"
@@ -29,7 +29,9 @@ var (
 )
 
 // AppModuleBasic defines the basic application module used by the service module.
-type AppModuleBasic struct{}
+type AppModuleBasic struct {
+	cdc codec.Marshaler
+}
 
 // Name returns the service module's name.
 func (AppModuleBasic) Name() string {
@@ -43,14 +45,14 @@ func (AppModuleBasic) RegisterCodec(cdc *codec.Codec) {
 
 // DefaultGenesis returns default genesis state as raw bytes for the service
 // module.
-func (AppModuleBasic) DefaultGenesis() json.RawMessage {
-	return ModuleCdc.MustMarshalJSON(DefaultGenesisState())
+func (AppModuleBasic) DefaultGenesis(cdc codec.JSONMarshaler) json.RawMessage {
+	return cdc.MustMarshalJSON(DefaultGenesisState())
 }
 
 // ValidateGenesis performs genesis state validation for the service module.
-func (AppModuleBasic) ValidateGenesis(bz json.RawMessage) error {
+func (AppModuleBasic) ValidateGenesis(cdc codec.JSONMarshaler, bz json.RawMessage) error {
 	var data GenesisState
-	if err := ModuleCdc.UnmarshalJSON(bz, &data); err != nil {
+	if err := cdc.UnmarshalJSON(bz, &data); err != nil {
 		return fmt.Errorf("failed to unmarshal %s genesis state: %w", ModuleName, err)
 	}
 
@@ -80,14 +82,16 @@ type AppModule struct {
 
 	keeper        Keeper
 	accountKeeper types.AccountKeeper
+	bankKeeper    types.BankKeeper
 }
 
 // NewAppModule creates a new AppModule object
-func NewAppModule(keeper Keeper, accountKeeper types.AccountKeeper) AppModule {
+func NewAppModule(keeper Keeper, accountKeeper types.AccountKeeper, bankKeeper types.BankKeeper) AppModule {
 	return AppModule{
 		AppModuleBasic: AppModuleBasic{},
 		keeper:         keeper,
 		accountKeeper:  accountKeeper,
+		bankKeeper:     bankKeeper,
 	}
 }
 
@@ -122,9 +126,9 @@ func (am AppModule) NewQuerierHandler() sdk.Querier {
 
 // InitGenesis performs genesis initialization for the service module. It returns
 // no validator updates.
-func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.ValidatorUpdate {
+func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONMarshaler, data json.RawMessage) []abci.ValidatorUpdate {
 	var genesisState GenesisState
-	ModuleCdc.MustUnmarshalJSON(data, &genesisState)
+	cdc.MustUnmarshalJSON(data, &genesisState)
 
 	InitGenesis(ctx, am.keeper, genesisState)
 	return []abci.ValidatorUpdate{}
@@ -132,9 +136,9 @@ func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.Va
 
 // ExportGenesis returns the exported genesis state as raw bytes for the service
 // module.
-func (am AppModule) ExportGenesis(ctx sdk.Context) json.RawMessage {
+func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONMarshaler) json.RawMessage {
 	gs := ExportGenesis(ctx, am.keeper)
-	return ModuleCdc.MustMarshalJSON(gs)
+	return cdc.MustMarshalJSON(gs)
 }
 
 // BeginBlock returns the begin blocker for the service module.
@@ -157,22 +161,22 @@ func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
 }
 
 // ProposalContents doesn't return any content functions for governance proposals.
-func (AppModule) ProposalContents(_ module.SimulationState) []sim.WeightedProposalContent {
+func (AppModule) ProposalContents(_ module.SimulationState) []simtypes.WeightedProposalContent {
 	return nil
 }
 
 // RandomizedParams creates randomized service param changes for the simulator.
-func (AppModule) RandomizedParams(r *rand.Rand) []sim.ParamChange {
+func (AppModule) RandomizedParams(r *rand.Rand) []simtypes.ParamChange {
 	return nil
 }
 
 // RegisterStoreDecoder registers a decoder for service module's types
-func (AppModule) RegisterStoreDecoder(sdr sdk.StoreDecoderRegistry) {
-	sdr[StoreKey] = simulation.DecodeStore
+func (am AppModule) RegisterStoreDecoder(sdr sdk.StoreDecoderRegistry) {
+	sdr[StoreKey] = simulation.NewDecodeStore(am.cdc)
 }
 
 // WeightedOperations returns the all the staking module operations with their respective weights.
-func (am AppModule) WeightedOperations(simState module.SimulationState) []sim.WeightedOperation {
+func (am AppModule) WeightedOperations(simState module.SimulationState) []simtypes.WeightedOperation {
 	return simulation.WeightedOperations(simState.AppParams, simState.Cdc,
-		am.accountKeeper, am.keeper)
+		am.accountKeeper, am.bankKeeper, am.keeper)
 }

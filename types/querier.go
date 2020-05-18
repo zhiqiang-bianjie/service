@@ -1,6 +1,8 @@
 package types
 
 import (
+	tmbytes "github.com/tendermint/tendermint/libs/bytes"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -55,23 +57,23 @@ type QueryRequestsParams struct {
 
 // QueryResponseParams defines the params to query the response to a request
 type QueryResponseParams struct {
-	RequestID HexBytes
+	RequestID tmbytes.HexBytes
 }
 
 // QueryRequestContextParams defines the params to query the request context
 type QueryRequestContextParams struct {
-	RequestContextID HexBytes
+	RequestContextID tmbytes.HexBytes
 }
 
 // QueryRequestsByReqCtxParams defines the params to query active requests by the request context ID
 type QueryRequestsByReqCtxParams struct {
-	RequestContextID HexBytes
+	RequestContextID tmbytes.HexBytes
 	BatchCounter     uint64
 }
 
 // QueryResponsesParams defines the params to query active responses by the request context ID
 type QueryResponsesParams struct {
-	RequestContextID HexBytes
+	RequestContextID tmbytes.HexBytes
 	BatchCounter     uint64
 }
 

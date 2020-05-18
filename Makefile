@@ -1,9 +1,8 @@
 #!/usr/bin/make -f
 
-PACKAGES_NOSIMULATION=$(shell go list ./... | grep -v '/simulation')
-PACKAGES_SIMTEST=$(shell go list ./... | grep '/simulation')
+PACKAGES_NOSIMULATION=$(shell go list ./...)
 BINDIR ?= $(GOPATH)/bin
-SIMAPP = ./simapp
+SIMAPP = ./app
 
 export GO111MODULE = on
 
@@ -50,8 +49,8 @@ test-sim-nondeterminism:
 
 test-sim-custom-genesis-fast:
 	@echo "Running custom genesis simulation..."
-	@echo "By default, ${HOME}/.gaiad/config/genesis.json will be used."
-	@go test -mod=readonly $(SIMAPP) -run TestFullAppSimulation -Genesis=${HOME}/.gaiad/config/genesis.json \
+	@echo "By default, ${HOME}/.simapp/config/genesis.json will be used."
+	@go test -mod=readonly $(SIMAPP) -run TestFullAppSimulation -Genesis=${HOME}/.simapp/config/genesis.json \
 		-Enabled=true -NumBlocks=$(SIM_NUM_BLOCKS) -BlockSize=$(SIM_BLOCK_SIZE) -Commit=$(SIM_COMMIT) -Seed=99 -Period=5 -v -timeout 24h
 
 test-sim-import-export: runsim
@@ -64,8 +63,8 @@ test-sim-after-import: runsim
 
 test-sim-custom-genesis-multi-seed: runsim
 	@echo "Running multi-seed custom genesis simulation..."
-	@echo "By default, ${HOME}/.gaiad/config/genesis.json will be used."
-	@$(BINDIR)/runsim -Genesis=${HOME}/.gaiad/config/genesis.json -SimAppPkg=$(SIMAPP) 400 5 TestFullAppSimulation
+	@echo "By default, ${HOME}/.simapp/config/genesis.json will be used."
+	@$(BINDIR)/runsim -Genesis=${HOME}/.simapp/config/genesis.json -SimAppPkg=$(SIMAPP) 400 5 TestFullAppSimulation
 
 test-sim-multi-seed-long: runsim
 	@echo "Running long multi-seed application simulation. This may take awhile!"
@@ -118,3 +117,6 @@ format:
 	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" | xargs misspell -w
 	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" | xargs goimports -w -local github.com/irismod/service
 .PHONY: format
+
+proto-gen:
+	@./scripts/protocgen.sh

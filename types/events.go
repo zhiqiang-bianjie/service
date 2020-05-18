@@ -29,9 +29,9 @@ const (
 type BatchState struct {
 	BatchCounter           uint64                   `json:"batch_counter"`
 	State                  RequestContextBatchState `json:"state"`
-	BatchResponseThreshold uint16                   `json:"batch_response_threshold"`
-	BatchRequestCount      uint16                   `json:"batch_request_count"`
-	BatchResponseCount     uint16                   `json:"batch_response_count"`
+	BatchResponseThreshold uint32                   `json:"batch_response_threshold"`
+	BatchRequestCount      uint32                   `json:"batch_request_count"`
+	BatchResponseCount     uint32                   `json:"batch_response_count"`
 }
 
 // ActionTag appends action and all tagKeys

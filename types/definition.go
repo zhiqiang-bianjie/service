@@ -4,16 +4,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// ServiceDefinition defines a struct for the service definition
-type ServiceDefinition struct {
-	Name              string         `json:"name" yaml:"name"`
-	Description       string         `json:"description" yaml:"description"`
-	Tags              []string       `json:"tags" yaml:"tags"`
-	Author            sdk.AccAddress `json:"author" yaml:"author"`
-	AuthorDescription string         `json:"author_description" yaml:"author_description"`
-	Schemas           string         `json:"schemas" yaml:"schemas"`
-}
-
 // NewServiceDefinition creates a new ServiceDefinition instance
 func NewServiceDefinition(
 	name string,

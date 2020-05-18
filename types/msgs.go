@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"regexp"
 
+	tmbytes "github.com/tendermint/tendermint/libs/bytes"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
@@ -25,7 +27,6 @@ const (
 	TypeMsgKillRequestContext    = "kill_request_context"    // type for MsgKillRequestContext
 	TypeMsgUpdateRequestContext  = "update_request_context"  // type for MsgUpdateRequestContext
 	TypeMsgWithdrawEarnedFees    = "withdraw_earned_fees"    // type for MsgWithdrawEarnedFees
-	TypeMsgWithdrawTax           = "withdraw_tax"            // type for MsgWithdrawTax
 
 	MaxNameLength        = 70  // maximum length of the service name
 	MaxDescriptionLength = 280 // maximum length of the service and author description
@@ -49,16 +50,6 @@ var (
 )
 
 //______________________________________________________________________
-
-// MsgDefineService defines a message to define a service
-type MsgDefineService struct {
-	Name              string         `json:"name" yaml:"name"`
-	Description       string         `json:"description" yaml:"description"`
-	Tags              []string       `json:"tags" yaml:"tags"`
-	Author            sdk.AccAddress `json:"author" yaml:"author"`
-	AuthorDescription string         `json:"author_description" yaml:"author_description"`
-	Schemas           string         `json:"schemas" yaml:"schemas"`
-}
 
 // NewMsgDefineService creates a new MsgDefineService instance
 func NewMsgDefineService(
@@ -131,16 +122,6 @@ func (msg MsgDefineService) GetSigners() []sdk.AccAddress {
 
 //______________________________________________________________________
 
-// MsgBindService defines a message to bind a service
-type MsgBindService struct {
-	ServiceName string         `json:"service_name" yaml:"service_name"`
-	Provider    sdk.AccAddress `json:"provider" yaml:"provider"`
-	Deposit     sdk.Coins      `json:"deposit" yaml:"deposit"`
-	Pricing     string         `json:"pricing" yaml:"pricing"`
-	QoS         uint64         `json:"qos" yaml:"qos"`
-	Owner       sdk.AccAddress `json:"owner" yaml:"owner"`
-}
-
 // NewMsgBindService creates a new MsgBindService instance
 func NewMsgBindService(
 	serviceName string,
@@ -207,16 +188,6 @@ func (msg MsgBindService) GetSigners() []sdk.AccAddress {
 }
 
 //______________________________________________________________________
-
-// MsgUpdateServiceBinding defines a message to update a service binding
-type MsgUpdateServiceBinding struct {
-	ServiceName string         `json:"service_name" yaml:"service_name"`
-	Provider    sdk.AccAddress `json:"provider" yaml:"provider"`
-	Deposit     sdk.Coins      `json:"deposit" yaml:"deposit"`
-	Pricing     string         `json:"pricing" yaml:"pricing"`
-	QoS         uint64         `json:"qos" yaml:"qos"`
-	Owner       sdk.AccAddress `json:"owner" yaml:"owner"`
-}
 
 // NewMsgUpdateServiceBinding creates a new MsgUpdateServiceBinding instance
 func NewMsgUpdateServiceBinding(
@@ -287,12 +258,6 @@ func (msg MsgUpdateServiceBinding) GetSigners() []sdk.AccAddress {
 
 //______________________________________________________________________
 
-// MsgSetWithdrawAddress defines a message to set the withdrawal address for a provider
-type MsgSetWithdrawAddress struct {
-	Owner           sdk.AccAddress `json:"owner" yaml:"owner"`
-	WithdrawAddress sdk.AccAddress `json:"withdraw_address" yaml:"withdraw_address"`
-}
-
 // NewMsgSetWithdrawAddress creates a new MsgSetWithdrawAddress instance
 func NewMsgSetWithdrawAddress(owner, withdrawAddr sdk.AccAddress) MsgSetWithdrawAddress {
 	return MsgSetWithdrawAddress{
@@ -328,13 +293,6 @@ func (msg MsgSetWithdrawAddress) GetSigners() []sdk.AccAddress {
 }
 
 //______________________________________________________________________
-
-// MsgDisableServiceBinding defines a message to disable a service binding
-type MsgDisableServiceBinding struct {
-	ServiceName string         `json:"service_name" yaml:"service_name"`
-	Provider    sdk.AccAddress `json:"provider" yaml:"provider"`
-	Owner       sdk.AccAddress `json:"owner" yaml:"owner"`
-}
 
 // NewMsgDisableServiceBinding creates a new MsgDisableServiceBinding instance
 func NewMsgDisableServiceBinding(
@@ -380,14 +338,6 @@ func (msg MsgDisableServiceBinding) GetSigners() []sdk.AccAddress {
 }
 
 //______________________________________________________________________
-
-// MsgEnableServiceBinding defines a message to enable a service binding
-type MsgEnableServiceBinding struct {
-	ServiceName string         `json:"service_name" yaml:"service_name"`
-	Provider    sdk.AccAddress `json:"provider" yaml:"provider"`
-	Deposit     sdk.Coins      `json:"deposit" yaml:"deposit"`
-	Owner       sdk.AccAddress `json:"owner" yaml:"owner"`
-}
 
 // NewMsgEnableServiceBinding creates a new MsgEnableServiceBinding instance
 func NewMsgEnableServiceBinding(
@@ -450,13 +400,6 @@ func (msg MsgEnableServiceBinding) GetSigners() []sdk.AccAddress {
 
 //______________________________________________________________________
 
-// MsgRefundServiceDeposit defines a message to refund deposit from a service binding
-type MsgRefundServiceDeposit struct {
-	ServiceName string         `json:"service_name" yaml:"service_name"`
-	Provider    sdk.AccAddress `json:"provider" yaml:"provider"`
-	Owner       sdk.AccAddress `json:"owner" yaml:"owner"`
-}
-
 // NewMsgRefundServiceDeposit creates a new MsgRefundServiceDeposit instance
 func NewMsgRefundServiceDeposit(
 	serviceName string,
@@ -501,20 +444,6 @@ func (msg MsgRefundServiceDeposit) GetSigners() []sdk.AccAddress {
 }
 
 //______________________________________________________________________
-
-// MsgCallService defines a message to initiate a service call
-type MsgCallService struct {
-	ServiceName       string           `json:"service_name"`
-	Providers         []sdk.AccAddress `json:"providers"`
-	Consumer          sdk.AccAddress   `json:"consumer"`
-	Input             string           `json:"input"`
-	ServiceFeeCap     sdk.Coins        `json:"service_fee_cap"`
-	Timeout           int64            `json:"timeout"`
-	SuperMode         bool             `json:"super_mode"`
-	Repeated          bool             `json:"repeated"`
-	RepeatedFrequency uint64           `json:"repeated_frequency"`
-	RepeatedTotal     int64            `json:"repeated_total"`
-}
 
 // NewMsgCallService creates a new MsgCallService instance
 func NewMsgCallService(
@@ -592,17 +521,9 @@ func (msg MsgCallService) GetSigners() []sdk.AccAddress {
 
 //______________________________________________________________________
 
-// MsgRespondService defines a message to respond to a service request
-type MsgRespondService struct {
-	RequestID HexBytes       `json:"request_id"`
-	Provider  sdk.AccAddress `json:"provider"`
-	Result    string         `json:"result"`
-	Output    string         `json:"output"`
-}
-
 // NewMsgRespondService creates a new MsgRespondService instance
 func NewMsgRespondService(
-	requestID HexBytes,
+	requestID tmbytes.HexBytes,
 	provider sdk.AccAddress,
 	result string,
 	output string,
@@ -660,14 +581,8 @@ func (msg MsgRespondService) GetSigners() []sdk.AccAddress {
 
 //______________________________________________________________________
 
-// MsgPauseRequestContext defines a message to suspend a request context
-type MsgPauseRequestContext struct {
-	RequestContextID HexBytes       `json:"request_context_id"`
-	Consumer         sdk.AccAddress `json:"consumer"`
-}
-
 // NewMsgPauseRequestContext creates a new MsgPauseRequestContext instance
-func NewMsgPauseRequestContext(requestContextID HexBytes, consumer sdk.AccAddress) MsgPauseRequestContext {
+func NewMsgPauseRequestContext(requestContextID tmbytes.HexBytes, consumer sdk.AccAddress) MsgPauseRequestContext {
 	return MsgPauseRequestContext{
 		RequestContextID: requestContextID,
 		Consumer:         consumer,
@@ -705,14 +620,8 @@ func (msg MsgPauseRequestContext) GetSigners() []sdk.AccAddress {
 
 //______________________________________________________________________
 
-// MsgStartRequestContext defines a message to resume a request context
-type MsgStartRequestContext struct {
-	RequestContextID HexBytes       `json:"request_context_id"`
-	Consumer         sdk.AccAddress `json:"consumer"`
-}
-
 // NewMsgStartRequestContext creates a new MsgStartRequestContext instance
-func NewMsgStartRequestContext(requestContextID HexBytes, consumer sdk.AccAddress) MsgStartRequestContext {
+func NewMsgStartRequestContext(requestContextID tmbytes.HexBytes, consumer sdk.AccAddress) MsgStartRequestContext {
 	return MsgStartRequestContext{
 		RequestContextID: requestContextID,
 		Consumer:         consumer,
@@ -750,14 +659,8 @@ func (msg MsgStartRequestContext) GetSigners() []sdk.AccAddress {
 
 //______________________________________________________________________
 
-// MsgKillRequestContext defines a message to terminate a request context
-type MsgKillRequestContext struct {
-	RequestContextID HexBytes       `json:"request_context_id"`
-	Consumer         sdk.AccAddress `json:"consumer"`
-}
-
 // NewMsgKillRequestContext creates a new MsgKillRequestContext instance
-func NewMsgKillRequestContext(requestContextID HexBytes, consumer sdk.AccAddress) MsgKillRequestContext {
+func NewMsgKillRequestContext(requestContextID tmbytes.HexBytes, consumer sdk.AccAddress) MsgKillRequestContext {
 	return MsgKillRequestContext{
 		RequestContextID: requestContextID,
 		Consumer:         consumer,
@@ -795,20 +698,9 @@ func (msg MsgKillRequestContext) GetSigners() []sdk.AccAddress {
 
 //______________________________________________________________________
 
-// MsgUpdateRequestContext defines a message to update a request context
-type MsgUpdateRequestContext struct {
-	RequestContextID  HexBytes         `json:"request_context_id"`
-	Providers         []sdk.AccAddress `json:"providers"`
-	ServiceFeeCap     sdk.Coins        `json:"service_fee_cap"`
-	Timeout           int64            `json:"timeout"`
-	RepeatedFrequency uint64           `json:"repeated_frequency"`
-	RepeatedTotal     int64            `json:"repeated_total"`
-	Consumer          sdk.AccAddress   `json:"consumer"`
-}
-
 // NewMsgUpdateRequestContext creates a new MsgUpdateRequestContext instance
 func NewMsgUpdateRequestContext(
-	requestContextID HexBytes,
+	requestContextID tmbytes.HexBytes,
 	providers []sdk.AccAddress,
 	serviceFeeCap sdk.Coins,
 	timeout int64,
@@ -876,12 +768,6 @@ func (msg MsgUpdateRequestContext) GetSigners() []sdk.AccAddress {
 }
 
 //______________________________________________________________________
-
-// MsgWithdrawEarnedFees defines a message to withdraw the fees earned by the provider or owner
-type MsgWithdrawEarnedFees struct {
-	Owner    sdk.AccAddress `json:"owner" yaml:"owner"`
-	Provider sdk.AccAddress `json:"provider" yaml:"provider"`
-}
 
 // NewMsgWithdrawEarnedFees creates a new MsgWithdrawEarnedFees instance
 func NewMsgWithdrawEarnedFees(owner, provider sdk.AccAddress) MsgWithdrawEarnedFees {
@@ -986,6 +872,10 @@ func ValidateOwner(owner sdk.AccAddress) error {
 
 func ValidateServiceDeposit(deposit sdk.Coins) error {
 	if !deposit.IsValid() {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "invalid deposit")
+	}
+
+	if !deposit.IsAllPositive() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "invalid deposit")
 	}
 

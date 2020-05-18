@@ -3,11 +3,11 @@ package keeper
 import (
 	"strings"
 
-	abci "github.com/tendermint/tendermint/abci/types"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	gogotypes "github.com/gogo/protobuf/types"
+	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/irismod/service/types"
 )
@@ -113,7 +113,7 @@ func queryBindings(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, er
 
 		for ; iterator.Valid(); iterator.Next() {
 			var binding types.ServiceBinding
-			k.cdc.MustUnmarshalBinaryLengthPrefixed(iterator.Value(), &binding)
+			k.cdc.MustUnmarshalBinaryBare(iterator.Value(), &binding)
 
 			bindings = append(bindings, binding)
 		}
@@ -178,10 +178,11 @@ func queryRequests(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, er
 	requests := make([]types.Request, 0)
 
 	for ; iterator.Valid(); iterator.Next() {
-		var requestID types.HexBytes
-		k.cdc.MustUnmarshalBinaryLengthPrefixed(iterator.Value(), &requestID)
+		var requestID gogotypes.BytesValue
 
-		request, _ := k.GetRequest(ctx, requestID)
+		k.cdc.MustUnmarshalBinaryBare(iterator.Value(), &requestID)
+
+		request, _ := k.GetRequest(ctx, requestID.Value)
 		requests = append(requests, request)
 	}
 
@@ -268,7 +269,7 @@ func queryResponses(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, e
 
 	for ; iterator.Valid(); iterator.Next() {
 		var response types.Response
-		k.cdc.MustUnmarshalBinaryLengthPrefixed(iterator.Value(), &response)
+		k.cdc.MustUnmarshalBinaryBare(iterator.Value(), &response)
 
 		responses = append(responses, response)
 	}

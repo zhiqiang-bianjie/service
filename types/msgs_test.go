@@ -309,10 +309,10 @@ func TestMsgUpdateServiceBindingValidation(t *testing.T) {
 
 // TestMsgUpdateServiceBindingGetSignBytes tests GetSignBytes for MsgUpdateServiceBinding
 func TestMsgUpdateServiceBindingGetSignBytes(t *testing.T) {
-	msg := NewMsgUpdateServiceBinding(testServiceName, testProvider, testAddedDeposit, "", 0, testOwner)
+	msg := NewMsgUpdateServiceBinding(testServiceName, testProvider, testAddedDeposit, "{\"price\":\"1\"}", 1, testOwner)
 	res := msg.GetSignBytes()
 
-	expected := `{"type":"irismod/service/MsgUpdateServiceBinding","value":{"deposit":[{"amount":"100","denom":"stake"}],"owner":"cosmos1w3jhxapddamkuetjkkyjud","pricing":"","provider":"cosmos1w3jhxapdwpex7anfv3jhy8anr90","qos":"0","service_name":"test-service"}}`
+	expected := `{"type":"irismod/service/MsgUpdateServiceBinding","value":{"deposit":[{"amount":"100","denom":"stake"}],"owner":"cosmos1w3jhxapddamkuetjkkyjud","pricing":"{\"price\":\"1\"}","provider":"cosmos1w3jhxapdwpex7anfv3jhy8anr90","qos":"1","service_name":"test-service"}}`
 	require.Equal(t, expected, string(res))
 }
 
@@ -733,12 +733,12 @@ func TestMsgCallServiceValidation(t *testing.T) {
 func TestMsgCallServiceGetSignBytes(t *testing.T) {
 	msg := NewMsgCallService(
 		testServiceName, testProviders, testConsumer,
-		testInput, testServiceFeeCap, testTimeout, false,
+		testInput, testServiceFeeCap, testTimeout, true,
 		true, testRepeatedFreq, testRepeatedTotal,
 	)
 	res := msg.GetSignBytes()
 
-	expected := `{"type":"irismod/service/MsgCallService","value":{"consumer":"cosmos1w3jhxapdvdhkuum4d4jhyt34ks5","input":"{\"pair\":\"iris-usdt\"}","providers":["cosmos1w3jhxapdwpex7anfv3jhy8anr90"],"repeated":true,"repeated_frequency":"120","repeated_total":"100","service_fee_cap":[{"amount":"100","denom":"stake"}],"service_name":"test-service","super_mode":false,"timeout":"100"}}`
+	expected := `{"type":"irismod/service/MsgCallService","value":{"consumer":"cosmos1w3jhxapdvdhkuum4d4jhyt34ks5","input":"{\"pair\":\"iris-usdt\"}","providers":["cosmos1w3jhxapdwpex7anfv3jhy8anr90"],"repeated":true,"repeated_frequency":"120","repeated_total":"100","service_fee_cap":[{"amount":"100","denom":"stake"}],"service_name":"test-service","super_mode":true,"timeout":"100"}}`
 	require.Equal(t, expected, string(res))
 }
 

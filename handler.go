@@ -75,7 +75,7 @@ func handleMsgDefineService(ctx sdk.Context, k Keeper, msg MsgDefineService) (*s
 		),
 	})
 
-	return &sdk.Result{Events: ctx.EventManager().Events()}, nil
+	return &sdk.Result{Events: ctx.EventManager().ABCIEvents()}, nil
 }
 
 func handleMsgBindService(ctx sdk.Context, k Keeper, msg MsgBindService) (*sdk.Result, error) {
@@ -92,7 +92,7 @@ func handleMsgBindService(ctx sdk.Context, k Keeper, msg MsgBindService) (*sdk.R
 		),
 	})
 
-	return &sdk.Result{Events: ctx.EventManager().Events()}, nil
+	return &sdk.Result{Events: ctx.EventManager().ABCIEvents()}, nil
 }
 
 func handleMsgUpdateServiceBinding(ctx sdk.Context, k Keeper, msg MsgUpdateServiceBinding) (*sdk.Result, error) {
@@ -109,7 +109,7 @@ func handleMsgUpdateServiceBinding(ctx sdk.Context, k Keeper, msg MsgUpdateServi
 		),
 	})
 
-	return &sdk.Result{Events: ctx.EventManager().Events()}, nil
+	return &sdk.Result{Events: ctx.EventManager().ABCIEvents()}, nil
 }
 
 func handleMsgSetWithdrawAddress(ctx sdk.Context, k Keeper, msg MsgSetWithdrawAddress) (*sdk.Result, error) {
@@ -123,7 +123,7 @@ func handleMsgSetWithdrawAddress(ctx sdk.Context, k Keeper, msg MsgSetWithdrawAd
 		),
 	})
 
-	return &sdk.Result{Events: ctx.EventManager().Events()}, nil
+	return &sdk.Result{Events: ctx.EventManager().ABCIEvents()}, nil
 }
 
 func handleMsgDisableServiceBinding(ctx sdk.Context, k Keeper, msg MsgDisableServiceBinding) (*sdk.Result, error) {
@@ -140,7 +140,7 @@ func handleMsgDisableServiceBinding(ctx sdk.Context, k Keeper, msg MsgDisableSer
 		),
 	})
 
-	return &sdk.Result{Events: ctx.EventManager().Events()}, nil
+	return &sdk.Result{Events: ctx.EventManager().ABCIEvents()}, nil
 }
 
 func handleMsgEnableServiceBinding(ctx sdk.Context, k Keeper, msg MsgEnableServiceBinding) (*sdk.Result, error) {
@@ -157,7 +157,7 @@ func handleMsgEnableServiceBinding(ctx sdk.Context, k Keeper, msg MsgEnableServi
 		),
 	})
 
-	return &sdk.Result{Events: ctx.EventManager().Events()}, nil
+	return &sdk.Result{Events: ctx.EventManager().ABCIEvents()}, nil
 }
 
 func handleMsgRefundServiceDeposit(ctx sdk.Context, k Keeper, msg MsgRefundServiceDeposit) (*sdk.Result, error) {
@@ -174,7 +174,7 @@ func handleMsgRefundServiceDeposit(ctx sdk.Context, k Keeper, msg MsgRefundServi
 		),
 	})
 
-	return &sdk.Result{Events: ctx.EventManager().Events()}, nil
+	return &sdk.Result{Events: ctx.EventManager().ABCIEvents()}, nil
 }
 
 // handleMsgCallService handles MsgCallService
@@ -195,7 +195,7 @@ func handleMsgCallService(ctx sdk.Context, k Keeper, msg MsgCallService) (*sdk.R
 		),
 	})
 
-	return &sdk.Result{Events: ctx.EventManager().Events()}, nil
+	return &sdk.Result{Events: ctx.EventManager().ABCIEvents()}, nil
 }
 
 // handleMsgRespondService handles MsgRespondService
@@ -215,7 +215,7 @@ func handleMsgRespondService(ctx sdk.Context, k Keeper, msg MsgRespondService) (
 		),
 	})
 
-	return &sdk.Result{Events: ctx.EventManager().Events()}, nil
+	return &sdk.Result{Events: ctx.EventManager().ABCIEvents()}, nil
 }
 
 // handleMsgPauseRequestContext handles MsgPauseRequestContext
@@ -236,7 +236,7 @@ func handleMsgPauseRequestContext(ctx sdk.Context, k Keeper, msg MsgPauseRequest
 		),
 	})
 
-	return &sdk.Result{Events: ctx.EventManager().Events()}, nil
+	return &sdk.Result{Events: ctx.EventManager().ABCIEvents()}, nil
 }
 
 // handleMsgStartRequestContext handles MsgStartRequestContext
@@ -257,7 +257,7 @@ func handleMsgStartRequestContext(ctx sdk.Context, k Keeper, msg MsgStartRequest
 		),
 	})
 
-	return &sdk.Result{Events: ctx.EventManager().Events()}, nil
+	return &sdk.Result{Events: ctx.EventManager().ABCIEvents()}, nil
 }
 
 // handleMsgKillRequestContext handles MsgKillRequestContext
@@ -278,7 +278,7 @@ func handleMsgKillRequestContext(ctx sdk.Context, k Keeper, msg MsgKillRequestCo
 		),
 	})
 
-	return &sdk.Result{Events: ctx.EventManager().Events()}, nil
+	return &sdk.Result{Events: ctx.EventManager().ABCIEvents()}, nil
 }
 
 // handleMsgUpdateRequestContext handles MsgUpdateRequestContext
@@ -302,7 +302,7 @@ func handleMsgUpdateRequestContext(ctx sdk.Context, k Keeper, msg MsgUpdateReque
 		),
 	})
 
-	return &sdk.Result{Events: ctx.EventManager().Events()}, nil
+	return &sdk.Result{Events: ctx.EventManager().ABCIEvents()}, nil
 }
 
 // handleMsgWithdrawEarnedFees handles MsgWithdrawEarnedFees
@@ -319,5 +319,5 @@ func handleMsgWithdrawEarnedFees(ctx sdk.Context, k Keeper, msg MsgWithdrawEarne
 		),
 	})
 
-	return &sdk.Result{Events: ctx.EventManager().Events()}, nil
+	return &sdk.Result{Events: ctx.EventManager().ABCIEvents()}, nil
 }

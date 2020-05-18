@@ -1,11 +1,11 @@
 package types
 
 import (
-	"bytes"
 	"fmt"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/codec"
+	"gopkg.in/yaml.v2"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
 )
@@ -38,19 +38,6 @@ var (
 )
 
 var _ params.ParamSet = (*Params)(nil)
-
-// Params defines the high level settings for service
-type Params struct {
-	MaxRequestTimeout    int64         `json:"max_request_timeout" yaml:"max_request_timeout"`
-	MinDepositMultiple   int64         `json:"min_deposit_multiple" yaml:"min_deposit_multiple"`
-	MinDeposit           sdk.Coins     `json:"min_deposit" yaml:"min_deposit"`
-	ServiceFeeTax        sdk.Dec       `json:"service_fee_tax" yaml:"service_fee_tax"`
-	SlashFraction        sdk.Dec       `json:"slash_fraction" yaml:"slash_fraction"`
-	ComplaintRetrospect  time.Duration `json:"complaint_retrospect" yaml:"complaint_retrospect"`
-	ArbitrationTimeLimit time.Duration `json:"arbitration_time_limit" yaml:"arbitration_time_limit"`
-	TxSizeLimit          uint64        `json:"tx_size_limit" yaml:"tx_size_limit"`
-	BaseDenom            string        `json:"base_denom" yaml:"base_denom"`
-}
 
 // NewParams creates a new Params instance
 func NewParams(
@@ -92,14 +79,6 @@ func (p *Params) ParamSetPairs() params.ParamSetPairs {
 	}
 }
 
-// Equal returns a boolean determining if two Param types are identical.
-// TODO: This is slower than comparing struct fields directly
-func (p Params) Equal(p2 Params) bool {
-	bz1 := ModuleCdc.MustMarshalBinaryLengthPrefixed(&p)
-	bz2 := ModuleCdc.MustMarshalBinaryLengthPrefixed(&p2)
-	return bytes.Equal(bz1, bz2)
-}
-
 // DefaultParams returns a default set of parameters.
 func DefaultParams() Params {
 	return NewParams(
@@ -117,34 +96,8 @@ func DefaultParams() Params {
 
 // String implements stringer
 func (p Params) String() string {
-	return fmt.Sprintf(`Params:
-  Max Request Timeout:     %d
-  Min Deposit Multiple:    %d
-  Min Deposit:             %s
-  Service Fee Tax:         %s
-  Slash Fraction:          %s
-  Complaint Retrospect:    %s
-  Arbitration Time Limit:  %s
-  Tx Size Limit:           %d
-  Base Denom:              %s`,
-		p.MaxRequestTimeout, p.MinDepositMultiple, p.MinDeposit.String(), p.ServiceFeeTax.String(), p.SlashFraction.String(),
-		p.ComplaintRetrospect, p.ArbitrationTimeLimit, p.TxSizeLimit, p.BaseDenom)
-}
-
-// MustUnmarshalParams unmarshals the current service params value from store key or panic
-func MustUnmarshalParams(cdc *codec.Codec, value []byte) Params {
-	params, err := UnmarshalParams(cdc, value)
-	if err != nil {
-		panic(err)
-	}
-
-	return params
-}
-
-// UnmarshalParams unmarshals the current service params value from store key
-func UnmarshalParams(cdc *codec.Codec, value []byte) (params Params, err error) {
-	err = cdc.UnmarshalBinaryLengthPrefixed(value, &params)
-	return
+	out, _ := yaml.Marshal(p)
+	return string(out)
 }
 
 // Validate validates a set of params

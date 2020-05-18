@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	gogotypes "github.com/gogo/protobuf/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
@@ -59,7 +61,7 @@ func (k Keeper) AddServiceBinding(
 	}
 
 	// Send coins from owner's account to the deposit module account
-	if err := k.supplyKeeper.SendCoinsFromAccountToModule(
+	if err := k.bankKeeper.SendCoinsFromAccountToModule(
 		ctx, owner, types.DepositAccName, deposit,
 	); err != nil {
 		return err
@@ -152,7 +154,7 @@ func (k Keeper) UpdateServiceBinding(
 
 	if !deposit.Empty() {
 		// Send coins from owner's account to the deposit module account
-		if err := k.supplyKeeper.SendCoinsFromAccountToModule(
+		if err := k.bankKeeper.SendCoinsFromAccountToModule(
 			ctx, owner, types.DepositAccName, deposit,
 		); err != nil {
 			return err
@@ -231,7 +233,7 @@ func (k Keeper) EnableServiceBinding(
 
 	if !deposit.Empty() {
 		// Send coins from owner's account to the deposit module account
-		if err := k.supplyKeeper.SendCoinsFromAccountToModule(
+		if err := k.bankKeeper.SendCoinsFromAccountToModule(
 			ctx, owner, types.DepositAccName, deposit,
 		); err != nil {
 			return err
@@ -273,7 +275,7 @@ func (k Keeper) RefundDeposit(ctx sdk.Context, serviceName string, provider, own
 	}
 
 	// Send coins from the deposit module account to the owner's account
-	if err := k.supplyKeeper.SendCoinsFromModuleToAccount(
+	if err := k.bankKeeper.SendCoinsFromModuleToAccount(
 		ctx, types.DepositAccName, binding.Owner, binding.Deposit,
 	); err != nil {
 		return err
@@ -292,9 +294,9 @@ func (k Keeper) RefundDeposits(ctx sdk.Context) error {
 
 	for ; iterator.Valid(); iterator.Next() {
 		var binding types.ServiceBinding
-		k.cdc.MustUnmarshalBinaryLengthPrefixed(iterator.Value(), &binding)
+		k.cdc.MustUnmarshalBinaryBare(iterator.Value(), &binding)
 
-		if err := k.supplyKeeper.SendCoinsFromModuleToAccount(
+		if err := k.bankKeeper.SendCoinsFromModuleToAccount(
 			ctx, types.DepositAccName, binding.Owner, binding.Deposit,
 		); err != nil {
 			return err
@@ -308,7 +310,7 @@ func (k Keeper) RefundDeposits(ctx sdk.Context) error {
 func (k Keeper) SetServiceBinding(ctx sdk.Context, svcBinding types.ServiceBinding) {
 	store := ctx.KVStore(k.storeKey)
 
-	bz := k.cdc.MustMarshalBinaryLengthPrefixed(svcBinding)
+	bz := k.cdc.MustMarshalBinaryBare(&svcBinding)
 	store.Set(types.GetServiceBindingKey(svcBinding.ServiceName, svcBinding.Provider), bz)
 }
 
@@ -321,7 +323,7 @@ func (k Keeper) GetServiceBinding(ctx sdk.Context, serviceName string, provider 
 		return svcBinding, false
 	}
 
-	k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &svcBinding)
+	k.cdc.MustUnmarshalBinaryBare(bz, &svcBinding)
 	return svcBinding, true
 }
 
@@ -359,21 +361,22 @@ func (k Keeper) GetOwnerServiceBindings(ctx sdk.Context, owner sdk.AccAddress, s
 func (k Keeper) SetOwner(ctx sdk.Context, provider, owner sdk.AccAddress) {
 	store := ctx.KVStore(k.storeKey)
 
-	bz := k.cdc.MustMarshalBinaryLengthPrefixed(owner)
+	bz := k.cdc.MustMarshalBinaryBare(&gogotypes.BytesValue{Value: owner})
 	store.Set(types.GetOwnerKey(provider), bz)
 }
 
 // GetOwner gets the owner for the specified provider
-func (k Keeper) GetOwner(ctx sdk.Context, provider sdk.AccAddress) (addr sdk.AccAddress, found bool) {
+func (k Keeper) GetOwner(ctx sdk.Context, provider sdk.AccAddress) (sdk.AccAddress, bool) {
 	store := ctx.KVStore(k.storeKey)
 
 	bz := store.Get(types.GetOwnerKey(provider))
 	if bz == nil {
-		return addr, false
+		return nil, false
 	}
 
-	k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &addr)
-	return addr, true
+	addr := gogotypes.BytesValue{}
+	k.cdc.MustUnmarshalBinaryBare(bz, &addr)
+	return addr.GetValue(), true
 }
 
 // SetOwnerProvider sets the provider with the owner
@@ -429,7 +432,7 @@ func (k Keeper) SetPricing(
 ) {
 	store := ctx.KVStore(k.storeKey)
 
-	bz := k.cdc.MustMarshalBinaryLengthPrefixed(pricing)
+	bz := k.cdc.MustMarshalBinaryBare(&pricing)
 	store.Set(types.GetPricingKey(serviceName, provider), bz)
 }
 
@@ -442,7 +445,7 @@ func (k Keeper) GetPricing(ctx sdk.Context, serviceName string, provider sdk.Acc
 		return
 	}
 
-	k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &pricing)
+	k.cdc.MustUnmarshalBinaryBare(bz, &pricing)
 	return pricing
 }
 
@@ -507,7 +510,7 @@ func (k Keeper) IterateServiceBindings(
 
 	for ; iterator.Valid(); iterator.Next() {
 		var binding types.ServiceBinding
-		k.cdc.MustUnmarshalBinaryLengthPrefixed(iterator.Value(), &binding)
+		k.cdc.MustUnmarshalBinaryBare(iterator.Value(), &binding)
 
 		if stop := op(binding); stop {
 			break

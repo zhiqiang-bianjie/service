@@ -3,14 +3,14 @@ package types
 // TokenI defines the interface for Token
 type TokenI interface {
 	GetMinUnit() string
-	GetScale() uint8
+	GetScale() uint32
 }
 
 // MockToken represents a mock implementation for TokenI
 type MockToken struct {
 	Symbol  string
 	MinUnit string
-	Scale   uint8
+	Scale   uint32
 }
 
 // GetSymbol gets the symbol
@@ -24,6 +24,6 @@ func (token MockToken) GetMinUnit() string {
 }
 
 // GetScale gets the scale
-func (token MockToken) GetScale() uint8 {
+func (token MockToken) GetScale() uint32 {
 	return token.Scale
 }

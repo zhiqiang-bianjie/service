@@ -7,18 +7,6 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-// ServiceBinding defines a struct for the service binding
-type ServiceBinding struct {
-	ServiceName  string         `json:"service_name" yaml:"service_name"`
-	Provider     sdk.AccAddress `json:"provider" yaml:"provider"`
-	Deposit      sdk.Coins      `json:"deposit" yaml:"deposit"`
-	Pricing      string         `json:"pricing" yaml:"pricing"`
-	QoS          uint64         `json:"qos" yaml:"qos"`
-	Available    bool           `json:"available" yaml:"available"`
-	DisabledTime time.Time      `json:"disabled_time" yaml:"disabled_time"`
-	Owner        sdk.AccAddress `json:"owner" yaml:"owner"`
-}
-
 // NewServiceBinding creates a new ServiceBinding instance
 func NewServiceBinding(
 	serviceName string,
@@ -47,26 +35,6 @@ type RawPricing struct {
 	Price              string              `json:"price"`                // base price string
 	PromotionsByTime   []PromotionByTime   `json:"promotions_by_time"`   // promotions by time
 	PromotionsByVolume []PromotionByVolume `json:"promotions_by_volume"` // promotions by volume
-}
-
-// Pricing represents the pricing of a service binding
-type Pricing struct {
-	Price              sdk.Coins           `json:"price"`                // base price
-	PromotionsByTime   []PromotionByTime   `json:"promotions_by_time"`   // promotions by time
-	PromotionsByVolume []PromotionByVolume `json:"promotions_by_volume"` // promotions by volume
-}
-
-// PromotionByTime defines the promotion by time
-type PromotionByTime struct {
-	StartTime time.Time `json:"start_time"` // starting time of the promotion
-	EndTime   time.Time `json:"end_time"`   // ending time of the promotion
-	Discount  sdk.Dec   `json:"discount"`   // discount during the promotion
-}
-
-// PromotionByVolume defines the promotion by volume
-type PromotionByVolume struct {
-	Volume   uint64  `json:"volume"`   // minimum volume for the promotion
-	Discount sdk.Dec `json:"discount"` // discount for the promotion
 }
 
 // GetDiscountByTime gets the discount level by the specified time

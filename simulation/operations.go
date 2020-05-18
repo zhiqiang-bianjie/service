@@ -7,11 +7,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 
+	"github.com/irismod/service/app/helpers"
+	simappparams "github.com/irismod/service/app/params"
 	"github.com/irismod/service/keeper"
-	"github.com/irismod/service/simapp/helpers"
-	simappparams "github.com/irismod/service/simapp/params"
 	"github.com/irismod/service/types"
 )
 
@@ -28,9 +29,10 @@ const (
 
 // WeightedOperations returns all the operations from the module with their respective weights
 func WeightedOperations(
-	appParams simulation.AppParams,
+	appParams simtypes.AppParams,
 	cdc *codec.Codec,
 	ak types.AccountKeeper,
+	bk types.BankKeeper,
 	k keeper.Keeper,
 ) simulation.WeightedOperations {
 	var (
@@ -88,53 +90,55 @@ func WeightedOperations(
 	return simulation.WeightedOperations{
 		simulation.NewWeightedOperation(
 			weightMsgDefineService,
-			SimulateMsgDefineService(ak, k),
+			SimulateMsgDefineService(ak, bk, k),
 		),
 		simulation.NewWeightedOperation(
 			weightMsgBindService,
-			SimulateMsgBindService(ak, k),
+			SimulateMsgBindService(ak, bk, k),
 		),
 		simulation.NewWeightedOperation(
 			weightMsgUpdateServiceBinding,
-			SimulateMsgUpdateServiceBinding(ak, k),
+			SimulateMsgUpdateServiceBinding(ak, bk, k),
 		),
 		simulation.NewWeightedOperation(
 			weightMsgSetWithdrawAddress,
-			SimulateMsgSetWithdrawAddress(ak, k),
+			SimulateMsgSetWithdrawAddress(ak, bk, k),
 		),
 		simulation.NewWeightedOperation(
 			weightMsgDisableServiceBinding,
-			SimulateMsgDisableServiceBinding(ak, k),
+			SimulateMsgDisableServiceBinding(ak, bk, k),
 		),
 		simulation.NewWeightedOperation(
 			weightMsgEnableServiceBinding,
-			SimulateMsgEnableServiceBinding(ak, k),
+			SimulateMsgEnableServiceBinding(ak, bk, k),
 		),
 		simulation.NewWeightedOperation(
 			weightMsgRefundServiceDeposit,
-			SimulateMsgRefundServiceDeposit(ak, k),
+			SimulateMsgRefundServiceDeposit(ak, bk, k),
 		),
 	}
 }
 
 // SimulateMsgDefineService generates a MsgDefineService with random values.
-func SimulateMsgDefineService(ak types.AccountKeeper, k keeper.Keeper) simulation.Operation {
+func SimulateMsgDefineService(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keeper) simtypes.Operation {
 	return func(
-		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simulation.Account, chainID string,
-	) (simulation.OperationMsg, []simulation.FutureOperation, error) {
+		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
+	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 
-		simAccount, _ := simulation.RandomAcc(r, accs)
+		simAccount, _ := simtypes.RandomAcc(r, accs)
 
-		serviceName := simulation.RandStringOfLength(r, 20)
-		serviceDescription := simulation.RandStringOfLength(r, 50)
-		authorDescription := simulation.RandStringOfLength(r, 50)
-		tags := []string{simulation.RandStringOfLength(r, 20), simulation.RandStringOfLength(r, 20)}
+		serviceName := simtypes.RandStringOfLength(r, 20)
+		serviceDescription := simtypes.RandStringOfLength(r, 50)
+		authorDescription := simtypes.RandStringOfLength(r, 50)
+		tags := []string{simtypes.RandStringOfLength(r, 20), simtypes.RandStringOfLength(r, 20)}
 		schemas := `{"input":{"type":"object"},"output":{"type":"object"}}`
 
 		account := ak.GetAccount(ctx, simAccount.Address)
-		fees, err := simulation.RandomFees(r, ctx, account.SpendableCoins(ctx.BlockTime()))
+		spendable := bk.SpendableCoins(ctx, account.GetAddress())
+
+		fees, err := simtypes.RandomFees(r, ctx, spendable)
 		if err != nil {
-			return simulation.NoOpMsg(types.ModuleName), nil, err
+			return simtypes.NoOpMsg(types.ModuleName), nil, err
 		}
 
 		msg := types.NewMsgDefineService(serviceName, serviceDescription, tags, simAccount.Address, authorDescription, schemas)
@@ -150,30 +154,32 @@ func SimulateMsgDefineService(ak types.AccountKeeper, k keeper.Keeper) simulatio
 		)
 
 		if _, _, err := app.Deliver(tx); err != nil {
-			return simulation.NoOpMsg(types.ModuleName), nil, err
+			return simtypes.NoOpMsg(types.ModuleName), nil, err
 		}
 
-		return simulation.NewOperationMsg(msg, true, ""), nil, nil
+		return simtypes.NewOperationMsg(msg, true, ""), nil, nil
 	}
 }
 
 // SimulateMsgBindService generates a MsgBindService with random values.
-func SimulateMsgBindService(ak types.AccountKeeper, k keeper.Keeper) simulation.Operation {
+func SimulateMsgBindService(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keeper) simtypes.Operation {
 	return func(
-		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simulation.Account, chainID string,
-	) (simulation.OperationMsg, []simulation.FutureOperation, error) {
+		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
+	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 
-		simAccount, _ := simulation.RandomAcc(r, accs)
+		simAccount, _ := simtypes.RandomAcc(r, accs)
 
-		serviceName := simulation.RandStringOfLength(r, 20)
-		deposit := sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(int64(simulation.RandIntBetween(r, 1000000, 2000000)))))
-		pricing := fmt.Sprintf(`{"price":"%d%s"`, simulation.RandIntBetween(r, 100, 1000), sdk.DefaultBondDenom)
-		qos := uint64(simulation.RandIntBetween(r, 10, 100))
+		serviceName := simtypes.RandStringOfLength(r, 20)
+		deposit := sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(int64(simtypes.RandIntBetween(r, 1000000, 2000000)))))
+		pricing := fmt.Sprintf(`{"price":"%d%s"`, simtypes.RandIntBetween(r, 100, 1000), sdk.DefaultBondDenom)
+		qos := uint64(simtypes.RandIntBetween(r, 10, 100))
 
 		account := ak.GetAccount(ctx, simAccount.Address)
-		fees, err := simulation.RandomFees(r, ctx, account.SpendableCoins(ctx.BlockTime()))
+		spendable := bk.SpendableCoins(ctx, account.GetAddress())
+
+		fees, err := simtypes.RandomFees(r, ctx, spendable)
 		if err != nil {
-			return simulation.NoOpMsg(types.ModuleName), nil, err
+			return simtypes.NoOpMsg(types.ModuleName), nil, err
 		}
 
 		msg := types.NewMsgBindService(serviceName, simAccount.Address, deposit, pricing, qos, simAccount.Address)
@@ -189,30 +195,32 @@ func SimulateMsgBindService(ak types.AccountKeeper, k keeper.Keeper) simulation.
 		)
 
 		if _, _, err := app.Deliver(tx); err != nil {
-			return simulation.NoOpMsg(types.ModuleName), nil, err
+			return simtypes.NoOpMsg(types.ModuleName), nil, err
 		}
 
-		return simulation.NewOperationMsg(msg, true, ""), nil, nil
+		return simtypes.NewOperationMsg(msg, true, ""), nil, nil
 	}
 }
 
 // SimulateMsgUpdateServiceBinding generates a MsgUpdateServiceBinding with random values.
-func SimulateMsgUpdateServiceBinding(ak types.AccountKeeper, k keeper.Keeper) simulation.Operation {
+func SimulateMsgUpdateServiceBinding(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keeper) simtypes.Operation {
 	return func(
-		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simulation.Account, chainID string,
-	) (simulation.OperationMsg, []simulation.FutureOperation, error) {
+		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
+	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 
-		simAccount, _ := simulation.RandomAcc(r, accs)
+		simAccount, _ := simtypes.RandomAcc(r, accs)
 
-		serviceName := simulation.RandStringOfLength(r, 20)
-		deposit := sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(int64(simulation.RandIntBetween(r, 100, 1000)))))
-		pricing := fmt.Sprintf(`{"price":"%d%s"`, simulation.RandIntBetween(r, 100, 1000), sdk.DefaultBondDenom)
-		qos := uint64(simulation.RandIntBetween(r, 10, 100))
+		serviceName := simtypes.RandStringOfLength(r, 20)
+		deposit := sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(int64(simtypes.RandIntBetween(r, 100, 1000)))))
+		pricing := fmt.Sprintf(`{"price":"%d%s"`, simtypes.RandIntBetween(r, 100, 1000), sdk.DefaultBondDenom)
+		qos := uint64(simtypes.RandIntBetween(r, 10, 100))
 
 		account := ak.GetAccount(ctx, simAccount.Address)
-		fees, err := simulation.RandomFees(r, ctx, account.SpendableCoins(ctx.BlockTime()))
+		spendable := bk.SpendableCoins(ctx, account.GetAddress())
+
+		fees, err := simtypes.RandomFees(r, ctx, spendable)
 		if err != nil {
-			return simulation.NoOpMsg(types.ModuleName), nil, err
+			return simtypes.NoOpMsg(types.ModuleName), nil, err
 		}
 
 		msg := types.NewMsgUpdateServiceBinding(serviceName, simAccount.Address, deposit, pricing, qos, simAccount.Address)
@@ -228,26 +236,28 @@ func SimulateMsgUpdateServiceBinding(ak types.AccountKeeper, k keeper.Keeper) si
 		)
 
 		if _, _, err := app.Deliver(tx); err != nil {
-			return simulation.NoOpMsg(types.ModuleName), nil, err
+			return simtypes.NoOpMsg(types.ModuleName), nil, err
 		}
 
-		return simulation.NewOperationMsg(msg, true, ""), nil, nil
+		return simtypes.NewOperationMsg(msg, true, ""), nil, nil
 	}
 }
 
 // SimulateMsgSetWithdrawAddress generates a MsgSetWithdrawAddress with random values.
-func SimulateMsgSetWithdrawAddress(ak types.AccountKeeper, k keeper.Keeper) simulation.Operation {
+func SimulateMsgSetWithdrawAddress(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keeper) simtypes.Operation {
 	return func(
-		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simulation.Account, chainID string,
-	) (simulation.OperationMsg, []simulation.FutureOperation, error) {
+		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
+	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 
-		simAccount, _ := simulation.RandomAcc(r, accs)
-		withdrawalAccount, _ := simulation.RandomAcc(r, accs)
+		simAccount, _ := simtypes.RandomAcc(r, accs)
+		withdrawalAccount, _ := simtypes.RandomAcc(r, accs)
 
 		account := ak.GetAccount(ctx, simAccount.Address)
-		fees, err := simulation.RandomFees(r, ctx, account.SpendableCoins(ctx.BlockTime()))
+		spendable := bk.SpendableCoins(ctx, account.GetAddress())
+
+		fees, err := simtypes.RandomFees(r, ctx, spendable)
 		if err != nil {
-			return simulation.NoOpMsg(types.ModuleName), nil, err
+			return simtypes.NoOpMsg(types.ModuleName), nil, err
 		}
 
 		msg := types.NewMsgSetWithdrawAddress(simAccount.Address, withdrawalAccount.Address)
@@ -263,26 +273,28 @@ func SimulateMsgSetWithdrawAddress(ak types.AccountKeeper, k keeper.Keeper) simu
 		)
 
 		if _, _, err := app.Deliver(tx); err != nil {
-			return simulation.NoOpMsg(types.ModuleName), nil, err
+			return simtypes.NoOpMsg(types.ModuleName), nil, err
 		}
 
-		return simulation.NewOperationMsg(msg, true, ""), nil, nil
+		return simtypes.NewOperationMsg(msg, true, ""), nil, nil
 	}
 }
 
 // SimulateMsgDisableServiceBinding generates a MsgDisableServiceBinding with random values.
-func SimulateMsgDisableServiceBinding(ak types.AccountKeeper, k keeper.Keeper) simulation.Operation {
+func SimulateMsgDisableServiceBinding(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keeper) simtypes.Operation {
 	return func(
-		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simulation.Account, chainID string,
-	) (simulation.OperationMsg, []simulation.FutureOperation, error) {
+		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
+	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 
-		simAccount, _ := simulation.RandomAcc(r, accs)
-		serviceName := simulation.RandStringOfLength(r, 20)
+		simAccount, _ := simtypes.RandomAcc(r, accs)
+		serviceName := simtypes.RandStringOfLength(r, 20)
 
 		account := ak.GetAccount(ctx, simAccount.Address)
-		fees, err := simulation.RandomFees(r, ctx, account.SpendableCoins(ctx.BlockTime()))
+		spendable := bk.SpendableCoins(ctx, account.GetAddress())
+
+		fees, err := simtypes.RandomFees(r, ctx, spendable)
 		if err != nil {
-			return simulation.NoOpMsg(types.ModuleName), nil, err
+			return simtypes.NoOpMsg(types.ModuleName), nil, err
 		}
 
 		msg := types.NewMsgDisableServiceBinding(serviceName, simAccount.Address, simAccount.Address)
@@ -298,28 +310,30 @@ func SimulateMsgDisableServiceBinding(ak types.AccountKeeper, k keeper.Keeper) s
 		)
 
 		if _, _, err := app.Deliver(tx); err != nil {
-			return simulation.NoOpMsg(types.ModuleName), nil, err
+			return simtypes.NoOpMsg(types.ModuleName), nil, err
 		}
 
-		return simulation.NewOperationMsg(msg, true, ""), nil, nil
+		return simtypes.NewOperationMsg(msg, true, ""), nil, nil
 	}
 }
 
 // SimulateMsgEnableServiceBinding generates a MsgEnableServiceBinding with random values.
-func SimulateMsgEnableServiceBinding(ak types.AccountKeeper, k keeper.Keeper) simulation.Operation {
+func SimulateMsgEnableServiceBinding(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keeper) simtypes.Operation {
 	return func(
-		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simulation.Account, chainID string,
-	) (simulation.OperationMsg, []simulation.FutureOperation, error) {
+		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
+	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 
-		simAccount, _ := simulation.RandomAcc(r, accs)
+		simAccount, _ := simtypes.RandomAcc(r, accs)
 
-		serviceName := simulation.RandStringOfLength(r, 20)
-		deposit := sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(int64(simulation.RandIntBetween(r, 100, 1000)))))
+		serviceName := simtypes.RandStringOfLength(r, 20)
+		deposit := sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(int64(simtypes.RandIntBetween(r, 100, 1000)))))
 
 		account := ak.GetAccount(ctx, simAccount.Address)
-		fees, err := simulation.RandomFees(r, ctx, account.SpendableCoins(ctx.BlockTime()))
+		spendable := bk.SpendableCoins(ctx, account.GetAddress())
+
+		fees, err := simtypes.RandomFees(r, ctx, spendable)
 		if err != nil {
-			return simulation.NoOpMsg(types.ModuleName), nil, err
+			return simtypes.NoOpMsg(types.ModuleName), nil, err
 		}
 
 		msg := types.NewMsgEnableServiceBinding(serviceName, simAccount.Address, deposit, simAccount.Address)
@@ -335,26 +349,28 @@ func SimulateMsgEnableServiceBinding(ak types.AccountKeeper, k keeper.Keeper) si
 		)
 
 		if _, _, err := app.Deliver(tx); err != nil {
-			return simulation.NoOpMsg(types.ModuleName), nil, err
+			return simtypes.NoOpMsg(types.ModuleName), nil, err
 		}
 
-		return simulation.NewOperationMsg(msg, true, ""), nil, nil
+		return simtypes.NewOperationMsg(msg, true, ""), nil, nil
 	}
 }
 
 // SimulateMsgRefundServiceDeposit generates a MsgRefundServiceDeposit with random values.
-func SimulateMsgRefundServiceDeposit(ak types.AccountKeeper, k keeper.Keeper) simulation.Operation {
+func SimulateMsgRefundServiceDeposit(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keeper) simtypes.Operation {
 	return func(
-		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simulation.Account, chainID string,
-	) (simulation.OperationMsg, []simulation.FutureOperation, error) {
+		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
+	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 
-		simAccount, _ := simulation.RandomAcc(r, accs)
-		serviceName := simulation.RandStringOfLength(r, 20)
+		simAccount, _ := simtypes.RandomAcc(r, accs)
+		serviceName := simtypes.RandStringOfLength(r, 20)
 
 		account := ak.GetAccount(ctx, simAccount.Address)
-		fees, err := simulation.RandomFees(r, ctx, account.SpendableCoins(ctx.BlockTime()))
+		spendable := bk.SpendableCoins(ctx, account.GetAddress())
+
+		fees, err := simtypes.RandomFees(r, ctx, spendable)
 		if err != nil {
-			return simulation.NoOpMsg(types.ModuleName), nil, err
+			return simtypes.NoOpMsg(types.ModuleName), nil, err
 		}
 
 		msg := types.NewMsgRefundServiceDeposit(serviceName, simAccount.Address, simAccount.Address)
@@ -370,9 +386,9 @@ func SimulateMsgRefundServiceDeposit(ak types.AccountKeeper, k keeper.Keeper) si
 		)
 
 		if _, _, err := app.Deliver(tx); err != nil {
-			return simulation.NoOpMsg(types.ModuleName), nil, err
+			return simtypes.NoOpMsg(types.ModuleName), nil, err
 		}
 
-		return simulation.NewOperationMsg(msg, true, ""), nil, nil
+		return simtypes.NewOperationMsg(msg, true, ""), nil, nil
 	}
 }

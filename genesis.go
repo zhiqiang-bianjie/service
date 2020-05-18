@@ -5,8 +5,7 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	"github.com/irismod/service/types"
+	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 )
 
 // InitGenesis - store genesis parameters
@@ -70,7 +69,7 @@ func ExportGenesis(ctx sdk.Context, k Keeper) GenesisState {
 
 	k.IterateRequestContexts(
 		ctx,
-		func(requestContextID types.HexBytes, requestContext RequestContext) bool {
+		func(requestContextID tmbytes.HexBytes, requestContext RequestContext) bool {
 			requestContexts[requestContextID.String()] = requestContext
 			return false
 		},

@@ -204,13 +204,23 @@ func GetResponseSubspaceByReqCtx(requestContextID []byte, batchCounter uint64) [
 	return append(append(ResponseKey, requestContextID...), sdk.Uint64ToBigEndian(batchCounter)...)
 }
 
-// GetEarnedFeesKey gets the key for the earned fees of the specified provider
-func GetEarnedFeesKey(provider sdk.AccAddress) []byte {
+// GetEarnedFeesKey gets the key for the earned fees of the specified provider and denom
+func GetEarnedFeesKey(provider sdk.AccAddress, denom string) []byte {
+	return append(append(EarnedFeesKey, provider.Bytes()...), []byte(denom)...)
+}
+
+// GetEarnedFeesSubspace gets the subspace for the earned fees of the specified provider
+func GetEarnedFeesSubspace(provider sdk.AccAddress) []byte {
 	return append(EarnedFeesKey, provider.Bytes()...)
 }
 
-// GetOwnerEarnedFeesKey returns the key for the earned fees of the specified owner
-func GetOwnerEarnedFeesKey(owner sdk.AccAddress) []byte {
+// GetOwnerEarnedFeesKey returns the key for the earned fees of the specified owner and denom
+func GetOwnerEarnedFeesKey(owner sdk.AccAddress, denom string) []byte {
+	return append(OwnerEarnedFeesKey, owner.Bytes()...)
+}
+
+// GetEarnedFeesSubspace gets the subspace for the earned fees of the specified provider
+func GetOwnerEarnedFeesSubspace(owner sdk.AccAddress) []byte {
 	return append(OwnerEarnedFeesKey, owner.Bytes()...)
 }
 

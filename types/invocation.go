@@ -8,31 +8,11 @@ import (
 	"fmt"
 	"strings"
 
+	tmbytes "github.com/tendermint/tendermint/libs/bytes"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
-
-// RequestContext defines a context which holds request-related data
-type RequestContext struct {
-	ServiceName            string                   `json:"service_name" yaml:"service_name"`
-	Providers              []sdk.AccAddress         `json:"providers" yaml:"providers"`
-	Consumer               sdk.AccAddress           `json:"consumer" yaml:"consumer"`
-	ServiceFeeCap          sdk.Coins                `json:"service_fee_cap" yaml:"service_fee_cap"`
-	Input                  string                   `json:"input" yaml:"input"`
-	ModuleName             string                   `json:"module_name" yaml:"module_name"`
-	Timeout                int64                    `json:"timeout" yaml:"timeout"`
-	RepeatedFrequency      uint64                   `json:"repeated_frequency" yaml:"repeated_frequency"`
-	RepeatedTotal          int64                    `json:"repeated_total" yaml:"repeated_total"`
-	BatchCounter           uint64                   `json:"batch_counter" yaml:"batch_counter"`
-	BatchRequestCount      uint16                   `json:"batch_request_count" yaml:"batch_request_count"`
-	BatchResponseCount     uint16                   `json:"batch_response_count" yaml:"batch_response_count"`
-	BatchResponseThreshold uint16                   `json:"batch_response_threshold" yaml:"batch_response_threshold"`
-	ResponseThreshold      uint16                   `json:"response_threshold" yaml:"response_threshold"`
-	SuperMode              bool                     `json:"super_mode" yaml:"super_mode"`
-	Repeated               bool                     `json:"repeated" yaml:"repeated"`
-	BatchState             RequestContextBatchState `json:"batch_state" yaml:"batch_state"`
-	State                  RequestContextState      `json:"state" yaml:"state"`
-}
 
 // NewRequestContext creates a new RequestContext instance
 func NewRequestContext(
@@ -48,11 +28,11 @@ func NewRequestContext(
 	repeatedTotal int64,
 	batchCounter uint64,
 	batchRequestCount,
-	batchResponseCount uint16,
-	batchResponseThreshold uint16,
+	batchResponseCount uint32,
+	batchResponseThreshold uint32,
 	batchState RequestContextBatchState,
 	state RequestContextState,
-	responseThreshold uint16,
+	responseThreshold uint32,
 	moduleName string,
 ) RequestContext {
 	return RequestContext{
@@ -108,18 +88,9 @@ func (rc RequestContext) Empty() bool {
 	return len(rc.Consumer) == 0
 }
 
-// CompactRequest defines a compact request with a request context ID
-type CompactRequest struct {
-	RequestContextID           HexBytes
-	RequestContextBatchCounter uint64
-	Provider                   sdk.AccAddress
-	ServiceFee                 sdk.Coins
-	RequestHeight              int64
-}
-
 // NewCompactRequest creates a new CompactRequest instance
 func NewCompactRequest(
-	requestContextID HexBytes,
+	requestContextID tmbytes.HexBytes,
 	batchCounter uint64,
 	provider sdk.AccAddress,
 	serviceFee sdk.Coins,
@@ -134,24 +105,9 @@ func NewCompactRequest(
 	}
 }
 
-// Request defines a request which contains the detailed request data
-type Request struct {
-	ID                         HexBytes       `json:"id" yaml:"id"`
-	ServiceName                string         `json:"service_name" yaml:"service_name"`
-	Provider                   sdk.AccAddress `json:"provider" yaml:"provider"`
-	Consumer                   sdk.AccAddress `json:"consumer" yaml:"consumer"`
-	Input                      string         `json:"input" yaml:"input"`
-	ServiceFee                 sdk.Coins      `json:"service_fee" yaml:"service_fee"`
-	SuperMode                  bool           `json:"super_mode" yaml:"super_mode"`
-	RequestHeight              int64          `json:"request_height" yaml:"request_height"`
-	ExpirationHeight           int64          `json:"expiration_height" yaml:"expiration_height"`
-	RequestContextID           HexBytes       `json:"request_context_id" yaml:"request_context_id"`
-	RequestContextBatchCounter uint64         `json:"request_context_batch_counter" yaml:"request_context_batch_counter"`
-}
-
 // NewRequest creates a new Request instance
 func NewRequest(
-	id HexBytes,
+	id tmbytes.HexBytes,
 	serviceName string,
 	provider,
 	consumer sdk.AccAddress,
@@ -160,7 +116,7 @@ func NewRequest(
 	superMode bool,
 	requestHeight int64,
 	expirationHeight int64,
-	requestContextID HexBytes,
+	requestContextID tmbytes.HexBytes,
 	batchCounter uint64,
 ) Request {
 	return Request{
@@ -183,23 +139,13 @@ func (r Request) Empty() bool {
 	return len(r.ID) == 0
 }
 
-// Response defines a response
-type Response struct {
-	Provider                   sdk.AccAddress `json:"provider" yaml:"provider"`
-	Consumer                   sdk.AccAddress `json:"consumer" yaml:"consumer"`
-	Result                     string         `json:"result" yaml:"result"`
-	Output                     string         `json:"output" yaml:"output"`
-	RequestContextID           HexBytes       `json:"request_context_id" yaml:"request_context_id"`
-	RequestContextBatchCounter uint64         `json:"request_context_batch_counter" yaml:"request_context_batch_counter"`
-}
-
 // NewResponse creates a new Response instance
 func NewResponse(
 	provider,
 	consumer sdk.AccAddress,
 	result,
 	output string,
-	requestContextID HexBytes,
+	requestContextID tmbytes.HexBytes,
 	batchCounter uint64,
 ) Response {
 	return Response{
@@ -233,15 +179,6 @@ func ParseResult(result string) (Result, error) {
 
 	return r, nil
 }
-
-// RequestContextState defines the state for the request context
-type RequestContextState byte
-
-const (
-	RUNNING   RequestContextState = 0x00 // running
-	PAUSED    RequestContextState = 0x01 // paused
-	COMPLETED RequestContextState = 0x02 // completed
-)
 
 var (
 	RequestContextStateToStringMap = map[RequestContextState]string{
@@ -313,14 +250,6 @@ func (state RequestContextState) MarshalYAML() (interface{}, error) {
 	return state.String(), nil
 }
 
-// RequestContextBatchState defines the current batch state for the request context
-type RequestContextBatchState byte
-
-const (
-	BATCHRUNNING   RequestContextBatchState = 0x00 // running
-	BATCHCOMPLETED RequestContextBatchState = 0x01 // completed
-)
-
 var (
 	RequestContextBatchStateToStringMap = map[RequestContextBatchState]string{
 		BATCHRUNNING:   "running",
@@ -390,10 +319,10 @@ func (state RequestContextBatchState) MarshalYAML() (interface{}, error) {
 }
 
 // ResponseCallback defines the response callback interface
-type ResponseCallback func(ctx sdk.Context, requestContextID HexBytes, responses []string, err error)
+type ResponseCallback func(ctx sdk.Context, requestContextID tmbytes.HexBytes, responses []string, err error)
 
 // StateCallback defines the state callback interface
-type StateCallback func(ctx sdk.Context, requestContextID HexBytes, cause string)
+type StateCallback func(ctx sdk.Context, requestContextID tmbytes.HexBytes, cause string)
 
 const (
 	RequestIDLen = 58
@@ -401,7 +330,7 @@ const (
 )
 
 // ConvertRequestID converts the given string to request ID
-func ConvertRequestID(requestIDStr string) (HexBytes, error) {
+func ConvertRequestID(requestIDStr string) (tmbytes.HexBytes, error) {
 	if len(requestIDStr) != 2*RequestIDLen {
 		return nil, errors.New("invalid request id")
 	}
@@ -415,7 +344,7 @@ func ConvertRequestID(requestIDStr string) (HexBytes, error) {
 }
 
 // GenerateRequestContextID generates a unique ID for the request context from the specified params
-func GenerateRequestContextID(txHash []byte, msgIndex int64) HexBytes {
+func GenerateRequestContextID(txHash []byte, msgIndex int64) tmbytes.HexBytes {
 	bz := make([]byte, 8)
 
 	binary.BigEndian.PutUint64(bz, uint64(msgIndex))
@@ -424,7 +353,7 @@ func GenerateRequestContextID(txHash []byte, msgIndex int64) HexBytes {
 }
 
 // SplitRequestContextID splits the given contextID to txHash and msgIndex
-func SplitRequestContextID(contextID HexBytes) (HexBytes, int64, error) {
+func SplitRequestContextID(contextID tmbytes.HexBytes) (tmbytes.HexBytes, int64, error) {
 	if len(contextID) != ContextIDLen {
 		return nil, 0, errors.New("invalid request context ID")
 	}
@@ -436,7 +365,7 @@ func SplitRequestContextID(contextID HexBytes) (HexBytes, int64, error) {
 }
 
 // GenerateRequestID generates a unique request ID from the given params
-func GenerateRequestID(requestContextID HexBytes, requestContextBatchCounter uint64, requestHeight int64, batchRequestIndex int16) HexBytes {
+func GenerateRequestID(requestContextID tmbytes.HexBytes, requestContextBatchCounter uint64, requestHeight int64, batchRequestIndex int16) tmbytes.HexBytes {
 	contextID := make([]byte, len(requestContextID))
 	copy(contextID, requestContextID)
 
@@ -450,7 +379,7 @@ func GenerateRequestID(requestContextID HexBytes, requestContextBatchCounter uin
 }
 
 // SplitRequestID splits the given requestID to contextID, batchCounter, requestHeight, batchRequestIndex
-func SplitRequestID(requestID HexBytes) (HexBytes, uint64, int64, int16, error) {
+func SplitRequestID(requestID tmbytes.HexBytes) (tmbytes.HexBytes, uint64, int64, int16, error) {
 	if len(requestID) != RequestIDLen {
 		return nil, 0, 0, 0, errors.New("invalid request ID")
 	}

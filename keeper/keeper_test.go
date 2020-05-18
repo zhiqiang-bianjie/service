@@ -6,14 +6,16 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
+	gogotypes "github.com/gogo/protobuf/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/tmhash"
+	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	simapp "github.com/irismod/service/app"
 	"github.com/irismod/service/keeper"
-	"github.com/irismod/service/simapp"
 	"github.com/irismod/service/types"
 )
 
@@ -371,9 +373,10 @@ func (suite *KeeperTestSuite) TestKeeperRequestService() {
 
 	requestProviders := []sdk.AccAddress{}
 	for ; iterator.Valid(); iterator.Next() {
-		var requestID []byte
-		suite.cdc.MustUnmarshalBinaryLengthPrefixed(iterator.Value(), &requestID)
+		var requestIDBz gogotypes.BytesValue
+		suite.cdc.MustUnmarshalBinaryBare(iterator.Value(), &requestIDBz)
 
+		requestID := requestIDBz.Value
 		request, found := suite.keeper.GetRequest(ctx, requestID)
 		suite.True(found)
 
@@ -430,7 +433,7 @@ func (suite *KeeperTestSuite) TestKeeper_Respond_Service() {
 	suite.NoError(err)
 
 	requestContext, _ = suite.keeper.GetRequestContext(ctx, requestContextID)
-	suite.Equal(uint16(1), requestContext.BatchResponseCount)
+	suite.Equal(uint32(1), requestContext.BatchResponseCount)
 	suite.Equal(types.BATCHRUNNING, requestContext.BatchState)
 
 	response, found := suite.keeper.GetResponse(ctx, requestID1)
@@ -449,7 +452,7 @@ func (suite *KeeperTestSuite) TestKeeper_Respond_Service() {
 	suite.NoError(err)
 
 	requestContext, _ = suite.keeper.GetRequestContext(ctx, requestContextID)
-	suite.Equal(uint16(2), requestContext.BatchResponseCount)
+	suite.Equal(uint32(2), requestContext.BatchResponseCount)
 	suite.Equal(types.BATCHCOMPLETED, requestContext.BatchState)
 
 	_, found = suite.keeper.GetResponse(ctx, requestID2)
@@ -481,7 +484,7 @@ func (suite *KeeperTestSuite) TestRequestServiceFromModule() {
 	suite.setServiceDefinition()
 
 	moduleName := "oracle"
-	respThreshold := uint16(2)
+	respThreshold := uint32(2)
 
 	err := suite.keeper.RegisterResponseCallback(moduleName, callback)
 	suite.NoError(err)
@@ -501,7 +504,7 @@ func (suite *KeeperTestSuite) TestRequestServiceFromModule() {
 	suite.NoError(err)
 
 	requestContext, _ = suite.keeper.GetRequestContext(ctx, requestContextID)
-	suite.Equal(uint16(1), requestContext.BatchResponseCount)
+	suite.Equal(uint32(1), requestContext.BatchResponseCount)
 	suite.Equal(types.BATCHRUNNING, requestContext.BatchState)
 
 	// callback has not occurred due to insufficient responses
@@ -511,22 +514,22 @@ func (suite *KeeperTestSuite) TestRequestServiceFromModule() {
 	suite.NoError(err)
 
 	requestContext, _ = suite.keeper.GetRequestContext(ctx, requestContextID)
-	suite.Equal(uint16(2), requestContext.BatchResponseCount)
+	suite.Equal(uint32(2), requestContext.BatchResponseCount)
 	suite.Equal(types.BATCHCOMPLETED, requestContext.BatchState)
 
 	// callback has occurred because the response count reaches the threshold
 	suite.True(callbacked)
 }
 
-func callback(ctx sdk.Context, requestContextID types.HexBytes, responses []string, err error) {
+func callback(ctx sdk.Context, requestContextID tmbytes.HexBytes, responses []string, err error) {
 	callbacked = true
 }
 
 func (suite *KeeperTestSuite) setRequestContext(
 	ctx sdk.Context, consumer sdk.AccAddress,
 	providers []sdk.AccAddress, state types.RequestContextState,
-	threshold uint16, moduleName string,
-) (types.HexBytes, types.RequestContext) {
+	threshold uint32, moduleName string,
+) (tmbytes.HexBytes, types.RequestContext) {
 	requestContext := types.NewRequestContext(
 		testServiceName, providers, consumer, testInput,
 		testServiceFeeCap, testTimeout, false, true, testRepeatedFreq,
@@ -540,7 +543,7 @@ func (suite *KeeperTestSuite) setRequestContext(
 	return requestContextID, requestContext
 }
 
-func (suite *KeeperTestSuite) setRequest(ctx sdk.Context, consumer sdk.AccAddress, provider sdk.AccAddress, requestContextID []byte) types.HexBytes {
+func (suite *KeeperTestSuite) setRequest(ctx sdk.Context, consumer sdk.AccAddress, provider sdk.AccAddress, requestContextID []byte) tmbytes.HexBytes {
 	requestContext, _ := suite.keeper.GetRequestContext(ctx, requestContextID)
 
 	_ = suite.keeper.DeductServiceFees(ctx, consumer, testServiceFee)

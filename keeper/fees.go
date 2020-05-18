@@ -3,13 +3,14 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	gogotypes "github.com/gogo/protobuf/types"
 
 	"github.com/irismod/service/types"
 )
 
 // RefundServiceFee refunds the service fee to the specified consumer
 func (k Keeper) RefundServiceFee(ctx sdk.Context, consumer sdk.AccAddress, serviceFee sdk.Coins) error {
-	err := k.supplyKeeper.SendCoinsFromModuleToAccount(ctx, types.RequestAccName, consumer, serviceFee)
+	err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.RequestAccName, consumer, serviceFee)
 
 	if err != nil {
 		return err
@@ -28,7 +29,7 @@ func (k Keeper) AddEarnedFee(ctx sdk.Context, provider sdk.AccAddress, fee sdk.C
 		taxCoins = taxCoins.Add(sdk.NewCoin(coin.Denom, taxAmount))
 	}
 
-	err := k.supplyKeeper.SendCoinsFromModuleToModule(ctx, types.RequestAccName, k.feeCollectorName, taxCoins)
+	err := k.bankKeeper.SendCoinsFromModuleToModule(ctx, types.RequestAccName, k.feeCollectorName, taxCoins)
 	if err != nil {
 		return err
 	}
@@ -54,54 +55,72 @@ func (k Keeper) AddEarnedFee(ctx sdk.Context, provider sdk.AccAddress, fee sdk.C
 func (k Keeper) SetEarnedFees(ctx sdk.Context, provider sdk.AccAddress, fees sdk.Coins) {
 	store := ctx.KVStore(k.storeKey)
 
-	bz := k.cdc.MustMarshalBinaryLengthPrefixed(fees)
-	store.Set(types.GetEarnedFeesKey(provider), bz)
+	for _, fee := range fees {
+		bz := k.cdc.MustMarshalBinaryBare(&fee)
+		store.Set(types.GetEarnedFeesKey(provider, fee.Denom), bz)
+	}
 }
 
 // GetEarnedFees retrieves the earned fees of the specified provider
 func (k Keeper) GetEarnedFees(ctx sdk.Context, provider sdk.AccAddress) (fees sdk.Coins, found bool) {
 	store := ctx.KVStore(k.storeKey)
 
-	bz := store.Get(types.GetEarnedFeesKey(provider))
-	if bz == nil {
-		return fees, false
+	iterator := sdk.KVStorePrefixIterator(store, types.GetEarnedFeesSubspace(provider))
+
+	fees = sdk.NewCoins()
+	for ; iterator.Valid(); iterator.Next() {
+		var balance sdk.Coin
+		k.cdc.MustUnmarshalBinaryBare(iterator.Value(), &balance)
+		fees = fees.Add(balance)
 	}
 
-	k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &fees)
 	return fees, true
 }
 
 // DeleteEarnedFees removes the earned fees of the specified provider
 func (k Keeper) DeleteEarnedFees(ctx sdk.Context, provider sdk.AccAddress) {
 	store := ctx.KVStore(k.storeKey)
-	store.Delete(types.GetEarnedFeesKey(provider))
+	iterator := sdk.KVStorePrefixIterator(store, types.GetEarnedFeesSubspace(provider))
+
+	for ; iterator.Valid(); iterator.Next() {
+		store.Delete(iterator.Key())
+	}
 }
 
 // SetOwnerEarnedFees sets the earned fees for the specified owner
 func (k Keeper) SetOwnerEarnedFees(ctx sdk.Context, owner sdk.AccAddress, fees sdk.Coins) {
 	store := ctx.KVStore(k.storeKey)
 
-	bz := k.cdc.MustMarshalBinaryLengthPrefixed(fees)
-	store.Set(types.GetOwnerEarnedFeesKey(owner), bz)
+	for _, fee := range fees {
+		bz := k.cdc.MustMarshalBinaryBare(&fee)
+		store.Set(types.GetOwnerEarnedFeesKey(owner, fee.Denom), bz)
+	}
 }
 
 // GetOwnerEarnedFees retrieves the earned fees of the specified owner
 func (k Keeper) GetOwnerEarnedFees(ctx sdk.Context, owner sdk.AccAddress) (fees sdk.Coins, found bool) {
 	store := ctx.KVStore(k.storeKey)
 
-	bz := store.Get(types.GetOwnerEarnedFeesKey(owner))
-	if bz == nil {
-		return fees, false
+	iterator := sdk.KVStorePrefixIterator(store, types.GetOwnerEarnedFeesSubspace(owner))
+
+	fees = sdk.NewCoins()
+	for ; iterator.Valid(); iterator.Next() {
+		var balance sdk.Coin
+		k.cdc.MustUnmarshalBinaryBare(iterator.Value(), &balance)
+		fees = fees.Add(balance)
 	}
 
-	k.cdc.MustUnmarshalBinaryLengthPrefixed(bz, &fees)
 	return fees, true
 }
 
 // DeleteOwnerEarnedFees removes the earned fees of the specified owner
 func (k Keeper) DeleteOwnerEarnedFees(ctx sdk.Context, owner sdk.AccAddress) {
 	store := ctx.KVStore(k.storeKey)
-	store.Delete(types.GetOwnerEarnedFeesKey(owner))
+	iterator := sdk.KVStorePrefixIterator(store, types.GetOwnerEarnedFeesSubspace(owner))
+
+	for ; iterator.Valid(); iterator.Next() {
+		store.Delete(iterator.Key())
+	}
 }
 
 // WithdrawEarnedFees withdraws the earned fees of the specified provider or owner
@@ -150,7 +169,7 @@ func (k Keeper) WithdrawEarnedFees(ctx sdk.Context, owner, provider sdk.AccAddre
 
 	withdrawAddr := k.GetWithdrawAddress(ctx, owner)
 
-	err := k.supplyKeeper.SendCoinsFromModuleToAccount(ctx, types.RequestAccName, withdrawAddr, withdrawFees)
+	err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.RequestAccName, withdrawAddr, withdrawFees)
 	if err != nil {
 		return err
 	}
@@ -172,10 +191,10 @@ func (k Keeper) RefundEarnedFees(ctx sdk.Context) error {
 	for ; iterator.Valid(); iterator.Next() {
 		provider := iterator.Key()[1:]
 
-		var earnedFees sdk.Coins
-		k.cdc.MustUnmarshalBinaryLengthPrefixed(iterator.Value(), &earnedFees)
+		var earnedFee sdk.Coin
+		k.cdc.MustUnmarshalBinaryBare(iterator.Value(), &earnedFee)
 
-		err := k.supplyKeeper.SendCoinsFromModuleToAccount(ctx, types.RequestAccName, provider, earnedFees)
+		err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.RequestAccName, provider, sdk.NewCoins(earnedFee))
 		if err != nil {
 			return err
 		}
@@ -190,12 +209,12 @@ func (k Keeper) RefundServiceFees(ctx sdk.Context) error {
 	defer iterator.Close()
 
 	for ; iterator.Valid(); iterator.Next() {
-		var requestID types.HexBytes
-		k.cdc.MustUnmarshalBinaryLengthPrefixed(iterator.Value(), &requestID)
+		var requestID gogotypes.BytesValue
+		k.cdc.MustUnmarshalBinaryBare(iterator.Value(), &requestID)
 
-		request, _ := k.GetRequest(ctx, requestID)
+		request, _ := k.GetRequest(ctx, requestID.Value)
 
-		err := k.supplyKeeper.SendCoinsFromModuleToAccount(ctx, types.RequestAccName, request.Consumer, request.ServiceFee)
+		err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.RequestAccName, request.Consumer, request.ServiceFee)
 		if err != nil {
 			return err
 		}

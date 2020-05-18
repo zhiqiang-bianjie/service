@@ -8,7 +8,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
+	authclient "github.com/cosmos/cosmos-sdk/x/auth/client"
 
 	"github.com/irismod/service/types"
 )
@@ -50,7 +50,7 @@ func QueryRequestContextByTxQuery(cliCtx context.CLIContext, queryRoute string, 
 	}
 
 	// NOTE: QueryTx is used to facilitate the txs query which does not currently
-	txInfo, err := utils.QueryTx(cliCtx, txHash.String())
+	txInfo, err := authclient.QueryTx(cliCtx, txHash.String())
 	if err != nil {
 		return requestContext, err
 	}
@@ -164,7 +164,7 @@ func QueryResponseByTxQuery(cliCtx context.CLIContext, queryRoute string, params
 
 	// NOTE: SearchTxs is used to facilitate the txs query which does not currently
 	// support configurable pagination.
-	result, err := utils.QueryTxsByEvents(cliCtx, events, 1, 1)
+	result, err := authclient.QueryTxsByEvents(cliCtx, events, 1, 1, "")
 	if err != nil {
 		return response, err
 	}

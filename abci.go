@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 
 	"github.com/irismod/service/types"
 )
@@ -14,7 +15,7 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 	ctx = ctx.WithLogger(ctx.Logger().With("handler", "endBlock").With("module", "iris/service"))
 
 	// handler for the active request on expired
-	expiredRequestHandler := func(requestID types.HexBytes, request Request) {
+	expiredRequestHandler := func(requestID tmbytes.HexBytes, request Request) {
 		if !request.SuperMode {
 			_ = k.Slash(ctx, requestID)
 			_ = k.RefundServiceFee(ctx, request.Consumer, request.ServiceFee)
@@ -24,7 +25,7 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 	}
 
 	// handler for the expired request batch
-	expiredRequestBatchHandler := func(requestContextID types.HexBytes, requestContext RequestContext) {
+	expiredRequestBatchHandler := func(requestContextID tmbytes.HexBytes, requestContext RequestContext) {
 		if requestContext.BatchState != BATCHCOMPLETED {
 			k.IterateActiveRequests(ctx, requestContextID, requestContext.BatchCounter, expiredRequestHandler)
 			resContext := k.CompleteBatch(ctx, requestContext, requestContextID)
@@ -52,7 +53,7 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 	providerRequests := make(map[string][]string)
 
 	// handler for the new request batch
-	newRequestBatchHandler := func(requestContextID types.HexBytes, requestContext RequestContext) {
+	newRequestBatchHandler := func(requestContextID tmbytes.HexBytes, requestContext RequestContext) {
 		if requestContext.State == RUNNING {
 			providers, totalPrices := k.FilterServiceProviders(
 				ctx, requestContext.ServiceName,
