@@ -95,6 +95,7 @@ func NewCompactRequest(
 	provider sdk.AccAddress,
 	serviceFee sdk.Coins,
 	requestHeight int64,
+	expirationHeight int64,
 ) CompactRequest {
 	return CompactRequest{
 		RequestContextID:           requestContextID,
@@ -102,6 +103,7 @@ func NewCompactRequest(
 		Provider:                   provider,
 		ServiceFee:                 serviceFee,
 		RequestHeight:              requestHeight,
+		ExpirationHeight:           expirationHeight,
 	}
 }
 

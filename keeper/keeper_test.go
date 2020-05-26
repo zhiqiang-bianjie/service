@@ -550,7 +550,7 @@ func (suite *KeeperTestSuite) setRequest(ctx sdk.Context, consumer sdk.AccAddres
 
 	request := types.NewCompactRequest(
 		requestContextID, requestContext.BatchCounter, provider,
-		testServiceFee, ctx.BlockHeight(),
+		testServiceFee, ctx.BlockHeight(), requestContext.Timeout,
 	)
 
 	requestContext.BatchRequestCount++

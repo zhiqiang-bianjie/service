@@ -7,9 +7,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	gogotypes "github.com/gogo/protobuf/types"
-	abci "github.com/tendermint/tendermint/abci/types"
-
 	"github.com/irismod/service/types"
+	abci "github.com/tendermint/tendermint/abci/types"
 )
 
 // NewQuerier creates a new service Querier instance

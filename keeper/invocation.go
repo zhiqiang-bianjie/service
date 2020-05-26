@@ -384,7 +384,7 @@ func (k Keeper) InitiateRequests(
 		request := k.buildRequest(
 			ctx, requestContextID, requestContext.BatchCounter,
 			requestContext.ServiceName, provider, requestContext.SuperMode,
-			requestContext.Consumer,
+			requestContext.Consumer, requestContext.Timeout,
 		)
 
 		requestID := types.GenerateRequestID(requestContextID, requestContext.BatchCounter, ctx.BlockHeight(), int16(providerIndex))
@@ -442,6 +442,7 @@ func (k Keeper) buildRequest(
 	provider sdk.AccAddress,
 	superMode bool,
 	consumer sdk.AccAddress,
+	timeout int64,
 ) types.CompactRequest {
 	var serviceFee sdk.Coins
 
@@ -456,6 +457,7 @@ func (k Keeper) buildRequest(
 		provider,
 		serviceFee,
 		ctx.BlockHeight(),
+		ctx.BlockHeight()+timeout,
 	)
 
 	return request
@@ -510,7 +512,7 @@ func (k Keeper) GetRequest(ctx sdk.Context, requestID tmbytes.HexBytes) (request
 		compactRequest.ServiceFee,
 		requestContext.SuperMode,
 		compactRequest.RequestHeight,
-		compactRequest.RequestHeight+requestContext.Timeout,
+		compactRequest.ExpirationHeight,
 		compactRequest.RequestContextID,
 		compactRequest.RequestContextBatchCounter,
 	)

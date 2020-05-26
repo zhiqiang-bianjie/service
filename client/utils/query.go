@@ -139,7 +139,7 @@ func QueryRequestByTxQuery(cliCtx context.CLIContext, queryRoute string, params 
 						compactRequest.ServiceFee,
 						requestContext.SuperMode,
 						compactRequest.RequestHeight,
-						compactRequest.RequestHeight+requestContext.Timeout,
+						compactRequest.ExpirationHeight,
 						compactRequest.RequestContextID,
 						compactRequest.RequestContextBatchCounter,
 					)

@@ -265,7 +265,8 @@ message CompactRequest {
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
     (gogoproto.moretags) = "yaml:\"service_fee\""
   ];
-  int64 request_height = 5 [(gogoproto.moretags) = "yaml:\"request_height\""];
+  int64 request_height     = 5 [(gogoproto.moretags) = "yaml:\"request_height\""];
+  int64 expiration_height  = 6 [(gogoproto.moretags) = "yaml:\"expiration_height\""];
 }
 
 // Response defines a standard for response.
