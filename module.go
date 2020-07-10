@@ -7,6 +7,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
@@ -26,6 +27,7 @@ var (
 	_ module.AppModule           = AppModule{}
 	_ module.AppModuleBasic      = AppModuleBasic{}
 	_ module.AppModuleSimulation = AppModule{}
+	_ module.InterfaceModule     = AppModuleBasic{}
 )
 
 // AppModuleBasic defines the basic application module used by the service module.
@@ -70,6 +72,11 @@ func (AppModuleBasic) GetTxCmd(_ client.Context) *cobra.Command {
 // GetQueryCmd returns no root query command for the service module.
 func (AppModuleBasic) GetQueryCmd(clientCtx client.Context) *cobra.Command {
 	return cli.GetQueryCmd(clientCtx.Codec)
+}
+
+// RegisterInterfaceTypes implements InterfaceModule.RegisterInterfaceTypes
+func (a AppModuleBasic) RegisterInterfaceTypes(registry codectypes.InterfaceRegistry) {
+	types.RegisterInterfaces(registry)
 }
 
 //____________________________________________________________________________
