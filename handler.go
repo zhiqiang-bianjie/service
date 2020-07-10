@@ -4,64 +4,65 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
+	"github.com/irismod/service/keeper"
 	"github.com/irismod/service/types"
 )
 
 // NewHandler creates an sdk.Handler for all the service type messages
-func NewHandler(k Keeper) sdk.Handler {
+func NewHandler(k keeper.Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 
 		switch msg := msg.(type) {
-		case MsgDefineService:
+		case *types.MsgDefineService:
 			return handleMsgDefineService(ctx, k, msg)
 
-		case MsgBindService:
+		case *types.MsgBindService:
 			return handleMsgBindService(ctx, k, msg)
 
-		case MsgUpdateServiceBinding:
+		case *types.MsgUpdateServiceBinding:
 			return handleMsgUpdateServiceBinding(ctx, k, msg)
 
-		case MsgSetWithdrawAddress:
+		case *types.MsgSetWithdrawAddress:
 			return handleMsgSetWithdrawAddress(ctx, k, msg)
 
-		case MsgDisableServiceBinding:
+		case *types.MsgDisableServiceBinding:
 			return handleMsgDisableServiceBinding(ctx, k, msg)
 
-		case MsgEnableServiceBinding:
+		case *types.MsgEnableServiceBinding:
 			return handleMsgEnableServiceBinding(ctx, k, msg)
 
-		case MsgRefundServiceDeposit:
+		case *types.MsgRefundServiceDeposit:
 			return handleMsgRefundServiceDeposit(ctx, k, msg)
 
-		case MsgCallService:
+		case *types.MsgCallService:
 			return handleMsgCallService(ctx, k, msg)
 
-		case MsgRespondService:
+		case *types.MsgRespondService:
 			return handleMsgRespondService(ctx, k, msg)
 
-		case MsgPauseRequestContext:
+		case *types.MsgPauseRequestContext:
 			return handleMsgPauseRequestContext(ctx, k, msg)
 
-		case MsgStartRequestContext:
+		case *types.MsgStartRequestContext:
 			return handleMsgStartRequestContext(ctx, k, msg)
 
-		case MsgKillRequestContext:
+		case *types.MsgKillRequestContext:
 			return handleMsgKillRequestContext(ctx, k, msg)
 
-		case MsgUpdateRequestContext:
+		case *types.MsgUpdateRequestContext:
 			return handleMsgUpdateRequestContext(ctx, k, msg)
 
-		case MsgWithdrawEarnedFees:
+		case *types.MsgWithdrawEarnedFees:
 			return handleMsgWithdrawEarnedFees(ctx, k, msg)
 
 		default:
-			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized %s message type: %T", ModuleName, msg)
+			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized %s message type: %T", types.ModuleName, msg)
 		}
 	}
 }
 
-func handleMsgDefineService(ctx sdk.Context, k Keeper, msg MsgDefineService) (*sdk.Result, error) {
+func handleMsgDefineService(ctx sdk.Context, k keeper.Keeper, msg *types.MsgDefineService) (*sdk.Result, error) {
 	err := k.AddServiceDefinition(ctx, msg.Name, msg.Description, msg.Tags, msg.Author, msg.AuthorDescription, msg.Schemas)
 	if err != nil {
 		return nil, err
@@ -70,7 +71,7 @@ func handleMsgDefineService(ctx sdk.Context, k Keeper, msg MsgDefineService) (*s
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, AttributeValueCategory),
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 			sdk.NewAttribute(sdk.AttributeKeySender, msg.Author.String()),
 		),
 	})
@@ -78,7 +79,7 @@ func handleMsgDefineService(ctx sdk.Context, k Keeper, msg MsgDefineService) (*s
 	return &sdk.Result{Events: ctx.EventManager().ABCIEvents()}, nil
 }
 
-func handleMsgBindService(ctx sdk.Context, k Keeper, msg MsgBindService) (*sdk.Result, error) {
+func handleMsgBindService(ctx sdk.Context, k keeper.Keeper, msg *types.MsgBindService) (*sdk.Result, error) {
 	err := k.AddServiceBinding(ctx, msg.ServiceName, msg.Provider, msg.Deposit, msg.Pricing, msg.QoS, msg.Owner)
 	if err != nil {
 		return nil, err
@@ -87,7 +88,7 @@ func handleMsgBindService(ctx sdk.Context, k Keeper, msg MsgBindService) (*sdk.R
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, AttributeValueCategory),
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 			sdk.NewAttribute(sdk.AttributeKeySender, msg.Owner.String()),
 		),
 	})
@@ -95,7 +96,7 @@ func handleMsgBindService(ctx sdk.Context, k Keeper, msg MsgBindService) (*sdk.R
 	return &sdk.Result{Events: ctx.EventManager().ABCIEvents()}, nil
 }
 
-func handleMsgUpdateServiceBinding(ctx sdk.Context, k Keeper, msg MsgUpdateServiceBinding) (*sdk.Result, error) {
+func handleMsgUpdateServiceBinding(ctx sdk.Context, k keeper.Keeper, msg *types.MsgUpdateServiceBinding) (*sdk.Result, error) {
 	err := k.UpdateServiceBinding(ctx, msg.ServiceName, msg.Provider, msg.Deposit, msg.Pricing, msg.QoS, msg.Owner)
 	if err != nil {
 		return nil, err
@@ -104,7 +105,7 @@ func handleMsgUpdateServiceBinding(ctx sdk.Context, k Keeper, msg MsgUpdateServi
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, AttributeValueCategory),
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 			sdk.NewAttribute(sdk.AttributeKeySender, msg.Owner.String()),
 		),
 	})
@@ -112,13 +113,13 @@ func handleMsgUpdateServiceBinding(ctx sdk.Context, k Keeper, msg MsgUpdateServi
 	return &sdk.Result{Events: ctx.EventManager().ABCIEvents()}, nil
 }
 
-func handleMsgSetWithdrawAddress(ctx sdk.Context, k Keeper, msg MsgSetWithdrawAddress) (*sdk.Result, error) {
+func handleMsgSetWithdrawAddress(ctx sdk.Context, k keeper.Keeper, msg *types.MsgSetWithdrawAddress) (*sdk.Result, error) {
 	k.SetWithdrawAddress(ctx, msg.Owner, msg.WithdrawAddress)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, AttributeValueCategory),
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 			sdk.NewAttribute(sdk.AttributeKeySender, msg.Owner.String()),
 		),
 	})
@@ -126,7 +127,7 @@ func handleMsgSetWithdrawAddress(ctx sdk.Context, k Keeper, msg MsgSetWithdrawAd
 	return &sdk.Result{Events: ctx.EventManager().ABCIEvents()}, nil
 }
 
-func handleMsgDisableServiceBinding(ctx sdk.Context, k Keeper, msg MsgDisableServiceBinding) (*sdk.Result, error) {
+func handleMsgDisableServiceBinding(ctx sdk.Context, k keeper.Keeper, msg *types.MsgDisableServiceBinding) (*sdk.Result, error) {
 	err := k.DisableServiceBinding(ctx, msg.ServiceName, msg.Provider, msg.Owner)
 	if err != nil {
 		return nil, err
@@ -135,7 +136,7 @@ func handleMsgDisableServiceBinding(ctx sdk.Context, k Keeper, msg MsgDisableSer
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, AttributeValueCategory),
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 			sdk.NewAttribute(sdk.AttributeKeySender, msg.Owner.String()),
 		),
 	})
@@ -143,7 +144,7 @@ func handleMsgDisableServiceBinding(ctx sdk.Context, k Keeper, msg MsgDisableSer
 	return &sdk.Result{Events: ctx.EventManager().ABCIEvents()}, nil
 }
 
-func handleMsgEnableServiceBinding(ctx sdk.Context, k Keeper, msg MsgEnableServiceBinding) (*sdk.Result, error) {
+func handleMsgEnableServiceBinding(ctx sdk.Context, k keeper.Keeper, msg *types.MsgEnableServiceBinding) (*sdk.Result, error) {
 	err := k.EnableServiceBinding(ctx, msg.ServiceName, msg.Provider, msg.Deposit, msg.Owner)
 	if err != nil {
 		return nil, err
@@ -152,7 +153,7 @@ func handleMsgEnableServiceBinding(ctx sdk.Context, k Keeper, msg MsgEnableServi
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, AttributeValueCategory),
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 			sdk.NewAttribute(sdk.AttributeKeySender, msg.Owner.String()),
 		),
 	})
@@ -160,7 +161,7 @@ func handleMsgEnableServiceBinding(ctx sdk.Context, k Keeper, msg MsgEnableServi
 	return &sdk.Result{Events: ctx.EventManager().ABCIEvents()}, nil
 }
 
-func handleMsgRefundServiceDeposit(ctx sdk.Context, k Keeper, msg MsgRefundServiceDeposit) (*sdk.Result, error) {
+func handleMsgRefundServiceDeposit(ctx sdk.Context, k keeper.Keeper, msg *types.MsgRefundServiceDeposit) (*sdk.Result, error) {
 	err := k.RefundDeposit(ctx, msg.ServiceName, msg.Provider, msg.Owner)
 	if err != nil {
 		return nil, err
@@ -169,7 +170,7 @@ func handleMsgRefundServiceDeposit(ctx sdk.Context, k Keeper, msg MsgRefundServi
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, AttributeValueCategory),
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 			sdk.NewAttribute(sdk.AttributeKeySender, msg.Owner.String()),
 		),
 	})
@@ -178,10 +179,10 @@ func handleMsgRefundServiceDeposit(ctx sdk.Context, k Keeper, msg MsgRefundServi
 }
 
 // handleMsgCallService handles MsgCallService
-func handleMsgCallService(ctx sdk.Context, k Keeper, msg MsgCallService) (*sdk.Result, error) {
+func handleMsgCallService(ctx sdk.Context, k keeper.Keeper, msg *types.MsgCallService) (*sdk.Result, error) {
 	reqContextID, err := k.CreateRequestContext(
 		ctx, msg.ServiceName, msg.Providers, msg.Consumer, msg.Input, msg.ServiceFeeCap, msg.Timeout,
-		msg.SuperMode, msg.Repeated, msg.RepeatedFrequency, msg.RepeatedTotal, RUNNING, 0, "")
+		msg.SuperMode, msg.Repeated, msg.RepeatedFrequency, msg.RepeatedTotal, types.RUNNING, 0, "")
 	if err != nil {
 		return nil, err
 	}
@@ -189,7 +190,7 @@ func handleMsgCallService(ctx sdk.Context, k Keeper, msg MsgCallService) (*sdk.R
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, AttributeValueCategory),
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 			sdk.NewAttribute(sdk.AttributeKeySender, msg.Consumer.String()),
 			sdk.NewAttribute(types.AttributeKeyRequestContextID, reqContextID.String()),
 		),
@@ -199,7 +200,7 @@ func handleMsgCallService(ctx sdk.Context, k Keeper, msg MsgCallService) (*sdk.R
 }
 
 // handleMsgRespondService handles MsgRespondService
-func handleMsgRespondService(ctx sdk.Context, k Keeper, msg MsgRespondService) (*sdk.Result, error) {
+func handleMsgRespondService(ctx sdk.Context, k keeper.Keeper, msg *types.MsgRespondService) (*sdk.Result, error) {
 	request, _, err := k.AddResponse(ctx, msg.RequestID, msg.Provider, msg.Result, msg.Output)
 	if err != nil {
 		return nil, err
@@ -208,7 +209,7 @@ func handleMsgRespondService(ctx sdk.Context, k Keeper, msg MsgRespondService) (
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, AttributeValueCategory),
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 			sdk.NewAttribute(sdk.AttributeKeySender, msg.Provider.String()),
 			sdk.NewAttribute(types.AttributeKeyRequestContextID, request.RequestContextID.String()),
 			sdk.NewAttribute(types.AttributeKeyRequestID, msg.RequestID.String()),
@@ -219,7 +220,7 @@ func handleMsgRespondService(ctx sdk.Context, k Keeper, msg MsgRespondService) (
 }
 
 // handleMsgPauseRequestContext handles MsgPauseRequestContext
-func handleMsgPauseRequestContext(ctx sdk.Context, k Keeper, msg MsgPauseRequestContext) (*sdk.Result, error) {
+func handleMsgPauseRequestContext(ctx sdk.Context, k keeper.Keeper, msg *types.MsgPauseRequestContext) (*sdk.Result, error) {
 	if err := k.CheckAuthority(ctx, msg.Consumer, msg.RequestContextID, true); err != nil {
 		return nil, err
 	}
@@ -231,7 +232,7 @@ func handleMsgPauseRequestContext(ctx sdk.Context, k Keeper, msg MsgPauseRequest
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, AttributeValueCategory),
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 			sdk.NewAttribute(sdk.AttributeKeySender, msg.Consumer.String()),
 		),
 	})
@@ -240,7 +241,7 @@ func handleMsgPauseRequestContext(ctx sdk.Context, k Keeper, msg MsgPauseRequest
 }
 
 // handleMsgStartRequestContext handles MsgStartRequestContext
-func handleMsgStartRequestContext(ctx sdk.Context, k Keeper, msg MsgStartRequestContext) (*sdk.Result, error) {
+func handleMsgStartRequestContext(ctx sdk.Context, k keeper.Keeper, msg *types.MsgStartRequestContext) (*sdk.Result, error) {
 	if err := k.CheckAuthority(ctx, msg.Consumer, msg.RequestContextID, true); err != nil {
 		return nil, err
 	}
@@ -252,7 +253,7 @@ func handleMsgStartRequestContext(ctx sdk.Context, k Keeper, msg MsgStartRequest
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, AttributeValueCategory),
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 			sdk.NewAttribute(sdk.AttributeKeySender, msg.Consumer.String()),
 		),
 	})
@@ -261,7 +262,7 @@ func handleMsgStartRequestContext(ctx sdk.Context, k Keeper, msg MsgStartRequest
 }
 
 // handleMsgKillRequestContext handles MsgKillRequestContext
-func handleMsgKillRequestContext(ctx sdk.Context, k Keeper, msg MsgKillRequestContext) (*sdk.Result, error) {
+func handleMsgKillRequestContext(ctx sdk.Context, k keeper.Keeper, msg *types.MsgKillRequestContext) (*sdk.Result, error) {
 	if err := k.CheckAuthority(ctx, msg.Consumer, msg.RequestContextID, true); err != nil {
 		return nil, err
 	}
@@ -273,7 +274,7 @@ func handleMsgKillRequestContext(ctx sdk.Context, k Keeper, msg MsgKillRequestCo
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, AttributeValueCategory),
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 			sdk.NewAttribute(sdk.AttributeKeySender, msg.Consumer.String()),
 		),
 	})
@@ -282,7 +283,7 @@ func handleMsgKillRequestContext(ctx sdk.Context, k Keeper, msg MsgKillRequestCo
 }
 
 // handleMsgUpdateRequestContext handles MsgUpdateRequestContext
-func handleMsgUpdateRequestContext(ctx sdk.Context, k Keeper, msg MsgUpdateRequestContext) (*sdk.Result, error) {
+func handleMsgUpdateRequestContext(ctx sdk.Context, k keeper.Keeper, msg *types.MsgUpdateRequestContext) (*sdk.Result, error) {
 	if err := k.CheckAuthority(ctx, msg.Consumer, msg.RequestContextID, true); err != nil {
 		return nil, err
 	}
@@ -297,7 +298,7 @@ func handleMsgUpdateRequestContext(ctx sdk.Context, k Keeper, msg MsgUpdateReque
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, AttributeValueCategory),
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 			sdk.NewAttribute(sdk.AttributeKeySender, msg.Consumer.String()),
 		),
 	})
@@ -306,7 +307,7 @@ func handleMsgUpdateRequestContext(ctx sdk.Context, k Keeper, msg MsgUpdateReque
 }
 
 // handleMsgWithdrawEarnedFees handles MsgWithdrawEarnedFees
-func handleMsgWithdrawEarnedFees(ctx sdk.Context, k Keeper, msg MsgWithdrawEarnedFees) (*sdk.Result, error) {
+func handleMsgWithdrawEarnedFees(ctx sdk.Context, k keeper.Keeper, msg *types.MsgWithdrawEarnedFees) (*sdk.Result, error) {
 	if err := k.WithdrawEarnedFees(ctx, msg.Owner, msg.Provider); err != nil {
 		return nil, err
 	}
@@ -314,7 +315,7 @@ func handleMsgWithdrawEarnedFees(ctx sdk.Context, k Keeper, msg MsgWithdrawEarne
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, AttributeValueCategory),
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 			sdk.NewAttribute(sdk.AttributeKeySender, msg.Owner.String()),
 		),
 	})

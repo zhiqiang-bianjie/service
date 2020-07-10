@@ -40,13 +40,20 @@ const (
 var reServiceName = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9_-]*$`)
 
 var (
-	_ sdk.Msg = MsgDefineService{}
-	_ sdk.Msg = MsgBindService{}
-	_ sdk.Msg = MsgUpdateServiceBinding{}
-	_ sdk.Msg = MsgSetWithdrawAddress{}
-	_ sdk.Msg = MsgDisableServiceBinding{}
-	_ sdk.Msg = MsgEnableServiceBinding{}
-	_ sdk.Msg = MsgRefundServiceDeposit{}
+	_ sdk.Msg = &MsgDefineService{}
+	_ sdk.Msg = &MsgBindService{}
+	_ sdk.Msg = &MsgUpdateServiceBinding{}
+	_ sdk.Msg = &MsgSetWithdrawAddress{}
+	_ sdk.Msg = &MsgDisableServiceBinding{}
+	_ sdk.Msg = &MsgEnableServiceBinding{}
+	_ sdk.Msg = &MsgRefundServiceDeposit{}
+	_ sdk.Msg = &MsgCallService{}
+	_ sdk.Msg = &MsgStartRequestContext{}
+	_ sdk.Msg = &MsgPauseRequestContext{}
+	_ sdk.Msg = &MsgKillRequestContext{}
+	_ sdk.Msg = &MsgUpdateRequestContext{}
+	_ sdk.Msg = &MsgRespondService{}
+	_ sdk.Msg = &MsgWithdrawEarnedFees{}
 )
 
 //______________________________________________________________________
@@ -59,8 +66,8 @@ func NewMsgDefineService(
 	author sdk.AccAddress,
 	authorDescription,
 	schemas string,
-) MsgDefineService {
-	return MsgDefineService{
+) *MsgDefineService {
+	return &MsgDefineService{
 		Name:              name,
 		Description:       description,
 		Tags:              tags,
@@ -130,8 +137,8 @@ func NewMsgBindService(
 	pricing string,
 	qos uint64,
 	owner sdk.AccAddress,
-) MsgBindService {
-	return MsgBindService{
+) *MsgBindService {
+	return &MsgBindService{
 		ServiceName: serviceName,
 		Provider:    provider,
 		Deposit:     deposit,
@@ -197,8 +204,8 @@ func NewMsgUpdateServiceBinding(
 	pricing string,
 	qos uint64,
 	owner sdk.AccAddress,
-) MsgUpdateServiceBinding {
-	return MsgUpdateServiceBinding{
+) *MsgUpdateServiceBinding {
+	return &MsgUpdateServiceBinding{
 		ServiceName: serviceName,
 		Provider:    provider,
 		Deposit:     deposit,
@@ -259,8 +266,8 @@ func (msg MsgUpdateServiceBinding) GetSigners() []sdk.AccAddress {
 //______________________________________________________________________
 
 // NewMsgSetWithdrawAddress creates a new MsgSetWithdrawAddress instance
-func NewMsgSetWithdrawAddress(owner, withdrawAddr sdk.AccAddress) MsgSetWithdrawAddress {
-	return MsgSetWithdrawAddress{
+func NewMsgSetWithdrawAddress(owner, withdrawAddr sdk.AccAddress) *MsgSetWithdrawAddress {
+	return &MsgSetWithdrawAddress{
 		Owner:           owner,
 		WithdrawAddress: withdrawAddr,
 	}
@@ -299,8 +306,8 @@ func NewMsgDisableServiceBinding(
 	serviceName string,
 	provider,
 	owner sdk.AccAddress,
-) MsgDisableServiceBinding {
-	return MsgDisableServiceBinding{
+) *MsgDisableServiceBinding {
+	return &MsgDisableServiceBinding{
 		ServiceName: serviceName,
 		Provider:    provider,
 		Owner:       owner,
@@ -345,8 +352,8 @@ func NewMsgEnableServiceBinding(
 	provider sdk.AccAddress,
 	deposit sdk.Coins,
 	owner sdk.AccAddress,
-) MsgEnableServiceBinding {
-	return MsgEnableServiceBinding{
+) *MsgEnableServiceBinding {
+	return &MsgEnableServiceBinding{
 		ServiceName: serviceName,
 		Provider:    provider,
 		Deposit:     deposit,
@@ -405,8 +412,8 @@ func NewMsgRefundServiceDeposit(
 	serviceName string,
 	provider,
 	owner sdk.AccAddress,
-) MsgRefundServiceDeposit {
-	return MsgRefundServiceDeposit{
+) *MsgRefundServiceDeposit {
+	return &MsgRefundServiceDeposit{
 		ServiceName: serviceName,
 		Provider:    provider,
 		Owner:       owner,
@@ -457,8 +464,8 @@ func NewMsgCallService(
 	repeated bool,
 	repeatedFrequency uint64,
 	repeatedTotal int64,
-) MsgCallService {
-	return MsgCallService{
+) *MsgCallService {
+	return &MsgCallService{
 		ServiceName:       serviceName,
 		Providers:         providers,
 		Consumer:          consumer,
@@ -527,8 +534,8 @@ func NewMsgRespondService(
 	provider sdk.AccAddress,
 	result string,
 	output string,
-) MsgRespondService {
-	return MsgRespondService{
+) *MsgRespondService {
+	return &MsgRespondService{
 		RequestID: requestID,
 		Provider:  provider,
 		Result:    result,
@@ -582,8 +589,8 @@ func (msg MsgRespondService) GetSigners() []sdk.AccAddress {
 //______________________________________________________________________
 
 // NewMsgPauseRequestContext creates a new MsgPauseRequestContext instance
-func NewMsgPauseRequestContext(requestContextID tmbytes.HexBytes, consumer sdk.AccAddress) MsgPauseRequestContext {
-	return MsgPauseRequestContext{
+func NewMsgPauseRequestContext(requestContextID tmbytes.HexBytes, consumer sdk.AccAddress) *MsgPauseRequestContext {
+	return &MsgPauseRequestContext{
 		RequestContextID: requestContextID,
 		Consumer:         consumer,
 	}
@@ -621,8 +628,8 @@ func (msg MsgPauseRequestContext) GetSigners() []sdk.AccAddress {
 //______________________________________________________________________
 
 // NewMsgStartRequestContext creates a new MsgStartRequestContext instance
-func NewMsgStartRequestContext(requestContextID tmbytes.HexBytes, consumer sdk.AccAddress) MsgStartRequestContext {
-	return MsgStartRequestContext{
+func NewMsgStartRequestContext(requestContextID tmbytes.HexBytes, consumer sdk.AccAddress) *MsgStartRequestContext {
+	return &MsgStartRequestContext{
 		RequestContextID: requestContextID,
 		Consumer:         consumer,
 	}
@@ -660,8 +667,8 @@ func (msg MsgStartRequestContext) GetSigners() []sdk.AccAddress {
 //______________________________________________________________________
 
 // NewMsgKillRequestContext creates a new MsgKillRequestContext instance
-func NewMsgKillRequestContext(requestContextID tmbytes.HexBytes, consumer sdk.AccAddress) MsgKillRequestContext {
-	return MsgKillRequestContext{
+func NewMsgKillRequestContext(requestContextID tmbytes.HexBytes, consumer sdk.AccAddress) *MsgKillRequestContext {
+	return &MsgKillRequestContext{
 		RequestContextID: requestContextID,
 		Consumer:         consumer,
 	}
@@ -707,8 +714,8 @@ func NewMsgUpdateRequestContext(
 	repeatedFrequency uint64,
 	repeatedTotal int64,
 	consumer sdk.AccAddress,
-) MsgUpdateRequestContext {
-	return MsgUpdateRequestContext{
+) *MsgUpdateRequestContext {
+	return &MsgUpdateRequestContext{
 		RequestContextID:  requestContextID,
 		Providers:         providers,
 		ServiceFeeCap:     serviceFeeCap,
@@ -770,8 +777,8 @@ func (msg MsgUpdateRequestContext) GetSigners() []sdk.AccAddress {
 //______________________________________________________________________
 
 // NewMsgWithdrawEarnedFees creates a new MsgWithdrawEarnedFees instance
-func NewMsgWithdrawEarnedFees(owner, provider sdk.AccAddress) MsgWithdrawEarnedFees {
-	return MsgWithdrawEarnedFees{
+func NewMsgWithdrawEarnedFees(owner, provider sdk.AccAddress) *MsgWithdrawEarnedFees {
+	return &MsgWithdrawEarnedFees{
 		Owner:    owner,
 		Provider: provider,
 	}

@@ -8,7 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 
@@ -16,7 +16,7 @@ import (
 	"github.com/irismod/service/types"
 )
 
-func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
+func registerQueryRoutes(cliCtx client.Context, r *mux.Router) {
 	// query a service definition
 	r.HandleFunc(fmt.Sprintf("/service/definitions/{%s}", RestServiceName), queryDefinitionHandlerFn(cliCtx)).Methods("GET")
 	// query a service binding
@@ -43,7 +43,7 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc(fmt.Sprintf("/service/parameters"), queryParamsHandlerFn(cliCtx)).Methods("GET")
 }
 
-func queryDefinitionHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func queryDefinitionHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		serviceName := vars[RestServiceName]
@@ -80,7 +80,7 @@ func queryDefinitionHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-func queryBindingHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func queryBindingHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		serviceName := vars[RestServiceName]
@@ -125,7 +125,7 @@ func queryBindingHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-func queryBindingsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func queryBindingsHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		serviceName := vars[RestServiceName]
@@ -175,7 +175,7 @@ func queryBindingsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-func queryWithdrawAddrHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func queryWithdrawAddrHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		ownerStr := vars[RestOwner]
@@ -213,7 +213,7 @@ func queryWithdrawAddrHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-func queryRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func queryRequestHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		requestIDStr := vars[RestRequestID]
@@ -266,7 +266,7 @@ func queryRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-func queryRequestsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func queryRequestsHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		arg1 := vars[RestArg1]
@@ -303,7 +303,7 @@ func queryRequestsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-func queryResponseHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func queryResponseHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		requestIDStr := vars[RestRequestID]
@@ -356,7 +356,7 @@ func queryResponseHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-func queryRequestContextHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func queryRequestContextHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		requestContextIDStr := vars[RestRequestContextID]
@@ -386,7 +386,7 @@ func queryRequestContextHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-func queryResponsesHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func queryResponsesHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		requestContextIDStr := vars[RestRequestContextID]
@@ -432,7 +432,7 @@ func queryResponsesHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-func queryEarnedFeesHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func queryEarnedFeesHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		providerStr := vars[RestProvider]
@@ -470,7 +470,7 @@ func queryEarnedFeesHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-func querySchemaHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func querySchemaHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 
@@ -507,7 +507,7 @@ func querySchemaHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-func queryParamsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func queryParamsHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {

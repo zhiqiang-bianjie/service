@@ -10,7 +10,6 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -21,7 +20,7 @@ import (
 )
 
 // GetQueryCmd returns the cli query commands for the module.
-func GetQueryCmd(queryRoute string, cdc *codec.Codec) *cobra.Command {
+func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 	serviceQueryCmd := &cobra.Command{
 		Use:                        types.ModuleName,
 		Short:                      "Querying commands for the service module",
@@ -31,25 +30,25 @@ func GetQueryCmd(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	}
 
 	serviceQueryCmd.AddCommand(flags.GetCommands(
-		GetCmdQueryServiceDefinition(queryRoute, cdc),
-		GetCmdQueryServiceBinding(queryRoute, cdc),
-		GetCmdQueryServiceBindings(queryRoute, cdc),
-		GetCmdQueryWithdrawAddr(queryRoute, cdc),
-		GetCmdQueryServiceRequest(queryRoute, cdc),
-		GetCmdQueryServiceRequests(queryRoute, cdc),
-		GetCmdQueryServiceResponse(queryRoute, cdc),
-		GetCmdQueryRequestContext(queryRoute, cdc),
-		GetCmdQueryServiceResponses(queryRoute, cdc),
-		GetCmdQueryEarnedFees(queryRoute, cdc),
-		GetCmdQuerySchema(queryRoute, cdc),
-		GetCmdQueryParams(queryRoute, cdc),
+		GetCmdQueryServiceDefinition(cdc),
+		GetCmdQueryServiceBinding(cdc),
+		GetCmdQueryServiceBindings(cdc),
+		GetCmdQueryWithdrawAddr(cdc),
+		GetCmdQueryServiceRequest(cdc),
+		GetCmdQueryServiceRequests(cdc),
+		GetCmdQueryServiceResponse(cdc),
+		GetCmdQueryRequestContext(cdc),
+		GetCmdQueryServiceResponses(cdc),
+		GetCmdQueryEarnedFees(cdc),
+		GetCmdQuerySchema(cdc),
+		GetCmdQueryParams(cdc),
 	)...)
 
 	return serviceQueryCmd
 }
 
 // GetCmdQueryServiceDefinition implements the query service definition command.
-func GetCmdQueryServiceDefinition(queryRoute string, cdc *codec.Codec) *cobra.Command {
+func GetCmdQueryServiceDefinition(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
 		Use:   "definition [service-name]",
 		Short: "Query a service definition",
@@ -59,12 +58,12 @@ func GetCmdQueryServiceDefinition(queryRoute string, cdc *codec.Codec) *cobra.Co
 Example:
 $ %s query service definition <service-name>
 `,
-				version.ClientName,
+				version.AppName,
 			),
 		),
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := client.NewContext().WithCodec(cdc).WithJSONMarshaler(cdc)
 
 			if err := types.ValidateServiceName(args[0]); err != nil {
 				return err
@@ -75,7 +74,7 @@ $ %s query service definition <service-name>
 				return err
 			}
 
-			route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryDefinition)
+			route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryDefinition)
 			res, _, err := cliCtx.QueryWithData(route, bz)
 			if err != nil {
 				return err
@@ -92,7 +91,7 @@ $ %s query service definition <service-name>
 }
 
 // GetCmdQueryServiceBinding implements the query service binding command
-func GetCmdQueryServiceBinding(queryRoute string, cdc *codec.Codec) *cobra.Command {
+func GetCmdQueryServiceBinding(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "binding [service-name] [provider-address]",
 		Short: "Query a service binding",
@@ -102,12 +101,12 @@ func GetCmdQueryServiceBinding(queryRoute string, cdc *codec.Codec) *cobra.Comma
 Example:
 $ %s query service binding <service-name> <provider-address>
 `,
-				version.ClientName,
+				version.AppName,
 			),
 		),
 		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := client.NewContext().WithCodec(cdc).WithJSONMarshaler(cdc)
 
 			if err := types.ValidateServiceName(args[0]); err != nil {
 				return err
@@ -123,7 +122,7 @@ $ %s query service binding <service-name> <provider-address>
 				return err
 			}
 
-			route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryBinding)
+			route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryBinding)
 			res, _, err := cliCtx.QueryWithData(route, bz)
 			if err != nil {
 				return err
@@ -142,7 +141,7 @@ $ %s query service binding <service-name> <provider-address>
 }
 
 // GetCmdQueryServiceBindings implements the query service bindings command
-func GetCmdQueryServiceBindings(queryRoute string, cdc *codec.Codec) *cobra.Command {
+func GetCmdQueryServiceBindings(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "bindings [service-name]",
 		Short: "Query all bindings of a service definition with an optional owner",
@@ -152,12 +151,12 @@ func GetCmdQueryServiceBindings(queryRoute string, cdc *codec.Codec) *cobra.Comm
 Example:
 $ %s query service bindings <service-name> --owner=<address>
 `,
-				version.ClientName,
+				version.AppName,
 			),
 		),
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := client.NewContext().WithCodec(cdc).WithJSONMarshaler(cdc)
 
 			if err := types.ValidateServiceName(args[0]); err != nil {
 				return err
@@ -184,7 +183,7 @@ $ %s query service bindings <service-name> --owner=<address>
 				return err
 			}
 
-			route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryBindings)
+			route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryBindings)
 			res, _, err := cliCtx.QueryWithData(route, bz)
 			if err != nil {
 				return err
@@ -205,7 +204,7 @@ $ %s query service bindings <service-name> --owner=<address>
 }
 
 // GetCmdQueryWithdrawAddr implements the query withdraw address command
-func GetCmdQueryWithdrawAddr(queryRoute string, cdc *codec.Codec) *cobra.Command {
+func GetCmdQueryWithdrawAddr(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "withdraw-addr [address]",
 		Short: "Query the withdrawal address of an owner",
@@ -215,12 +214,12 @@ func GetCmdQueryWithdrawAddr(queryRoute string, cdc *codec.Codec) *cobra.Command
 Example:
 $ %s query service withdraw-addr <address>
 `,
-				version.ClientName,
+				version.AppName,
 			),
 		),
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := client.NewContext().WithCodec(cdc).WithJSONMarshaler(cdc)
 
 			owner, err := sdk.AccAddressFromBech32(args[0])
 			if err != nil {
@@ -232,7 +231,7 @@ $ %s query service withdraw-addr <address>
 				return err
 			}
 
-			route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryWithdrawAddress)
+			route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryWithdrawAddress)
 			res, _, err := cliCtx.QueryWithData(route, bz)
 			if err != nil {
 				return err
@@ -251,7 +250,7 @@ $ %s query service withdraw-addr <address>
 }
 
 // GetCmdQueryServiceRequest implements the query service request command
-func GetCmdQueryServiceRequest(queryRoute string, cdc *codec.Codec) *cobra.Command {
+func GetCmdQueryServiceRequest(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "request [request-id]",
 		Short: "Query a request by the request ID",
@@ -261,12 +260,12 @@ func GetCmdQueryServiceRequest(queryRoute string, cdc *codec.Codec) *cobra.Comma
 Example:
 $ %s query service request <request-id>
 `,
-				version.ClientName,
+				version.AppName,
 			),
 		),
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := client.NewContext().WithCodec(cdc).WithJSONMarshaler(cdc)
 
 			requestID, err := types.ConvertRequestID(args[0])
 			if err != nil {
@@ -282,7 +281,7 @@ $ %s query service request <request-id>
 				return err
 			}
 
-			route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryRequest)
+			route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryRequest)
 			res, _, err := cliCtx.QueryWithData(route, bz)
 			if err != nil {
 				return err
@@ -291,7 +290,7 @@ $ %s query service request <request-id>
 			var request types.Request
 			_ = cdc.UnmarshalJSON(res, &request)
 			if request.Empty() {
-				request, err = utils.QueryRequestByTxQuery(cliCtx, queryRoute, params)
+				request, err = utils.QueryRequestByTxQuery(cliCtx, types.QuerierRoute, params)
 				if err != nil {
 					return err
 				}
@@ -309,7 +308,7 @@ $ %s query service request <request-id>
 }
 
 // GetCmdQueryServiceRequests implements the query service requests command
-func GetCmdQueryServiceRequests(queryRoute string, cdc *codec.Codec) *cobra.Command {
+func GetCmdQueryServiceRequests(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "requests [service-name] [provider] | [request-context-id] [batch-counter]",
 		Short: "Query active requests by the service binding or request context ID",
@@ -319,12 +318,12 @@ func GetCmdQueryServiceRequests(queryRoute string, cdc *codec.Codec) *cobra.Comm
 Example:
 $ %s query service requests <service-name> <provider> | <request-context-id> <batch-counter>
 `,
-				version.ClientName,
+				version.AppName,
 			),
 		),
 		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := client.NewContext().WithCodec(cdc).WithJSONMarshaler(cdc)
 
 			queryByBinding := true
 
@@ -336,9 +335,9 @@ $ %s query service requests <service-name> <provider> | <request-context-id> <ba
 			var requests []types.Request
 
 			if queryByBinding {
-				requests, _, err = utils.QueryRequestsByBinding(cliCtx, queryRoute, args[0], provider)
+				requests, _, err = utils.QueryRequestsByBinding(cliCtx, types.QuerierRoute, args[0], provider)
 			} else {
-				requests, _, err = utils.QueryRequestsByReqCtx(cliCtx, queryRoute, args[0], args[1])
+				requests, _, err = utils.QueryRequestsByReqCtx(cliCtx, types.QuerierRoute, args[0], args[1])
 			}
 
 			if err != nil {
@@ -353,7 +352,7 @@ $ %s query service requests <service-name> <provider> | <request-context-id> <ba
 }
 
 // GetCmdQueryServiceResponse implements the query service response command
-func GetCmdQueryServiceResponse(queryRoute string, cdc *codec.Codec) *cobra.Command {
+func GetCmdQueryServiceResponse(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "response [request-id]",
 		Short: "Query a response by the request ID",
@@ -363,12 +362,12 @@ func GetCmdQueryServiceResponse(queryRoute string, cdc *codec.Codec) *cobra.Comm
 Example:
 $ %s query service response <request-id>
 `,
-				version.ClientName,
+				version.AppName,
 			),
 		),
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := client.NewContext().WithCodec(cdc).WithJSONMarshaler(cdc)
 
 			requestID, err := types.ConvertRequestID(args[0])
 			if err != nil {
@@ -384,7 +383,7 @@ $ %s query service response <request-id>
 				return err
 			}
 
-			route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryResponse)
+			route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryResponse)
 			res, _, err := cliCtx.QueryWithData(route, bz)
 			if err != nil {
 				return err
@@ -393,7 +392,7 @@ $ %s query service response <request-id>
 			var response types.Response
 			_ = cdc.UnmarshalJSON(res, &response)
 			if response.Empty() {
-				response, err = utils.QueryResponseByTxQuery(cliCtx, queryRoute, params)
+				response, err = utils.QueryResponseByTxQuery(cliCtx, types.QuerierRoute, params)
 				if err != nil {
 					return err
 				}
@@ -411,7 +410,7 @@ $ %s query service response <request-id>
 }
 
 // GetCmdQueryServiceResponses implements the query service responses command
-func GetCmdQueryServiceResponses(queryRoute string, cdc *codec.Codec) *cobra.Command {
+func GetCmdQueryServiceResponses(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "responses [request-context-id] [batch-counter]",
 		Short: "Query active responses by the request context ID and batch counter",
@@ -421,12 +420,12 @@ func GetCmdQueryServiceResponses(queryRoute string, cdc *codec.Codec) *cobra.Com
 Example:
 $ %s query service responses <request-context-id> <batch-counter>
 `,
-				version.ClientName,
+				version.AppName,
 			),
 		),
 		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := client.NewContext().WithCodec(cdc).WithJSONMarshaler(cdc)
 
 			requestContextID, err := hex.DecodeString(args[0])
 			if err != nil {
@@ -448,7 +447,7 @@ $ %s query service responses <request-context-id> <batch-counter>
 				return err
 			}
 
-			route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryResponses)
+			route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryResponses)
 			res, _, err := cliCtx.QueryWithData(route, bz)
 			if err != nil {
 				return err
@@ -467,7 +466,7 @@ $ %s query service responses <request-context-id> <batch-counter>
 }
 
 // GetCmdQueryRequestContext implements the query request context command
-func GetCmdQueryRequestContext(queryRoute string, cdc *codec.Codec) *cobra.Command {
+func GetCmdQueryRequestContext(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "request-context [request-context-id]",
 		Short: "Query a request context",
@@ -477,12 +476,12 @@ func GetCmdQueryRequestContext(queryRoute string, cdc *codec.Codec) *cobra.Comma
 Example:
 $ %s query service request-context <request-context-id>
 `,
-				version.ClientName,
+				version.AppName,
 			),
 		),
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := client.NewContext().WithCodec(cdc).WithJSONMarshaler(cdc)
 
 			requestContextID, err := hex.DecodeString(args[0])
 			if err != nil {
@@ -493,7 +492,7 @@ $ %s query service request-context <request-context-id>
 				RequestContextID: requestContextID,
 			}
 
-			requestContext, err := utils.QueryRequestContext(cliCtx, queryRoute, params)
+			requestContext, err := utils.QueryRequestContext(cliCtx, types.QuerierRoute, params)
 			if err != nil {
 				return err
 			}
@@ -506,7 +505,7 @@ $ %s query service request-context <request-context-id>
 }
 
 // GetCmdQueryEarnedFees implements the query earned fees command
-func GetCmdQueryEarnedFees(queryRoute string, cdc *codec.Codec) *cobra.Command {
+func GetCmdQueryEarnedFees(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "fees [provider-address]",
 		Short: "Query the earned fees of a provider",
@@ -516,12 +515,12 @@ func GetCmdQueryEarnedFees(queryRoute string, cdc *codec.Codec) *cobra.Command {
 Example:
 $ %s query service fees <provider-address>
 `,
-				version.ClientName,
+				version.AppName,
 			),
 		),
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := client.NewContext().WithCodec(cdc).WithJSONMarshaler(cdc)
 
 			provider, err := sdk.AccAddressFromBech32(args[0])
 			if err != nil {
@@ -533,7 +532,7 @@ $ %s query service fees <provider-address>
 				return err
 			}
 
-			route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryEarnedFees)
+			route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryEarnedFees)
 			res, _, err := cliCtx.QueryWithData(route, bz)
 			if err != nil {
 				return err
@@ -552,7 +551,7 @@ $ %s query service fees <provider-address>
 }
 
 // GetCmdQuerySchema implements the query schema command
-func GetCmdQuerySchema(queryRoute string, cdc *codec.Codec) *cobra.Command {
+func GetCmdQuerySchema(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "schema [schema-name]",
 		Short: "Query the system schema by the schema name",
@@ -562,12 +561,12 @@ func GetCmdQuerySchema(queryRoute string, cdc *codec.Codec) *cobra.Command {
 Example:
 $ %s query service schema <schema-name>
 `,
-				version.ClientName,
+				version.AppName,
 			),
 		),
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := client.NewContext().WithCodec(cdc).WithJSONMarshaler(cdc)
 
 			params := types.QuerySchemaParams{
 				SchemaName: args[0],
@@ -578,7 +577,7 @@ $ %s query service schema <schema-name>
 				return err
 			}
 
-			route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QuerySchema)
+			route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QuerySchema)
 			res, _, err := cliCtx.QueryWithData(route, bz)
 			if err != nil {
 				return err
@@ -597,7 +596,7 @@ $ %s query service schema <schema-name>
 }
 
 // GetCmdQueryParams implements the query params command.
-func GetCmdQueryParams(queryRoute string, cdc *codec.Codec) *cobra.Command {
+func GetCmdQueryParams(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
 		Use:   "params",
 		Short: "Query the current service parameter values",
@@ -606,14 +605,14 @@ func GetCmdQueryParams(queryRoute string, cdc *codec.Codec) *cobra.Command {
 Example:
 $ %s query service params
 `,
-				version.ClientName,
+				version.AppName,
 			),
 		),
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := client.NewContext().WithCodec(cdc).WithJSONMarshaler(cdc)
 
-			route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryParameters)
+			route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryParameters)
 			bz, _, err := cliCtx.QueryWithData(route, nil)
 			if err != nil {
 				return err

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authclient "github.com/cosmos/cosmos-sdk/x/auth/client"
 
@@ -14,7 +14,7 @@ import (
 )
 
 // QueryRequestContext queries a single request context
-func QueryRequestContext(cliCtx context.CLIContext, queryRoute string, params types.QueryRequestContextParams) (
+func QueryRequestContext(cliCtx client.Context, queryRoute string, params types.QueryRequestContextParams) (
 	requestContext types.RequestContext, err error) {
 	bz, err := cliCtx.Codec.MarshalJSON(params)
 	if err != nil {
@@ -42,7 +42,7 @@ func QueryRequestContext(cliCtx context.CLIContext, queryRoute string, params ty
 }
 
 // QueryRequestContextByTxQuery will query for a single request context via a direct txs tags query.
-func QueryRequestContextByTxQuery(cliCtx context.CLIContext, queryRoute string, params types.QueryRequestContextParams) (
+func QueryRequestContextByTxQuery(cliCtx client.Context, queryRoute string, params types.QueryRequestContextParams) (
 	requestContext types.RequestContext, err error) {
 	txHash, msgIndex, err := types.SplitRequestContextID(params.RequestContextID)
 	if err != nil {
@@ -58,7 +58,7 @@ func QueryRequestContextByTxQuery(cliCtx context.CLIContext, queryRoute string, 
 	if int64(len(txInfo.Tx.GetMsgs())) > msgIndex {
 		msg := txInfo.Tx.GetMsgs()[msgIndex]
 		if msg.Type() == types.TypeMsgCallService {
-			requestMsg := msg.(types.MsgCallService)
+			requestMsg := msg.(*types.MsgCallService)
 			requestContext := types.NewRequestContext(
 				requestMsg.ServiceName, requestMsg.Providers,
 				requestMsg.Consumer, requestMsg.Input, requestMsg.ServiceFeeCap,
@@ -76,7 +76,7 @@ func QueryRequestContextByTxQuery(cliCtx context.CLIContext, queryRoute string, 
 }
 
 // QueryRequestByTxQuery will query for a single request via a direct txs tags query.
-func QueryRequestByTxQuery(cliCtx context.CLIContext, queryRoute string, params types.QueryRequestParams) (
+func QueryRequestByTxQuery(cliCtx client.Context, queryRoute string, params types.QueryRequestParams) (
 	request types.Request, err error) {
 	requestID := params.RequestID
 	if err != nil {
@@ -154,7 +154,7 @@ func QueryRequestByTxQuery(cliCtx context.CLIContext, queryRoute string, params 
 }
 
 // QueryResponseByTxQuery will query for a single request via a direct txs tags query.
-func QueryResponseByTxQuery(cliCtx context.CLIContext, queryRoute string, params types.QueryResponseParams) (
+func QueryResponseByTxQuery(cliCtx client.Context, queryRoute string, params types.QueryResponseParams) (
 	response types.Response, err error) {
 
 	events := []string{
@@ -191,7 +191,7 @@ func QueryResponseByTxQuery(cliCtx context.CLIContext, queryRoute string, params
 
 	for _, msg := range result.Txs[0].Tx.GetMsgs() {
 		if msg.Type() == types.TypeMsgRespondService {
-			responseMsg := msg.(types.MsgRespondService)
+			responseMsg := msg.(*types.MsgRespondService)
 			if responseMsg.RequestID.String() != params.RequestID.String() {
 				continue
 			}
@@ -210,7 +210,7 @@ func QueryResponseByTxQuery(cliCtx context.CLIContext, queryRoute string, params
 }
 
 // QueryRequestsByBinding queries active requests by the service binding
-func QueryRequestsByBinding(cliCtx context.CLIContext, queryRoute string, serviceName string, provider sdk.AccAddress) ([]types.Request, int64, error) {
+func QueryRequestsByBinding(cliCtx client.Context, queryRoute string, serviceName string, provider sdk.AccAddress) ([]types.Request, int64, error) {
 	params := types.QueryRequestsParams{
 		ServiceName: serviceName,
 		Provider:    provider,
@@ -236,7 +236,7 @@ func QueryRequestsByBinding(cliCtx context.CLIContext, queryRoute string, servic
 }
 
 // QueryRequestsByReqCtx queries active requests by the request context ID
-func QueryRequestsByReqCtx(cliCtx context.CLIContext, queryRoute, reqCtxIDStr, batchCounterStr string) ([]types.Request, int64, error) {
+func QueryRequestsByReqCtx(cliCtx client.Context, queryRoute, reqCtxIDStr, batchCounterStr string) ([]types.Request, int64, error) {
 	requestContextID, err := hex.DecodeString(reqCtxIDStr)
 	if err != nil {
 		return nil, 0, err

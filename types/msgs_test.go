@@ -76,7 +76,7 @@ func TestMsgDefineServiceValidation(t *testing.T) {
 	invalidSchemasNoInput := `{"output":{"type":"object"}}`
 	invalidSchemasNoOutput := `{"input":{"type":"object"}}`
 
-	testMsgs := []MsgDefineService{
+	testMsgs := []*MsgDefineService{
 		NewMsgDefineService(testServiceName, testServiceDesc, testServiceTags, testAuthor, testAuthorDesc, testSchemas),            // valid msg
 		NewMsgDefineService(testServiceName, testServiceDesc, testServiceTags, emptyAddress, testAuthorDesc, testSchemas),          // missing author address
 		NewMsgDefineService(invalidName, testServiceDesc, testServiceTags, testAuthor, testAuthorDesc, testSchemas),                // service name contains illegal characters
@@ -93,7 +93,7 @@ func TestMsgDefineServiceValidation(t *testing.T) {
 	}
 
 	testCases := []struct {
-		msg     MsgDefineService
+		msg     *MsgDefineService
 		expPass bool
 		errMsg  string
 	}{
@@ -170,7 +170,7 @@ func TestMsgBindServiceValidation(t *testing.T) {
 	invalidPromotionVolPricing := `{"price":"1stake","promotions_by_volume":` +
 		`[{"volume":0,"discount":"0.7"}]}`
 
-	testMsgs := []MsgBindService{
+	testMsgs := []*MsgBindService{
 		NewMsgBindService(testServiceName, testProvider, testDeposit, testPricing, testQoS, testOwner),                 // valid msg
 		NewMsgBindService(testServiceName, emptyAddress, testDeposit, testPricing, testQoS, testOwner),                 // missing provider address
 		NewMsgBindService(testServiceName, testProvider, testDeposit, testPricing, testQoS, emptyAddress),              // missing owner address
@@ -186,7 +186,7 @@ func TestMsgBindServiceValidation(t *testing.T) {
 	}
 
 	testCases := []struct {
-		msg     MsgBindService
+		msg     *MsgBindService
 		expPass bool
 		errMsg  string
 	}{
@@ -261,7 +261,7 @@ func TestMsgUpdateServiceBindingValidation(t *testing.T) {
 	invalidPromotionVolPricing := `{"price":"1stake","promotions_by_volume":` +
 		`[{"volume":0,"discount":"0.7"}]}`
 
-	testMsgs := []MsgUpdateServiceBinding{
+	testMsgs := []*MsgUpdateServiceBinding{
 		NewMsgUpdateServiceBinding(testServiceName, testProvider, testAddedDeposit, testPricing, testQoS, testOwner),                 // valid msg
 		NewMsgUpdateServiceBinding(testServiceName, testProvider, emptyAddedDeposit, testPricing, testQoS, testOwner),                // empty deposit is allowed
 		NewMsgUpdateServiceBinding(testServiceName, testProvider, testAddedDeposit, "", testQoS, testOwner),                          // empty pricing is allowed
@@ -278,7 +278,7 @@ func TestMsgUpdateServiceBindingValidation(t *testing.T) {
 	}
 
 	testCases := []struct {
-		msg     MsgUpdateServiceBinding
+		msg     *MsgUpdateServiceBinding
 		expPass bool
 		errMsg  string
 	}{
@@ -343,14 +343,14 @@ func TestMsgSetWithdrawAddressType(t *testing.T) {
 func TestMsgSetWithdrawAddressValidation(t *testing.T) {
 	emptyAddress := sdk.AccAddress{}
 
-	testMsgs := []MsgSetWithdrawAddress{
+	testMsgs := []*MsgSetWithdrawAddress{
 		NewMsgSetWithdrawAddress(testOwner, testWithdrawAddr),    // valid msg
 		NewMsgSetWithdrawAddress(emptyAddress, testWithdrawAddr), // missing owner address
 		NewMsgSetWithdrawAddress(testOwner, emptyAddress),        // missing withdrawal address
 	}
 
 	testCases := []struct {
-		msg     MsgSetWithdrawAddress
+		msg     *MsgSetWithdrawAddress
 		expPass bool
 		errMsg  string
 	}{
@@ -408,7 +408,7 @@ func TestMsgDisableServiceBindingValidation(t *testing.T) {
 	invalidName := "invalid/service/name"
 	invalidLongName := strings.Repeat("s", MaxNameLength+1)
 
-	testMsgs := []MsgDisableServiceBinding{
+	testMsgs := []*MsgDisableServiceBinding{
 		NewMsgDisableServiceBinding(testServiceName, testProvider, testOwner),    // valid msg
 		NewMsgDisableServiceBinding(testServiceName, emptyAddress, testOwner),    // missing provider address
 		NewMsgDisableServiceBinding(testServiceName, testProvider, emptyAddress), // missing owner address
@@ -417,7 +417,7 @@ func TestMsgDisableServiceBindingValidation(t *testing.T) {
 	}
 
 	testCases := []struct {
-		msg     MsgDisableServiceBinding
+		msg     *MsgDisableServiceBinding
 		expPass bool
 		errMsg  string
 	}{
@@ -478,7 +478,7 @@ func TestMsgEnableServiceBindingValidation(t *testing.T) {
 	invalidName := "invalid/service/name"
 	invalidLongName := strings.Repeat("s", MaxNameLength+1)
 
-	testMsgs := []MsgEnableServiceBinding{
+	testMsgs := []*MsgEnableServiceBinding{
 		NewMsgEnableServiceBinding(testServiceName, testProvider, testAddedDeposit, testOwner),    // valid msg
 		NewMsgEnableServiceBinding(testServiceName, testProvider, emptyAddedDeposit, testOwner),   // empty deposit is allowed
 		NewMsgEnableServiceBinding(testServiceName, emptyAddress, testAddedDeposit, testOwner),    // missing provider address
@@ -488,7 +488,7 @@ func TestMsgEnableServiceBindingValidation(t *testing.T) {
 	}
 
 	testCases := []struct {
-		msg     MsgEnableServiceBinding
+		msg     *MsgEnableServiceBinding
 		expPass bool
 		errMsg  string
 	}{
@@ -549,7 +549,7 @@ func TestMsgRefundServiceDepositValidation(t *testing.T) {
 	invalidName := "invalid/service/name"
 	invalidLongName := strings.Repeat("s", MaxNameLength+1)
 
-	testMsgs := []MsgRefundServiceDeposit{
+	testMsgs := []*MsgRefundServiceDeposit{
 		NewMsgRefundServiceDeposit(testServiceName, testProvider, testOwner),    // valid msg
 		NewMsgRefundServiceDeposit(testServiceName, emptyAddress, testOwner),    // missing provider address
 		NewMsgRefundServiceDeposit(testServiceName, testProvider, emptyAddress), // missing owner address
@@ -558,7 +558,7 @@ func TestMsgRefundServiceDepositValidation(t *testing.T) {
 	}
 
 	testCases := []struct {
-		msg     MsgRefundServiceDeposit
+		msg     *MsgRefundServiceDeposit
 		expPass bool
 		errMsg  string
 	}{
@@ -634,7 +634,7 @@ func TestMsgCallServiceValidation(t *testing.T) {
 	invalidRepeatedTotal1 := int64(-2)
 	invalidRepeatedTotal2 := int64(0)
 
-	testMsgs := []MsgCallService{
+	testMsgs := []*MsgCallService{
 		NewMsgCallService(
 			testServiceName, testProviders, testConsumer, testInput, testServiceFeeCap,
 			testTimeout, false, true, testRepeatedFreq, testRepeatedTotal,
@@ -698,7 +698,7 @@ func TestMsgCallServiceValidation(t *testing.T) {
 	}
 
 	testCases := []struct {
-		msg     MsgCallService
+		msg     *MsgCallService
 		expPass bool
 		errMsg  string
 	}{
@@ -782,7 +782,7 @@ func TestMsgRespondServiceValidation(t *testing.T) {
 	invalidResultNoCode := `{"message":""}`
 	invalidResultNoMsg := `{"code":200}`
 
-	testMsgs := []MsgRespondService{
+	testMsgs := []*MsgRespondService{
 		NewMsgRespondService(testRequestID, testProvider, testResult, testOutput),     // valid msg
 		NewMsgRespondService(testRequestID, testProvider, validResult400, ""),         // valid msg
 		NewMsgRespondService(testRequestID, emptyAddress, testResult, testOutput),     // missing provider address
@@ -798,7 +798,7 @@ func TestMsgRespondServiceValidation(t *testing.T) {
 	}
 
 	testCases := []struct {
-		msg     MsgRespondService
+		msg     *MsgRespondService
 		expPass bool
 		errMsg  string
 	}{
@@ -863,14 +863,14 @@ func TestMsgPauseRequestContextValidation(t *testing.T) {
 	emptyAddress := sdk.AccAddress{}
 	invalidRequestContextID := []byte("invalid-request-context-id")
 
-	testMsgs := []MsgPauseRequestContext{
+	testMsgs := []*MsgPauseRequestContext{
 		NewMsgPauseRequestContext(testRequestContextID, testConsumer),    // valid msg
 		NewMsgPauseRequestContext(testRequestContextID, emptyAddress),    // missing consumer address
 		NewMsgPauseRequestContext(invalidRequestContextID, testConsumer), // invalid request context ID
 	}
 
 	testCases := []struct {
-		msg     MsgPauseRequestContext
+		msg     *MsgPauseRequestContext
 		expPass bool
 		errMsg  string
 	}{
@@ -926,14 +926,14 @@ func TestMsgStartRequestContextValidation(t *testing.T) {
 	emptyAddress := sdk.AccAddress{}
 	invalidRequestContextID := []byte("invalid-request-context-id")
 
-	testMsgs := []MsgStartRequestContext{
+	testMsgs := []*MsgStartRequestContext{
 		NewMsgStartRequestContext(testRequestContextID, testConsumer),    // valid msg
 		NewMsgStartRequestContext(testRequestContextID, emptyAddress),    // missing consumer address
 		NewMsgStartRequestContext(invalidRequestContextID, testConsumer), // invalid request context ID
 	}
 
 	testCases := []struct {
-		msg     MsgStartRequestContext
+		msg     *MsgStartRequestContext
 		expPass bool
 		errMsg  string
 	}{
@@ -989,14 +989,14 @@ func TestMsgKillRequestContextValidation(t *testing.T) {
 	emptyAddress := sdk.AccAddress{}
 	invalidRequestContextID := []byte("invalid-request-context-id")
 
-	testMsgs := []MsgKillRequestContext{
+	testMsgs := []*MsgKillRequestContext{
 		NewMsgKillRequestContext(testRequestContextID, testConsumer),    // valid msg
 		NewMsgKillRequestContext(testRequestContextID, emptyAddress),    // missing consumer address
 		NewMsgKillRequestContext(invalidRequestContextID, testConsumer), // invalid request context ID
 	}
 
 	testCases := []struct {
-		msg     MsgKillRequestContext
+		msg     *MsgKillRequestContext
 		expPass bool
 		errMsg  string
 	}{
@@ -1058,7 +1058,7 @@ func TestMsgUpdateRequestContextValidation(t *testing.T) {
 	invalidRepeatedTotal := int64(-2)
 	invalidDenomCoins := sdk.Coins{sdk.Coin{Denom: "eth-min", Amount: sdk.NewInt(1000)}}
 
-	testMsgs := []MsgUpdateRequestContext{
+	testMsgs := []*MsgUpdateRequestContext{
 		NewMsgUpdateRequestContext(testRequestContextID, testProviders, testServiceFeeCap, testTimeout, testRepeatedFreq, testRepeatedTotal, testConsumer), // valid msg
 		NewMsgUpdateRequestContext(testRequestContextID, nil, nil, 0, 0, 0, testConsumer),                                                                  // allow all not to be updated
 		NewMsgUpdateRequestContext(testRequestContextID, nil, nil, 0, 0, 0, emptyAddress),                                                                  // missing consumer address
@@ -1071,7 +1071,7 @@ func TestMsgUpdateRequestContextValidation(t *testing.T) {
 	}
 
 	testCases := []struct {
-		msg     MsgUpdateRequestContext
+		msg     *MsgUpdateRequestContext
 		expPass bool
 		errMsg  string
 	}{
@@ -1132,14 +1132,14 @@ func TestMsgWithdrawEarnedFeesType(t *testing.T) {
 func TestMsgWithdrawEarnedFeesValidation(t *testing.T) {
 	emptyAddress := sdk.AccAddress{}
 
-	testMsgs := []MsgWithdrawEarnedFees{
+	testMsgs := []*MsgWithdrawEarnedFees{
 		NewMsgWithdrawEarnedFees(testOwner, testProvider),    // valid msg
 		NewMsgWithdrawEarnedFees(testOwner, emptyAddress),    // empty provider is allowed
 		NewMsgWithdrawEarnedFees(emptyAddress, testProvider), // missing owner address
 	}
 
 	testCases := []struct {
-		msg     MsgWithdrawEarnedFees
+		msg     *MsgWithdrawEarnedFees
 		expPass bool
 		errMsg  string
 	}{

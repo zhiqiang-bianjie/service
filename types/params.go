@@ -7,7 +7,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/params"
+	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 )
 
 // Service params default values
@@ -37,7 +37,7 @@ var (
 	KeyBaseDenom            = []byte("BaseDenom")
 )
 
-var _ params.ParamSet = (*Params)(nil)
+var _ paramstypes.ParamSet = (*Params)(nil)
 
 // NewParams creates a new Params instance
 func NewParams(
@@ -64,18 +64,18 @@ func NewParams(
 	}
 }
 
-// ParamSetPairs implements params.ParamSet
-func (p *Params) ParamSetPairs() params.ParamSetPairs {
-	return params.ParamSetPairs{
-		params.NewParamSetPair(KeyMaxRequestTimeout, &p.MaxRequestTimeout, validateMaxRequestTimeout),
-		params.NewParamSetPair(KeyMinDepositMultiple, &p.MinDepositMultiple, validateMinDepositMultiple),
-		params.NewParamSetPair(KeyMinDeposit, &p.MinDeposit, validateMinDeposit),
-		params.NewParamSetPair(KeyServiceFeeTax, &p.ServiceFeeTax, validateServiceFeeTax),
-		params.NewParamSetPair(KeySlashFraction, &p.SlashFraction, validateSlashFraction),
-		params.NewParamSetPair(KeyComplaintRetrospect, &p.ComplaintRetrospect, validateComplaintRetrospect),
-		params.NewParamSetPair(KeyArbitrationTimeLimit, &p.ArbitrationTimeLimit, validateArbitrationTimeLimit),
-		params.NewParamSetPair(KeyTxSizeLimit, &p.TxSizeLimit, validateTxSizeLimit),
-		params.NewParamSetPair(KeyBaseDenom, &p.BaseDenom, validateTxBaseDenom),
+// ParamSetPairs implements paramstypes.ParamSet
+func (p *Params) ParamSetPairs() paramstypes.ParamSetPairs {
+	return paramstypes.ParamSetPairs{
+		paramstypes.NewParamSetPair(KeyMaxRequestTimeout, &p.MaxRequestTimeout, validateMaxRequestTimeout),
+		paramstypes.NewParamSetPair(KeyMinDepositMultiple, &p.MinDepositMultiple, validateMinDepositMultiple),
+		paramstypes.NewParamSetPair(KeyMinDeposit, &p.MinDeposit, validateMinDeposit),
+		paramstypes.NewParamSetPair(KeyServiceFeeTax, &p.ServiceFeeTax, validateServiceFeeTax),
+		paramstypes.NewParamSetPair(KeySlashFraction, &p.SlashFraction, validateSlashFraction),
+		paramstypes.NewParamSetPair(KeyComplaintRetrospect, &p.ComplaintRetrospect, validateComplaintRetrospect),
+		paramstypes.NewParamSetPair(KeyArbitrationTimeLimit, &p.ArbitrationTimeLimit, validateArbitrationTimeLimit),
+		paramstypes.NewParamSetPair(KeyTxSizeLimit, &p.TxSizeLimit, validateTxSizeLimit),
+		paramstypes.NewParamSetPair(KeyBaseDenom, &p.BaseDenom, validateTxBaseDenom),
 	}
 }
 

@@ -10,7 +10,8 @@ import (
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 
-	"github.com/irismod/service/app/helpers"
+	"github.com/cosmos/cosmos-sdk/simapp/helpers"
+
 	simappparams "github.com/irismod/service/app/params"
 	"github.com/irismod/service/keeper"
 	"github.com/irismod/service/types"
@@ -136,12 +137,12 @@ func SimulateMsgDefineService(ak types.AccountKeeper, bk types.BankKeeper, k kee
 		account := ak.GetAccount(ctx, simAccount.Address)
 		spendable := bk.SpendableCoins(ctx, account.GetAddress())
 
+		msg := types.NewMsgDefineService(serviceName, serviceDescription, tags, simAccount.Address, authorDescription, schemas)
+
 		fees, err := simtypes.RandomFees(r, ctx, spendable)
 		if err != nil {
-			return simtypes.NoOpMsg(types.ModuleName), nil, err
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to generate fees"), nil, err
 		}
-
-		msg := types.NewMsgDefineService(serviceName, serviceDescription, tags, simAccount.Address, authorDescription, schemas)
 
 		tx := helpers.GenTx(
 			[]sdk.Msg{msg},
@@ -154,7 +155,7 @@ func SimulateMsgDefineService(ak types.AccountKeeper, bk types.BankKeeper, k kee
 		)
 
 		if _, _, err := app.Deliver(tx); err != nil {
-			return simtypes.NoOpMsg(types.ModuleName), nil, err
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to deliver tx"), nil, err
 		}
 
 		return simtypes.NewOperationMsg(msg, true, ""), nil, nil
@@ -177,12 +178,12 @@ func SimulateMsgBindService(ak types.AccountKeeper, bk types.BankKeeper, k keepe
 		account := ak.GetAccount(ctx, simAccount.Address)
 		spendable := bk.SpendableCoins(ctx, account.GetAddress())
 
+		msg := types.NewMsgBindService(serviceName, simAccount.Address, deposit, pricing, qos, simAccount.Address)
+
 		fees, err := simtypes.RandomFees(r, ctx, spendable)
 		if err != nil {
-			return simtypes.NoOpMsg(types.ModuleName), nil, err
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to generate fees"), nil, err
 		}
-
-		msg := types.NewMsgBindService(serviceName, simAccount.Address, deposit, pricing, qos, simAccount.Address)
 
 		tx := helpers.GenTx(
 			[]sdk.Msg{msg},
@@ -195,7 +196,7 @@ func SimulateMsgBindService(ak types.AccountKeeper, bk types.BankKeeper, k keepe
 		)
 
 		if _, _, err := app.Deliver(tx); err != nil {
-			return simtypes.NoOpMsg(types.ModuleName), nil, err
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to deliver tx"), nil, err
 		}
 
 		return simtypes.NewOperationMsg(msg, true, ""), nil, nil
@@ -218,12 +219,12 @@ func SimulateMsgUpdateServiceBinding(ak types.AccountKeeper, bk types.BankKeeper
 		account := ak.GetAccount(ctx, simAccount.Address)
 		spendable := bk.SpendableCoins(ctx, account.GetAddress())
 
+		msg := types.NewMsgUpdateServiceBinding(serviceName, simAccount.Address, deposit, pricing, qos, simAccount.Address)
+
 		fees, err := simtypes.RandomFees(r, ctx, spendable)
 		if err != nil {
-			return simtypes.NoOpMsg(types.ModuleName), nil, err
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to generate fees"), nil, err
 		}
-
-		msg := types.NewMsgUpdateServiceBinding(serviceName, simAccount.Address, deposit, pricing, qos, simAccount.Address)
 
 		tx := helpers.GenTx(
 			[]sdk.Msg{msg},
@@ -236,7 +237,7 @@ func SimulateMsgUpdateServiceBinding(ak types.AccountKeeper, bk types.BankKeeper
 		)
 
 		if _, _, err := app.Deliver(tx); err != nil {
-			return simtypes.NoOpMsg(types.ModuleName), nil, err
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to deliver tx"), nil, err
 		}
 
 		return simtypes.NewOperationMsg(msg, true, ""), nil, nil
@@ -255,12 +256,12 @@ func SimulateMsgSetWithdrawAddress(ak types.AccountKeeper, bk types.BankKeeper, 
 		account := ak.GetAccount(ctx, simAccount.Address)
 		spendable := bk.SpendableCoins(ctx, account.GetAddress())
 
+		msg := types.NewMsgSetWithdrawAddress(simAccount.Address, withdrawalAccount.Address)
+
 		fees, err := simtypes.RandomFees(r, ctx, spendable)
 		if err != nil {
-			return simtypes.NoOpMsg(types.ModuleName), nil, err
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to generate fees"), nil, err
 		}
-
-		msg := types.NewMsgSetWithdrawAddress(simAccount.Address, withdrawalAccount.Address)
 
 		tx := helpers.GenTx(
 			[]sdk.Msg{msg},
@@ -273,7 +274,7 @@ func SimulateMsgSetWithdrawAddress(ak types.AccountKeeper, bk types.BankKeeper, 
 		)
 
 		if _, _, err := app.Deliver(tx); err != nil {
-			return simtypes.NoOpMsg(types.ModuleName), nil, err
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to deliver tx"), nil, err
 		}
 
 		return simtypes.NewOperationMsg(msg, true, ""), nil, nil
@@ -292,12 +293,12 @@ func SimulateMsgDisableServiceBinding(ak types.AccountKeeper, bk types.BankKeepe
 		account := ak.GetAccount(ctx, simAccount.Address)
 		spendable := bk.SpendableCoins(ctx, account.GetAddress())
 
+		msg := types.NewMsgDisableServiceBinding(serviceName, simAccount.Address, simAccount.Address)
+
 		fees, err := simtypes.RandomFees(r, ctx, spendable)
 		if err != nil {
-			return simtypes.NoOpMsg(types.ModuleName), nil, err
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to generate fees"), nil, err
 		}
-
-		msg := types.NewMsgDisableServiceBinding(serviceName, simAccount.Address, simAccount.Address)
 
 		tx := helpers.GenTx(
 			[]sdk.Msg{msg},
@@ -310,7 +311,7 @@ func SimulateMsgDisableServiceBinding(ak types.AccountKeeper, bk types.BankKeepe
 		)
 
 		if _, _, err := app.Deliver(tx); err != nil {
-			return simtypes.NoOpMsg(types.ModuleName), nil, err
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to deliver tx"), nil, err
 		}
 
 		return simtypes.NewOperationMsg(msg, true, ""), nil, nil
@@ -331,12 +332,12 @@ func SimulateMsgEnableServiceBinding(ak types.AccountKeeper, bk types.BankKeeper
 		account := ak.GetAccount(ctx, simAccount.Address)
 		spendable := bk.SpendableCoins(ctx, account.GetAddress())
 
+		msg := types.NewMsgEnableServiceBinding(serviceName, simAccount.Address, deposit, simAccount.Address)
+
 		fees, err := simtypes.RandomFees(r, ctx, spendable)
 		if err != nil {
-			return simtypes.NoOpMsg(types.ModuleName), nil, err
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to generate fees"), nil, err
 		}
-
-		msg := types.NewMsgEnableServiceBinding(serviceName, simAccount.Address, deposit, simAccount.Address)
 
 		tx := helpers.GenTx(
 			[]sdk.Msg{msg},
@@ -349,7 +350,7 @@ func SimulateMsgEnableServiceBinding(ak types.AccountKeeper, bk types.BankKeeper
 		)
 
 		if _, _, err := app.Deliver(tx); err != nil {
-			return simtypes.NoOpMsg(types.ModuleName), nil, err
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to deliver tx"), nil, err
 		}
 
 		return simtypes.NewOperationMsg(msg, true, ""), nil, nil
@@ -368,12 +369,12 @@ func SimulateMsgRefundServiceDeposit(ak types.AccountKeeper, bk types.BankKeeper
 		account := ak.GetAccount(ctx, simAccount.Address)
 		spendable := bk.SpendableCoins(ctx, account.GetAddress())
 
+		msg := types.NewMsgRefundServiceDeposit(serviceName, simAccount.Address, simAccount.Address)
+
 		fees, err := simtypes.RandomFees(r, ctx, spendable)
 		if err != nil {
-			return simtypes.NoOpMsg(types.ModuleName), nil, err
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to generate fees"), nil, err
 		}
-
-		msg := types.NewMsgRefundServiceDeposit(serviceName, simAccount.Address, simAccount.Address)
 
 		tx := helpers.GenTx(
 			[]sdk.Msg{msg},
@@ -386,7 +387,7 @@ func SimulateMsgRefundServiceDeposit(ak types.AccountKeeper, bk types.BankKeeper
 		)
 
 		if _, _, err := app.Deliver(tx); err != nil {
-			return simtypes.NoOpMsg(types.ModuleName), nil, err
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to deliver tx"), nil, err
 		}
 
 		return simtypes.NewOperationMsg(msg, true, ""), nil, nil

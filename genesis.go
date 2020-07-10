@@ -6,11 +6,14 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	tmbytes "github.com/tendermint/tendermint/libs/bytes"
+
+	"github.com/irismod/service/keeper"
+	"github.com/irismod/service/types"
 )
 
 // InitGenesis - store genesis parameters
-func InitGenesis(ctx sdk.Context, k Keeper, data GenesisState) {
-	if err := ValidateGenesis(data); err != nil {
+func InitGenesis(ctx sdk.Context, k keeper.Keeper, data types.GenesisState) {
+	if err := types.ValidateGenesis(data); err != nil {
 		panic(err.Error())
 	}
 
@@ -37,15 +40,15 @@ func InitGenesis(ctx sdk.Context, k Keeper, data GenesisState) {
 }
 
 // ExportGenesis - output genesis parameters
-func ExportGenesis(ctx sdk.Context, k Keeper) GenesisState {
-	definitions := []ServiceDefinition{}
-	bindings := []ServiceBinding{}
+func ExportGenesis(ctx sdk.Context, k keeper.Keeper) types.GenesisState {
+	var definitions []types.ServiceDefinition
+	var bindings []types.ServiceBinding
 	withdrawAddresses := make(map[string]sdk.AccAddress)
-	requestContexts := make(map[string]RequestContext)
+	requestContexts := make(map[string]types.RequestContext)
 
 	k.IterateServiceDefinitions(
 		ctx,
-		func(definition ServiceDefinition) bool {
+		func(definition types.ServiceDefinition) bool {
 			definitions = append(definitions, definition)
 			return false
 		},
@@ -53,7 +56,7 @@ func ExportGenesis(ctx sdk.Context, k Keeper) GenesisState {
 
 	k.IterateServiceBindings(
 		ctx,
-		func(binding ServiceBinding) bool {
+		func(binding types.ServiceBinding) bool {
 			bindings = append(bindings, binding)
 			return false
 		},
@@ -69,13 +72,13 @@ func ExportGenesis(ctx sdk.Context, k Keeper) GenesisState {
 
 	k.IterateRequestContexts(
 		ctx,
-		func(requestContextID tmbytes.HexBytes, requestContext RequestContext) bool {
+		func(requestContextID tmbytes.HexBytes, requestContext types.RequestContext) bool {
 			requestContexts[requestContextID.String()] = requestContext
 			return false
 		},
 	)
 
-	return NewGenesisState(
+	return types.NewGenesisState(
 		k.GetParams(ctx),
 		definitions,
 		bindings,
@@ -85,7 +88,7 @@ func ExportGenesis(ctx sdk.Context, k Keeper) GenesisState {
 }
 
 // PrepForZeroHeightGenesis refunds the deposits, service fees and earned fees
-func PrepForZeroHeightGenesis(ctx sdk.Context, k Keeper) {
+func PrepForZeroHeightGenesis(ctx sdk.Context, k keeper.Keeper) {
 	// refund service fees from all active requests
 	if err := k.RefundServiceFees(ctx); err != nil {
 		panic(fmt.Sprintf("failed to refund the service fees: %s", err))
