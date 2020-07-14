@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/version"
@@ -29,7 +28,7 @@ func GetTxCmd(ctx client.Context) *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
-	serviceTxCmd.AddCommand(flags.PostCommands(
+	serviceTxCmd.AddCommand(
 		GetCmdDefineService(ctx),
 		GetCmdBindService(ctx),
 		GetCmdUpdateServiceBinding(ctx),
@@ -44,7 +43,7 @@ func GetTxCmd(ctx client.Context) *cobra.Command {
 		GetCmdKillRequestContext(ctx),
 		GetCmdUpdateRequestContext(ctx),
 		GetCmdWithdrawEarnedFees(ctx),
-	)...)
+	)
 
 	return serviceTxCmd
 }

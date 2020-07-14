@@ -10,7 +10,6 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/version"
@@ -29,7 +28,7 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
-	serviceQueryCmd.AddCommand(flags.GetCommands(
+	serviceQueryCmd.AddCommand(
 		GetCmdQueryServiceDefinition(cdc),
 		GetCmdQueryServiceBinding(cdc),
 		GetCmdQueryServiceBindings(cdc),
@@ -42,7 +41,7 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 		GetCmdQueryEarnedFees(cdc),
 		GetCmdQuerySchema(cdc),
 		GetCmdQueryParams(cdc),
-	)...)
+	)
 
 	return serviceQueryCmd
 }
