@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/version"
@@ -107,6 +108,7 @@ $ %s tx service define --name=<service name> --description=<service description>
 	cmd.Flags().AddFlagSet(FsDefineService)
 	_ = cmd.MarkFlagRequired(FlagName)
 	_ = cmd.MarkFlagRequired(FlagSchemas)
+	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
 }
@@ -189,6 +191,7 @@ $ %s tx service bind --service-name=<service-name> --deposit=1stake
 	_ = cmd.MarkFlagRequired(FlagDeposit)
 	_ = cmd.MarkFlagRequired(FlagPricing)
 	_ = cmd.MarkFlagRequired(FlagQoS)
+	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
 }
@@ -272,6 +275,7 @@ $ %s tx service update-binding <service-name> <provider-address> --deposit=1stak
 	}
 
 	cmd.Flags().AddFlagSet(FsUpdateServiceBinding)
+	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
 }
@@ -309,6 +313,7 @@ $ %s tx service set-withdraw-addr <withdrawal-address> --from mykey
 			return tx.GenerateOrBroadcastTx(clientCtx, msg)
 		},
 	}
+	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
 }
@@ -353,6 +358,7 @@ $ %s tx service disable <service-name> <provider-address> --from mykey
 			return tx.GenerateOrBroadcastTx(clientCtx, msg)
 		},
 	}
+	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
 }
@@ -409,6 +415,7 @@ $ %s tx service enable <service-name> <provider-address> --deposit=1stake --from
 	}
 
 	cmd.Flags().AddFlagSet(FsEnableServiceBinding)
+	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
 }
@@ -453,6 +460,7 @@ $ %s tx service refund-deposit <service-name> <provider-address> --from mykey
 			return tx.GenerateOrBroadcastTx(clientCtx, msg)
 		},
 	}
+	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
 }
@@ -548,6 +556,7 @@ $ %s tx service call --service-name=<service-name> --providers=<provider list>
 	_ = cmd.MarkFlagRequired(FlagServiceFeeCap)
 	_ = cmd.MarkFlagRequired(FlagData)
 	_ = cmd.MarkFlagRequired(FlagTimeout)
+	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
 }
@@ -637,6 +646,7 @@ $ %s tx service respond --request-id=<request-id> --result=<result content or pa
 	cmd.Flags().AddFlagSet(FsRespondService)
 	_ = cmd.MarkFlagRequired(FlagRequestID)
 	_ = cmd.MarkFlagRequired(FlagResult)
+	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
 }
@@ -674,6 +684,7 @@ $ %s tx service pause <request-context-id> --from mykey
 			return tx.GenerateOrBroadcastTx(clientCtx, msg)
 		},
 	}
+	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
 }
@@ -711,6 +722,7 @@ $ %s tx service start <request-context-id> --from mykey
 			return tx.GenerateOrBroadcastTx(clientCtx, msg)
 		},
 	}
+	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
 }
@@ -748,6 +760,7 @@ $ %s tx service kill <request-context-id> --from mykey
 			return tx.GenerateOrBroadcastTx(clientCtx, msg)
 		},
 	}
+	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
 }
@@ -817,6 +830,7 @@ $ %s tx service update <request-context-id> --providers=<new providers>
 	}
 
 	cmd.Flags().AddFlagSet(FsUpdateRequestContext)
+	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
 }
@@ -862,6 +876,7 @@ $ %s tx service withdraw-fees <provider-address> --from mykey
 			return tx.GenerateOrBroadcastTx(clientCtx, msg)
 		},
 	}
+	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
 }

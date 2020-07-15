@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/version"
@@ -48,7 +49,7 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 
 // GetCmdQueryServiceDefinition implements the query service definition command.
 func GetCmdQueryServiceDefinition(cdc *codec.Codec) *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "definition [service-name]",
 		Short: "Query a service definition",
 		Long: strings.TrimSpace(
@@ -87,6 +88,9 @@ $ %s query service definition <service-name>
 			return cliCtx.PrintOutput(definition)
 		},
 	}
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
 }
 
 // GetCmdQueryServiceBinding implements the query service binding command
@@ -135,6 +139,7 @@ $ %s query service binding <service-name> <provider-address>
 			return cliCtx.PrintOutput(binding)
 		},
 	}
+	flags.AddQueryFlagsToCmd(cmd)
 
 	return cmd
 }
@@ -198,6 +203,7 @@ $ %s query service bindings <service-name> --owner=<address>
 	}
 
 	cmd.Flags().AddFlagSet(FsQueryServiceBindings)
+	flags.AddQueryFlagsToCmd(cmd)
 
 	return cmd
 }
@@ -244,6 +250,7 @@ $ %s query service withdraw-addr <address>
 			return cliCtx.PrintOutput(withdrawAddr)
 		},
 	}
+	flags.AddQueryFlagsToCmd(cmd)
 
 	return cmd
 }
@@ -302,6 +309,7 @@ $ %s query service request <request-id>
 			return cliCtx.PrintOutput(request)
 		},
 	}
+	flags.AddQueryFlagsToCmd(cmd)
 
 	return cmd
 }
@@ -346,6 +354,7 @@ $ %s query service requests <service-name> <provider> | <request-context-id> <ba
 			return cliCtx.PrintOutput(requests)
 		},
 	}
+	flags.AddQueryFlagsToCmd(cmd)
 
 	return cmd
 }
@@ -404,6 +413,7 @@ $ %s query service response <request-id>
 			return cliCtx.PrintOutput(response)
 		},
 	}
+	flags.AddQueryFlagsToCmd(cmd)
 
 	return cmd
 }
@@ -460,6 +470,7 @@ $ %s query service responses <request-context-id> <batch-counter>
 			return cliCtx.PrintOutput(responses)
 		},
 	}
+	flags.AddQueryFlagsToCmd(cmd)
 
 	return cmd
 }
@@ -499,6 +510,7 @@ $ %s query service request-context <request-context-id>
 			return cliCtx.PrintOutput(requestContext)
 		},
 	}
+	flags.AddQueryFlagsToCmd(cmd)
 
 	return cmd
 }
@@ -545,6 +557,7 @@ $ %s query service fees <provider-address>
 			return cliCtx.PrintOutput(fees)
 		},
 	}
+	flags.AddQueryFlagsToCmd(cmd)
 
 	return cmd
 }
@@ -590,13 +603,14 @@ $ %s query service schema <schema-name>
 			return cliCtx.PrintOutput(schema)
 		},
 	}
+	flags.AddQueryFlagsToCmd(cmd)
 
 	return cmd
 }
 
 // GetCmdQueryParams implements the query params command.
 func GetCmdQueryParams(cdc *codec.Codec) *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "params",
 		Short: "Query the current service parameter values",
 		Long: strings.TrimSpace(
@@ -623,4 +637,7 @@ $ %s query service params
 			return cliCtx.PrintOutput(params)
 		},
 	}
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
 }
