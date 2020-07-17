@@ -112,8 +112,8 @@ func (k Keeper) CreateRequestContext(
 		batchState, state, responseThreshold, moduleName,
 	)
 
-	txHash := ctx.Value(types.TxHash).([]byte)
-	msgIndex := ctx.Value(types.MsgIndex).(int64)
+	txHash := ctx.Context().Value(types.TxHash).([]byte)
+	msgIndex := ctx.Context().Value(types.MsgIndex).(int64)
 	requestContextID := types.GenerateRequestContextID(txHash, msgIndex)
 	k.SetRequestContext(ctx, requestContextID, requestContext)
 
