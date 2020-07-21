@@ -20,7 +20,7 @@ import (
 )
 
 // GetTxCmd returns the transaction commands for this module
-func GetTxCmd(ctx client.Context) *cobra.Command {
+func GetTxCmd() *cobra.Command {
 	serviceTxCmd := &cobra.Command{
 		Use:                        types.ModuleName,
 		Short:                      "Service transaction subcommands",
@@ -30,27 +30,27 @@ func GetTxCmd(ctx client.Context) *cobra.Command {
 	}
 
 	serviceTxCmd.AddCommand(
-		GetCmdDefineService(ctx),
-		GetCmdBindService(ctx),
-		GetCmdUpdateServiceBinding(ctx),
-		GetCmdSetWithdrawAddr(ctx),
-		GetCmdDisableServiceBinding(ctx),
-		GetCmdEnableServiceBinding(ctx),
-		GetCmdRefundServiceDeposit(ctx),
-		GetCmdCallService(ctx),
-		GetCmdRespondService(ctx),
-		GetCmdPauseRequestContext(ctx),
-		GetCmdStartRequestContext(ctx),
-		GetCmdKillRequestContext(ctx),
-		GetCmdUpdateRequestContext(ctx),
-		GetCmdWithdrawEarnedFees(ctx),
+		GetCmdDefineService(),
+		GetCmdBindService(),
+		GetCmdUpdateServiceBinding(),
+		GetCmdSetWithdrawAddr(),
+		GetCmdDisableServiceBinding(),
+		GetCmdEnableServiceBinding(),
+		GetCmdRefundServiceDeposit(),
+		GetCmdCallService(),
+		GetCmdRespondService(),
+		GetCmdPauseRequestContext(),
+		GetCmdStartRequestContext(),
+		GetCmdKillRequestContext(),
+		GetCmdUpdateRequestContext(),
+		GetCmdWithdrawEarnedFees(),
 	)
 
 	return serviceTxCmd
 }
 
 // GetCmdDefineService implements defining a service command
-func GetCmdDefineService(clientCtx client.Context) *cobra.Command {
+func GetCmdDefineService() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "define",
 		Short: "Define a new service",
@@ -65,7 +65,11 @@ $ %s tx service define --name=<service name> --description=<service description>
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := clientCtx.InitWithInput(cmd.InOrStdin())
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
 			author := clientCtx.GetFromAddress()
 
@@ -114,7 +118,7 @@ $ %s tx service define --name=<service name> --description=<service description>
 }
 
 // GetCmdBindService implements binding a service command
-func GetCmdBindService(clientCtx client.Context) *cobra.Command {
+func GetCmdBindService() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "bind",
 		Short: "Bind an existing service definition",
@@ -129,11 +133,14 @@ $ %s tx service bind --service-name=<service-name> --deposit=1stake
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := clientCtx.InitWithInput(cmd.InOrStdin())
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
 			owner := clientCtx.GetFromAddress()
 
-			var err error
 			var provider sdk.AccAddress
 
 			providerStr := viper.GetString(FlagProvider)
@@ -197,7 +204,7 @@ $ %s tx service bind --service-name=<service-name> --deposit=1stake
 }
 
 // GetCmdUpdateServiceBinding implements updating a service binding command
-func GetCmdUpdateServiceBinding(clientCtx client.Context) *cobra.Command {
+func GetCmdUpdateServiceBinding() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "update-binding [service-name] [provider-address]",
 		Short: "Update an existing service binding",
@@ -213,11 +220,14 @@ $ %s tx service update-binding <service-name> <provider-address> --deposit=1stak
 		),
 		Args: cobra.RangeArgs(1, 2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := clientCtx.InitWithInput(cmd.InOrStdin())
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
 			owner := clientCtx.GetFromAddress()
 
-			var err error
 			var provider sdk.AccAddress
 
 			if len(args) > 1 {
@@ -281,7 +291,7 @@ $ %s tx service update-binding <service-name> <provider-address> --deposit=1stak
 }
 
 // GetCmdSetWithdrawAddr implements setting a withdrawal address command
-func GetCmdSetWithdrawAddr(clientCtx client.Context) *cobra.Command {
+func GetCmdSetWithdrawAddr() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "set-withdraw-addr [withdrawal-address]",
 		Short: "Set a withdrawal address for an owner",
@@ -296,7 +306,11 @@ $ %s tx service set-withdraw-addr <withdrawal-address> --from mykey
 		),
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := clientCtx.InitWithInput(cmd.InOrStdin())
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
 			owner := clientCtx.GetFromAddress()
 
@@ -319,7 +333,7 @@ $ %s tx service set-withdraw-addr <withdrawal-address> --from mykey
 }
 
 // GetCmdDisableServiceBinding implements disabling a service binding command
-func GetCmdDisableServiceBinding(clientCtx client.Context) *cobra.Command {
+func GetCmdDisableServiceBinding() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "disable [service-name] [provider-address]",
 		Short: "Disable an available service binding",
@@ -334,11 +348,14 @@ $ %s tx service disable <service-name> <provider-address> --from mykey
 		),
 		Args: cobra.RangeArgs(1, 2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := clientCtx.InitWithInput(cmd.InOrStdin())
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
 			owner := clientCtx.GetFromAddress()
 
-			var err error
 			var provider sdk.AccAddress
 
 			if len(args) > 1 {
@@ -364,7 +381,7 @@ $ %s tx service disable <service-name> <provider-address> --from mykey
 }
 
 // GetCmdEnableServiceBinding implements enabling a service binding command
-func GetCmdEnableServiceBinding(clientCtx client.Context) *cobra.Command {
+func GetCmdEnableServiceBinding() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "enable [service-name] [provider-address]",
 		Short: "Enable an unavailable service binding",
@@ -379,11 +396,14 @@ $ %s tx service enable <service-name> <provider-address> --deposit=1stake --from
 		),
 		Args: cobra.RangeArgs(1, 2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := clientCtx.InitWithInput(cmd.InOrStdin())
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
 			owner := clientCtx.GetFromAddress()
 
-			var err error
 			var provider sdk.AccAddress
 
 			if len(args) > 1 {
@@ -421,7 +441,7 @@ $ %s tx service enable <service-name> <provider-address> --deposit=1stake --from
 }
 
 // GetCmdRefundServiceDeposit implements refunding deposit command
-func GetCmdRefundServiceDeposit(clientCtx client.Context) *cobra.Command {
+func GetCmdRefundServiceDeposit() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "refund-deposit [service-name] [provider-address]",
 		Short: "Refund all deposit from a service binding",
@@ -436,11 +456,14 @@ $ %s tx service refund-deposit <service-name> <provider-address> --from mykey
 		),
 		Args: cobra.RangeArgs(1, 2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := clientCtx.InitWithInput(cmd.InOrStdin())
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
 			owner := clientCtx.GetFromAddress()
 
-			var err error
 			var provider sdk.AccAddress
 
 			if len(args) > 1 {
@@ -466,7 +489,7 @@ $ %s tx service refund-deposit <service-name> <provider-address> --from mykey
 }
 
 // GetCmdCallService implements initiating a service call command
-func GetCmdCallService(clientCtx client.Context) *cobra.Command {
+func GetCmdCallService() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "call",
 		Short: "Initiate a service call",
@@ -482,7 +505,11 @@ $ %s tx service call --service-name=<service-name> --providers=<provider list>
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := clientCtx.InitWithInput(cmd.InOrStdin())
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
 			consumer := clientCtx.GetFromAddress()
 
@@ -562,7 +589,7 @@ $ %s tx service call --service-name=<service-name> --providers=<provider list>
 }
 
 // GetCmdRespondService implements responding to a service request command
-func GetCmdRespondService(clientCtx client.Context) *cobra.Command {
+func GetCmdRespondService() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "respond",
 		Short: "Respond to a service request",
@@ -577,7 +604,11 @@ $ %s tx service respond --request-id=<request-id> --result=<result content or pa
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := clientCtx.InitWithInput(cmd.InOrStdin())
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
 			provider := clientCtx.GetFromAddress()
 
@@ -652,7 +683,7 @@ $ %s tx service respond --request-id=<request-id> --result=<result content or pa
 }
 
 // GetCmdPauseRequestContext implements pausing a request context command
-func GetCmdPauseRequestContext(clientCtx client.Context) *cobra.Command {
+func GetCmdPauseRequestContext() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "pause [request-context-id]",
 		Short: "Pause a running request context",
@@ -667,7 +698,11 @@ $ %s tx service pause <request-context-id> --from mykey
 		),
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := clientCtx.InitWithInput(cmd.InOrStdin())
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
 			consumer := clientCtx.GetFromAddress()
 
@@ -690,7 +725,7 @@ $ %s tx service pause <request-context-id> --from mykey
 }
 
 // GetCmdStartRequestContext implements restarting a request context command
-func GetCmdStartRequestContext(clientCtx client.Context) *cobra.Command {
+func GetCmdStartRequestContext() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "start [request-context-id]",
 		Short: "Start a paused request context",
@@ -705,7 +740,11 @@ $ %s tx service start <request-context-id> --from mykey
 		),
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := clientCtx.InitWithInput(cmd.InOrStdin())
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
 			consumer := clientCtx.GetFromAddress()
 
@@ -728,7 +767,7 @@ $ %s tx service start <request-context-id> --from mykey
 }
 
 // GetCmdKillRequestContext implements terminating a request context command
-func GetCmdKillRequestContext(clientCtx client.Context) *cobra.Command {
+func GetCmdKillRequestContext() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "kill [request-context-id]",
 		Short: "Terminate a request context",
@@ -743,7 +782,11 @@ $ %s tx service kill <request-context-id> --from mykey
 		),
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := clientCtx.InitWithInput(cmd.InOrStdin())
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
 			consumer := clientCtx.GetFromAddress()
 
@@ -766,7 +809,7 @@ $ %s tx service kill <request-context-id> --from mykey
 }
 
 // GetCmdUpdateRequestContext implements updating a request context command
-func GetCmdUpdateRequestContext(clientCtx client.Context) *cobra.Command {
+func GetCmdUpdateRequestContext() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "update [request-context-id]",
 		Short: "Update a request context",
@@ -782,7 +825,11 @@ $ %s tx service update <request-context-id> --providers=<new providers>
 		),
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := clientCtx.InitWithInput(cmd.InOrStdin())
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
 			consumer := clientCtx.GetFromAddress()
 
@@ -836,7 +883,7 @@ $ %s tx service update <request-context-id> --providers=<new providers>
 }
 
 // GetCmdWithdrawEarnedFees implements withdrawing earned fees command
-func GetCmdWithdrawEarnedFees(clientCtx client.Context) *cobra.Command {
+func GetCmdWithdrawEarnedFees() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "withdraw-fees [provider-address]",
 		Short: "Withdraw the earned fees of a provider or owner",
@@ -852,11 +899,14 @@ $ %s tx service withdraw-fees <provider-address> --from mykey
 		),
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := clientCtx.InitWithInput(cmd.InOrStdin())
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
 			owner := clientCtx.GetFromAddress()
 
-			var err error
 			var provider sdk.AccAddress
 
 			if len(args) > 1 {

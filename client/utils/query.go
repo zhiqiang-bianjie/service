@@ -55,8 +55,8 @@ func QueryRequestContextByTxQuery(cliCtx client.Context, queryRoute string, para
 		return requestContext, err
 	}
 
-	if int64(len(txInfo.Tx.GetMsgs())) > msgIndex {
-		msg := txInfo.Tx.GetMsgs()[msgIndex]
+	if int64(len(txInfo.GetTx().GetMsgs())) > msgIndex {
+		msg := txInfo.GetTx().GetMsgs()[msgIndex]
 		if msg.Type() == types.TypeMsgCallService {
 			requestMsg := msg.(*types.MsgCallService)
 			requestContext := types.NewRequestContext(
@@ -189,7 +189,7 @@ func QueryResponseByTxQuery(cliCtx client.Context, queryRoute string, params typ
 		return response, err
 	}
 
-	for _, msg := range result.Txs[0].Tx.GetMsgs() {
+	for _, msg := range result.Txs[0].GetTx().GetMsgs() {
 		if msg.Type() == types.TypeMsgRespondService {
 			responseMsg := msg.(*types.MsgRespondService)
 			if responseMsg.RequestID.String() != params.RequestID.String() {
