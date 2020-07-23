@@ -249,7 +249,7 @@ func queryRequestHandlerFn(cliCtx client.Context) http.HandlerFunc {
 		var request types.Request
 		_ = cliCtx.Codec.UnmarshalJSON(res, &request)
 		if request.Empty() {
-			request, err = serviceutils.QueryRequestByTxQuery(cliCtx, types.RouterKey, params)
+			request, err = serviceutils.QueryRequestByTxQuery(cliCtx, types.RouterKey, params.RequestID)
 			if err != nil {
 				rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 				return
@@ -339,7 +339,7 @@ func queryResponseHandlerFn(cliCtx client.Context) http.HandlerFunc {
 		var response types.Response
 		_ = cliCtx.Codec.UnmarshalJSON(res, &response)
 		if response.Empty() {
-			response, err = serviceutils.QueryResponseByTxQuery(cliCtx, types.RouterKey, params)
+			response, err = serviceutils.QueryResponseByTxQuery(cliCtx, types.RouterKey, params.RequestID)
 			if err != nil {
 				rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 				return

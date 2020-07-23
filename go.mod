@@ -7,6 +7,7 @@ require (
 	github.com/gogo/protobuf v1.3.1
 	github.com/golang/protobuf v1.4.2
 	github.com/gorilla/mux v1.7.4
+	github.com/regen-network/cosmos-proto v0.3.0
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.7.0
@@ -14,6 +15,7 @@ require (
 	github.com/tendermint/tendermint v0.33.6
 	github.com/tendermint/tm-db v0.5.1
 	github.com/xeipuuv/gojsonschema v1.2.0
+	google.golang.org/grpc v1.30.0
 	gopkg.in/yaml.v2 v2.3.0
 )
 

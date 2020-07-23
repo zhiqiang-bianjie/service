@@ -105,7 +105,7 @@ func queryBindings(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, er
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 
-	bindings := make([]types.ServiceBinding, 0)
+	bindings := make([]*types.ServiceBinding, 0)
 
 	if params.Owner.Empty() {
 		iterator := k.ServiceBindingsIterator(ctx, params.ServiceName)
@@ -115,7 +115,7 @@ func queryBindings(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, er
 			var binding types.ServiceBinding
 			k.cdc.MustUnmarshalBinaryBare(iterator.Value(), &binding)
 
-			bindings = append(bindings, binding)
+			bindings = append(bindings, &binding)
 		}
 	} else {
 		bindings = k.GetOwnerServiceBindings(ctx, params.Owner, params.ServiceName)

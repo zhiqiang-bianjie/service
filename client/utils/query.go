@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strconv"
 
+	tmbytes "github.com/tendermint/tendermint/libs/bytes"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authclient "github.com/cosmos/cosmos-sdk/x/auth/client"
@@ -76,12 +78,8 @@ func QueryRequestContextByTxQuery(cliCtx client.Context, queryRoute string, para
 }
 
 // QueryRequestByTxQuery will query for a single request via a direct txs tags query.
-func QueryRequestByTxQuery(cliCtx client.Context, queryRoute string, params types.QueryRequestParams) (
+func QueryRequestByTxQuery(cliCtx client.Context, queryRoute string, requestID tmbytes.HexBytes) (
 	request types.Request, err error) {
-	requestID := params.RequestID
-	if err != nil {
-		return request, nil
-	}
 
 	contextID, _, requestHeight, batchRequestIndex, err := types.SplitRequestID(requestID)
 	if err != nil {
@@ -154,12 +152,12 @@ func QueryRequestByTxQuery(cliCtx client.Context, queryRoute string, params type
 }
 
 // QueryResponseByTxQuery will query for a single request via a direct txs tags query.
-func QueryResponseByTxQuery(cliCtx client.Context, queryRoute string, params types.QueryResponseParams) (
+func QueryResponseByTxQuery(cliCtx client.Context, queryRoute string, requestID tmbytes.HexBytes) (
 	response types.Response, err error) {
 
 	events := []string{
 		fmt.Sprintf("%s.%s='%s'", sdk.EventTypeMessage, sdk.AttributeKeyAction, types.TypeMsgRespondService),
-		fmt.Sprintf("%s.%s='%s'", sdk.EventTypeMessage, types.AttributeKeyRequestID, []byte(fmt.Sprintf("%d", params.RequestID))),
+		fmt.Sprintf("%s.%s='%s'", sdk.EventTypeMessage, types.AttributeKeyRequestID, []byte(fmt.Sprintf("%d", requestID))),
 	}
 
 	// NOTE: SearchTxs is used to facilitate the txs query which does not currently
@@ -170,10 +168,8 @@ func QueryResponseByTxQuery(cliCtx client.Context, queryRoute string, params typ
 	}
 
 	if len(result.Txs) == 0 {
-		return response, fmt.Errorf("unknown response: %s", params.RequestID)
+		return response, fmt.Errorf("unknown response: %s", requestID)
 	}
-
-	requestID := params.RequestID
 
 	contextID, batchCounter, _, _, err := types.SplitRequestID(requestID)
 	if err != nil {
@@ -192,7 +188,7 @@ func QueryResponseByTxQuery(cliCtx client.Context, queryRoute string, params typ
 	for _, msg := range result.Txs[0].GetTx().GetMsgs() {
 		if msg.Type() == types.TypeMsgRespondService {
 			responseMsg := msg.(*types.MsgRespondService)
-			if responseMsg.RequestID.String() != params.RequestID.String() {
+			if responseMsg.RequestID.String() != requestID.String() {
 				continue
 			}
 

@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"encoding/hex"
 	"fmt"
 	"strconv"
@@ -72,23 +73,17 @@ $ %s query service definition <service-name>
 				return err
 			}
 
-			bz, err := clientCtx.Codec.MarshalJSON(types.QueryDefinitionParams{ServiceName: args[0]})
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.Definition(context.Background(), &types.QueryDefinitionRequest{
+				ServiceName: args[0],
+			})
+
 			if err != nil {
 				return err
 			}
 
-			route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryDefinition)
-			res, _, err := clientCtx.QueryWithData(route, bz)
-			if err != nil {
-				return err
-			}
-
-			var definition types.ServiceDefinition
-			if err := clientCtx.Codec.UnmarshalJSON(res, &definition); err != nil {
-				return err
-			}
-
-			return clientCtx.PrintOutput(definition)
+			return clientCtx.PrintOutput(res.ServiceDefinition)
 		},
 	}
 	flags.AddQueryFlagsToCmd(cmd)
@@ -128,23 +123,18 @@ $ %s query service binding <service-name> <provider-address>
 				return err
 			}
 
-			bz, err := clientCtx.Codec.MarshalJSON(types.QueryBindingParams{ServiceName: args[0], Provider: provider})
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.Binding(context.Background(), &types.QueryBindingRequest{
+				ServiceName: args[0],
+				Provider:    provider,
+			})
+
 			if err != nil {
 				return err
 			}
 
-			route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryBinding)
-			res, _, err := clientCtx.QueryWithData(route, bz)
-			if err != nil {
-				return err
-			}
-
-			var binding types.ServiceBinding
-			if err := clientCtx.Codec.UnmarshalJSON(res, &binding); err != nil {
-				return err
-			}
-
-			return clientCtx.PrintOutput(binding)
+			return clientCtx.PrintOutput(res.ServiceBinding)
 		},
 	}
 	flags.AddQueryFlagsToCmd(cmd)
@@ -189,28 +179,18 @@ $ %s query service bindings <service-name> --owner=<address>
 				}
 			}
 
-			params := types.QueryBindingsParams{
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.Bindings(context.Background(), &types.QueryBindingsRequest{
 				ServiceName: args[0],
 				Owner:       owner,
-			}
+			})
 
-			bz, err := clientCtx.Codec.MarshalJSON(params)
 			if err != nil {
 				return err
 			}
 
-			route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryBindings)
-			res, _, err := clientCtx.QueryWithData(route, bz)
-			if err != nil {
-				return err
-			}
-
-			var bindings []types.ServiceBinding
-			if err := clientCtx.Codec.UnmarshalJSON(res, &bindings); err != nil {
-				return err
-			}
-
-			return clientCtx.PrintOutput(bindings)
+			return clientCtx.PrintOutput(res.ServiceBindings)
 		},
 	}
 
@@ -248,23 +228,13 @@ $ %s query service withdraw-addr <address>
 				return err
 			}
 
-			bz, err := clientCtx.Codec.MarshalJSON(types.QueryWithdrawAddressParams{Owner: owner})
-			if err != nil {
-				return err
-			}
+			queryClient := types.NewQueryClient(clientCtx)
 
-			route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryWithdrawAddress)
-			res, _, err := clientCtx.QueryWithData(route, bz)
-			if err != nil {
-				return err
-			}
+			res, err := queryClient.WithdrawAddress(context.Background(), &types.QueryWithdrawAddressRequest{
+				Owner: owner,
+			})
 
-			var withdrawAddr sdk.AccAddress
-			if err := clientCtx.Codec.UnmarshalJSON(res, &withdrawAddr); err != nil {
-				return err
-			}
-
-			return clientCtx.PrintOutput(withdrawAddr)
+			return clientCtx.PrintOutput(res.WithdrawAddress)
 		},
 	}
 	flags.AddQueryFlagsToCmd(cmd)
@@ -300,35 +270,28 @@ $ %s query service request <request-id>
 				return err
 			}
 
-			params := types.QueryRequestParams{
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.Request(context.Background(), &types.QueryRequestRequest{
 				RequestID: requestID,
-			}
-
-			bz, err := clientCtx.Codec.MarshalJSON(params)
+			})
 			if err != nil {
 				return err
 			}
 
-			route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryRequest)
-			res, _, err := clientCtx.QueryWithData(route, bz)
-			if err != nil {
-				return err
-			}
-
-			var request types.Request
-			_ = clientCtx.Codec.UnmarshalJSON(res, &request)
-			if request.Empty() {
-				request, err = utils.QueryRequestByTxQuery(clientCtx, types.QuerierRoute, params)
+			if res.Request == nil {
+				request, err := utils.QueryRequestByTxQuery(clientCtx, types.QuerierRoute, requestID)
 				if err != nil {
 					return err
 				}
+				res.Request = &request
 			}
 
-			if request.Empty() {
-				return fmt.Errorf("unknown request: %s", params.RequestID)
+			if res.Request.Empty() {
+				return fmt.Errorf("unknown request: %s", requestID)
 			}
 
-			return clientCtx.PrintOutput(request)
+			return clientCtx.PrintOutput(res.Request)
 		},
 	}
 	flags.AddQueryFlagsToCmd(cmd)
@@ -366,16 +329,37 @@ $ %s query service requests <service-name> <provider> | <request-context-id> <ba
 				queryByBinding = false
 			}
 
-			var requests []types.Request
+			queryClient := types.NewQueryClient(clientCtx)
+
+			var requests []*types.Request
 
 			if queryByBinding {
-				requests, _, err = utils.QueryRequestsByBinding(clientCtx, types.QuerierRoute, args[0], provider)
+				res, err := queryClient.Requests(context.Background(), &types.QueryRequestsRequest{
+					ServiceName: args[0],
+					Provider:    provider,
+				})
+				if err != nil {
+					return err
+				}
+				requests = res.Requests
 			} else {
-				requests, _, err = utils.QueryRequestsByReqCtx(clientCtx, types.QuerierRoute, args[0], args[1])
-			}
+				requestContextID, err := hex.DecodeString(args[0])
+				if err != nil {
+					return err
+				}
 
-			if err != nil {
-				return err
+				batchCounter, err := strconv.ParseUint(args[1], 10, 64)
+				if err != nil {
+					return err
+				}
+				res, err := queryClient.RequestsByReqCtx(context.Background(), &types.QueryRequestsByReqCtxRequest{
+					RequestContextID: requestContextID,
+					BatchCounter:     batchCounter,
+				})
+				if err != nil {
+					return err
+				}
+				requests = res.Requests
 			}
 
 			return clientCtx.PrintOutput(requests)
@@ -414,35 +398,28 @@ $ %s query service response <request-id>
 				return err
 			}
 
-			params := types.QueryResponseParams{
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.Response(context.Background(), &types.QueryResponseRequest{
 				RequestID: requestID,
-			}
-
-			bz, err := clientCtx.Codec.MarshalJSON(params)
+			})
 			if err != nil {
 				return err
 			}
 
-			route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryResponse)
-			res, _, err := clientCtx.QueryWithData(route, bz)
-			if err != nil {
-				return err
-			}
-
-			var response types.Response
-			_ = clientCtx.Codec.UnmarshalJSON(res, &response)
-			if response.Empty() {
-				response, err = utils.QueryResponseByTxQuery(clientCtx, types.QuerierRoute, params)
+			if res.Response == nil {
+				response, err := utils.QueryResponseByTxQuery(clientCtx, types.QuerierRoute, requestID)
 				if err != nil {
 					return err
 				}
+				res.Response = &response
 			}
 
-			if response.Empty() {
-				return fmt.Errorf("unknown response: %s", params.RequestID)
+			if res.Response.Empty() {
+				return fmt.Errorf("unknown response: %s", requestID)
 			}
 
-			return clientCtx.PrintOutput(response)
+			return clientCtx.PrintOutput(res.Response)
 		},
 	}
 	flags.AddQueryFlagsToCmd(cmd)
@@ -483,28 +460,17 @@ $ %s query service responses <request-context-id> <batch-counter>
 				return err
 			}
 
-			params := types.QueryResponsesParams{
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.Responses(context.Background(), &types.QueryResponsesRequest{
 				RequestContextID: requestContextID,
 				BatchCounter:     batchCounter,
-			}
-
-			bz, err := clientCtx.Codec.MarshalJSON(params)
+			})
 			if err != nil {
 				return err
 			}
 
-			route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryResponses)
-			res, _, err := clientCtx.QueryWithData(route, bz)
-			if err != nil {
-				return err
-			}
-
-			var responses []types.Response
-			if err := clientCtx.Codec.UnmarshalJSON(res, &responses); err != nil {
-				return err
-			}
-
-			return clientCtx.PrintOutput(responses)
+			return clientCtx.PrintOutput(res.Responses)
 		},
 	}
 	flags.AddQueryFlagsToCmd(cmd)
@@ -540,16 +506,16 @@ $ %s query service request-context <request-context-id>
 				return err
 			}
 
-			params := types.QueryRequestContextParams{
-				RequestContextID: requestContextID,
-			}
+			queryClient := types.NewQueryClient(clientCtx)
 
-			requestContext, err := utils.QueryRequestContext(clientCtx, types.QuerierRoute, params)
+			res, err := queryClient.RequestContext(context.Background(), &types.QueryRequestContextRequest{
+				RequestContextID: requestContextID,
+			})
 			if err != nil {
 				return err
 			}
 
-			return clientCtx.PrintOutput(requestContext)
+			return clientCtx.PrintOutput(res.RequestContext)
 		},
 	}
 	flags.AddQueryFlagsToCmd(cmd)
@@ -585,23 +551,16 @@ $ %s query service fees <provider-address>
 				return err
 			}
 
-			bz, err := clientCtx.Codec.MarshalJSON(types.QueryEarnedFeesParams{Provider: provider})
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.EarnedFees(context.Background(), &types.QueryEarnedFeesRequest{
+				Provider: provider,
+			})
 			if err != nil {
 				return err
 			}
 
-			route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryEarnedFees)
-			res, _, err := clientCtx.QueryWithData(route, bz)
-			if err != nil {
-				return err
-			}
-
-			var fees sdk.Coins
-			if err := clientCtx.Codec.UnmarshalJSON(res, &fees); err != nil {
-				return err
-			}
-
-			return clientCtx.PrintOutput(fees)
+			return clientCtx.PrintOutput(res.Fees)
 		},
 	}
 	flags.AddQueryFlagsToCmd(cmd)
@@ -632,27 +591,16 @@ $ %s query service schema <schema-name>
 				return err
 			}
 
-			params := types.QuerySchemaParams{
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.Schema(context.Background(), &types.QuerySchemaRequest{
 				SchemaName: args[0],
-			}
-
-			bz, err := clientCtx.Codec.MarshalJSON(params)
+			})
 			if err != nil {
 				return err
 			}
 
-			route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QuerySchema)
-			res, _, err := clientCtx.QueryWithData(route, bz)
-			if err != nil {
-				return err
-			}
-
-			var schema utils.SchemaType
-			if err := clientCtx.Codec.UnmarshalJSON(res, &schema); err != nil {
-				return err
-			}
-
-			return clientCtx.PrintOutput(schema)
+			return clientCtx.PrintOutput(utils.SchemaType(res.Schema))
 		},
 	}
 	flags.AddQueryFlagsToCmd(cmd)
@@ -682,16 +630,14 @@ $ %s query service params
 				return err
 			}
 
-			route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryParameters)
-			bz, _, err := clientCtx.QueryWithData(route, nil)
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.Params(context.Background(), &types.QueryParamsRequest{})
 			if err != nil {
 				return err
 			}
 
-			var params types.Params
-			clientCtx.Codec.MustUnmarshalJSON(bz, &params)
-
-			return clientCtx.PrintOutput(params)
+			return clientCtx.PrintOutput(res.Params)
 		},
 	}
 	flags.AddQueryFlagsToCmd(cmd)

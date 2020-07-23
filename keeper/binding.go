@@ -334,10 +334,10 @@ func (k Keeper) SetOwnerServiceBinding(ctx sdk.Context, svcBinding types.Service
 }
 
 // GetOwnerServiceBindings retrieves the service bindings with the specified service name and owner
-func (k Keeper) GetOwnerServiceBindings(ctx sdk.Context, owner sdk.AccAddress, serviceName string) []types.ServiceBinding {
+func (k Keeper) GetOwnerServiceBindings(ctx sdk.Context, owner sdk.AccAddress, serviceName string) []*types.ServiceBinding {
 	store := ctx.KVStore(k.storeKey)
 
-	bindings := make([]types.ServiceBinding, 0)
+	bindings := make([]*types.ServiceBinding, 0)
 
 	iterator := sdk.KVStorePrefixIterator(store, types.GetOwnerBindingsSubspace(owner, serviceName))
 	defer iterator.Close()
@@ -350,7 +350,7 @@ func (k Keeper) GetOwnerServiceBindings(ctx sdk.Context, owner sdk.AccAddress, s
 
 		binding, found := k.GetServiceBinding(ctx, serviceName, provider)
 		if found {
-			bindings = append(bindings, binding)
+			bindings = append(bindings, &binding)
 		}
 	}
 

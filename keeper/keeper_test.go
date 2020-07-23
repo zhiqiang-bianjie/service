@@ -144,7 +144,7 @@ func (suite *KeeperTestSuite) TestBindService() {
 
 	svcBindings := suite.keeper.GetOwnerServiceBindings(suite.ctx, testOwner, testServiceName)
 	suite.Equal(1, len(svcBindings))
-	suite.Equal(svcBinding, svcBindings[0])
+	suite.Equal(svcBinding.String(), svcBindings[0].String())
 
 	providerOwner, found := suite.keeper.GetOwner(suite.ctx, testProvider)
 	suite.True(found)

@@ -2,7 +2,7 @@ syntax = "proto3";
 package irismod.service;
 
 import "third_party/proto/gogoproto/gogo.proto";
-import "third_party/proto/cosmos-proto/types.proto";
+import "third_party/proto/cosmos_proto/types.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/duration.proto";
 
