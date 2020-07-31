@@ -1,2 +1,2 @@
 # service
-IRIS Service (iService)
+Interchain Service (iService)
