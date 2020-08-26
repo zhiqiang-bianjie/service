@@ -190,7 +190,7 @@ $ %s query service bindings <service-name> --owner=<address>
 				return err
 			}
 
-			return clientCtx.PrintOutput(res.ServiceBindings)
+			return clientCtx.PrintOutput(res)
 		},
 	}
 
@@ -234,7 +234,7 @@ $ %s query service withdraw-addr <address>
 				Owner: owner,
 			})
 
-			return clientCtx.PrintOutput(res.WithdrawAddress)
+			return clientCtx.PrintOutput(res)
 		},
 	}
 	flags.AddQueryFlagsToCmd(cmd)
@@ -331,8 +331,6 @@ $ %s query service requests <service-name> <provider> | <request-context-id> <ba
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			var requests []*types.Request
-
 			if queryByBinding {
 				res, err := queryClient.Requests(context.Background(), &types.QueryRequestsRequest{
 					ServiceName: args[0],
@@ -341,7 +339,7 @@ $ %s query service requests <service-name> <provider> | <request-context-id> <ba
 				if err != nil {
 					return err
 				}
-				requests = res.Requests
+				return clientCtx.PrintOutput(res)
 			} else {
 				requestContextID, err := hex.DecodeString(args[0])
 				if err != nil {
@@ -359,10 +357,8 @@ $ %s query service requests <service-name> <provider> | <request-context-id> <ba
 				if err != nil {
 					return err
 				}
-				requests = res.Requests
+				return clientCtx.PrintOutput(res)
 			}
-
-			return clientCtx.PrintOutput(requests)
 		},
 	}
 	flags.AddQueryFlagsToCmd(cmd)
@@ -470,7 +466,7 @@ $ %s query service responses <request-context-id> <batch-counter>
 				return err
 			}
 
-			return clientCtx.PrintOutput(res.Responses)
+			return clientCtx.PrintOutput(res)
 		},
 	}
 	flags.AddQueryFlagsToCmd(cmd)
@@ -560,7 +556,7 @@ $ %s query service fees <provider-address>
 				return err
 			}
 
-			return clientCtx.PrintOutput(res.Fees)
+			return clientCtx.PrintOutput(res)
 		},
 	}
 	flags.AddQueryFlagsToCmd(cmd)
@@ -600,7 +596,7 @@ $ %s query service schema <schema-name>
 				return err
 			}
 
-			return clientCtx.PrintOutput(utils.SchemaType(res.Schema))
+			return clientCtx.PrintOutput(res)
 		},
 	}
 	flags.AddQueryFlagsToCmd(cmd)
@@ -637,7 +633,7 @@ $ %s query service params
 				return err
 			}
 
-			return clientCtx.PrintOutput(res.Params)
+			return clientCtx.PrintOutput(&res.Params)
 		},
 	}
 	flags.AddQueryFlagsToCmd(cmd)

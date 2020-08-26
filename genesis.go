@@ -35,7 +35,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, data types.GenesisState) {
 
 	for reqContextIDStr, requestContext := range data.RequestContexts {
 		requestContextID, _ := hex.DecodeString(reqContextIDStr)
-		k.SetRequestContext(ctx, requestContextID, requestContext)
+		k.SetRequestContext(ctx, requestContextID, *requestContext)
 	}
 }
 
@@ -43,8 +43,8 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, data types.GenesisState) {
 func ExportGenesis(ctx sdk.Context, k keeper.Keeper) types.GenesisState {
 	var definitions []types.ServiceDefinition
 	var bindings []types.ServiceBinding
-	withdrawAddresses := make(map[string]sdk.AccAddress)
-	requestContexts := make(map[string]types.RequestContext)
+	withdrawAddresses := make(map[string][]byte)
+	requestContexts := make(map[string]*types.RequestContext)
 
 	k.IterateServiceDefinitions(
 		ctx,
@@ -73,7 +73,7 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) types.GenesisState {
 	k.IterateRequestContexts(
 		ctx,
 		func(requestContextID tmbytes.HexBytes, requestContext types.RequestContext) bool {
-			requestContexts[requestContextID.String()] = requestContext
+			requestContexts[requestContextID.String()] = &requestContext
 			return false
 		},
 	)

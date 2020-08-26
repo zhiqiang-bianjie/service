@@ -18,7 +18,7 @@ import (
 // QueryRequestContext queries a single request context
 func QueryRequestContext(cliCtx client.Context, queryRoute string, params types.QueryRequestContextParams) (
 	requestContext types.RequestContext, err error) {
-	bz, err := cliCtx.Codec.MarshalJSON(params)
+	bz, err := cliCtx.JSONMarshaler.MarshalJSON(params)
 	if err != nil {
 		return requestContext, err
 	}
@@ -29,7 +29,7 @@ func QueryRequestContext(cliCtx client.Context, queryRoute string, params types.
 		return requestContext, err
 	}
 
-	_ = cliCtx.Codec.UnmarshalJSON(res, &requestContext)
+	_ = cliCtx.JSONMarshaler.UnmarshalJSON(res, &requestContext)
 	if requestContext.Empty() {
 		requestContext, err = QueryRequestContextByTxQuery(cliCtx, queryRoute, params)
 		if err != nil {
@@ -212,7 +212,7 @@ func QueryRequestsByBinding(cliCtx client.Context, queryRoute string, serviceNam
 		Provider:    provider,
 	}
 
-	bz, err := cliCtx.Codec.MarshalJSON(params)
+	bz, err := cliCtx.JSONMarshaler.MarshalJSON(params)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -224,7 +224,7 @@ func QueryRequestsByBinding(cliCtx client.Context, queryRoute string, serviceNam
 	}
 
 	var requests []types.Request
-	if err := cliCtx.Codec.UnmarshalJSON(res, &requests); err != nil {
+	if err := cliCtx.JSONMarshaler.UnmarshalJSON(res, &requests); err != nil {
 		return nil, 0, err
 	}
 
@@ -248,7 +248,7 @@ func QueryRequestsByReqCtx(cliCtx client.Context, queryRoute, reqCtxIDStr, batch
 		BatchCounter:     batchCounter,
 	}
 
-	bz, err := cliCtx.Codec.MarshalJSON(params)
+	bz, err := cliCtx.JSONMarshaler.MarshalJSON(params)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -260,7 +260,7 @@ func QueryRequestsByReqCtx(cliCtx client.Context, queryRoute, reqCtxIDStr, batch
 	}
 
 	var requests []types.Request
-	if err := cliCtx.Codec.UnmarshalJSON(res, &requests); err != nil {
+	if err := cliCtx.JSONMarshaler.UnmarshalJSON(res, &requests); err != nil {
 		return nil, 0, err
 	}
 

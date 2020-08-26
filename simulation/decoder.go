@@ -4,16 +4,15 @@ import (
 	"bytes"
 	"fmt"
 
-	tmkv "github.com/tendermint/tendermint/libs/kv"
-
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/types/kv"
 
 	"github.com/irismod/service/types"
 )
 
 // NewDecodeStore unmarshals the KVPair's Value to the corresponding service type
-func NewDecodeStore(cdc codec.Marshaler) func(kvA, kvB tmkv.Pair) string {
-	return func(kvA, kvB tmkv.Pair) string {
+func NewDecodeStore(cdc codec.Marshaler) func(kvA, kvB kv.Pair) string {
+	return func(kvA, kvB kv.Pair) string {
 		switch {
 		case bytes.Equal(kvA.Key[:1], types.ServiceDefinitionKey):
 			var definition1, definition2 types.ServiceDefinition
