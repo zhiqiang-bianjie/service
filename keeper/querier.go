@@ -7,52 +7,53 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	gogotypes "github.com/gogo/protobuf/types"
-	"github.com/irismod/service/types"
 	abci "github.com/tendermint/tendermint/abci/types"
+
+	"github.com/irismod/service/types"
 )
 
 // NewQuerier creates a new service Querier instance
-func NewQuerier(k Keeper) sdk.Querier {
+func NewQuerier(k Keeper, legacyQuerierCdc codec.JSONMarshaler) sdk.Querier {
 	return func(ctx sdk.Context, path []string, req abci.RequestQuery) ([]byte, error) {
 		switch path[0] {
 		case types.QueryDefinition:
-			return queryServiceDefinition(ctx, path[1:], req, k)
+			return queryServiceDefinition(ctx, path[1:], req, k, legacyQuerierCdc)
 
 		case types.QueryBinding:
-			return queryBinding(ctx, req, k)
+			return queryBinding(ctx, req, k, legacyQuerierCdc)
 
 		case types.QueryBindings:
-			return queryBindings(ctx, req, k)
+			return queryBindings(ctx, req, k, legacyQuerierCdc)
 
 		case types.QueryWithdrawAddress:
-			return queryWithdrawAddress(ctx, req, k)
+			return queryWithdrawAddress(ctx, req, k, legacyQuerierCdc)
 
 		case types.QueryRequest:
-			return queryRequest(ctx, req, k)
+			return queryRequest(ctx, req, k, legacyQuerierCdc)
 
 		case types.QueryRequests:
-			return queryRequests(ctx, req, k)
+			return queryRequests(ctx, req, k, legacyQuerierCdc)
 
 		case types.QueryResponse:
-			return queryResponse(ctx, req, k)
+			return queryResponse(ctx, req, k, legacyQuerierCdc)
 
 		case types.QueryRequestContext:
-			return queryRequestContext(ctx, req, k)
+			return queryRequestContext(ctx, req, k, legacyQuerierCdc)
 
 		case types.QueryRequestsByReqCtx:
-			return queryRequestsByReqCtx(ctx, req, k)
+			return queryRequestsByReqCtx(ctx, req, k, legacyQuerierCdc)
 
 		case types.QueryResponses:
-			return queryResponses(ctx, req, k)
+			return queryResponses(ctx, req, k, legacyQuerierCdc)
 
 		case types.QueryEarnedFees:
-			return queryEarnedFees(ctx, req, k)
+			return queryEarnedFees(ctx, req, k, legacyQuerierCdc)
 
 		case types.QuerySchema:
-			return querySchema(ctx, req, k)
+			return querySchema(ctx, req, k, legacyQuerierCdc)
 
 		case types.QueryParameters:
-			return queryParams(ctx, k)
+			return queryParams(ctx, k, legacyQuerierCdc)
 
 		default:
 			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unknown %s query path: %s", types.ModuleName, path[0])
@@ -60,9 +61,9 @@ func NewQuerier(k Keeper) sdk.Querier {
 	}
 }
 
-func queryServiceDefinition(ctx sdk.Context, path []string, req abci.RequestQuery, k Keeper) ([]byte, error) {
+func queryServiceDefinition(ctx sdk.Context, path []string, req abci.RequestQuery, k Keeper, legacyQuerierCdc codec.JSONMarshaler) ([]byte, error) {
 	var params types.QueryDefinitionParams
-	if err := k.cdc.UnmarshalJSON(req.Data, &params); err != nil {
+	if err := legacyQuerierCdc.UnmarshalJSON(req.Data, &params); err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 
@@ -71,7 +72,7 @@ func queryServiceDefinition(ctx sdk.Context, path []string, req abci.RequestQuer
 		return nil, sdkerrors.Wrap(types.ErrUnknownServiceDefinition, params.ServiceName)
 	}
 
-	bz, err := codec.MarshalJSONIndent(k.cdc, definition)
+	bz, err := codec.MarshalJSONIndent(legacyQuerierCdc, definition)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
@@ -79,9 +80,9 @@ func queryServiceDefinition(ctx sdk.Context, path []string, req abci.RequestQuer
 	return bz, nil
 }
 
-func queryBinding(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, error) {
+func queryBinding(ctx sdk.Context, req abci.RequestQuery, k Keeper, legacyQuerierCdc codec.JSONMarshaler) ([]byte, error) {
 	var params types.QueryBindingParams
-	if err := k.cdc.UnmarshalJSON(req.Data, &params); err != nil {
+	if err := legacyQuerierCdc.UnmarshalJSON(req.Data, &params); err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 
@@ -90,7 +91,7 @@ func queryBinding(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, err
 		return nil, sdkerrors.Wrap(types.ErrUnknownServiceBinding, "")
 	}
 
-	bz, err := codec.MarshalJSONIndent(k.cdc, svcBinding)
+	bz, err := codec.MarshalJSONIndent(legacyQuerierCdc, svcBinding)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
@@ -98,13 +99,13 @@ func queryBinding(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, err
 	return bz, nil
 }
 
-func queryBindings(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, error) {
+func queryBindings(ctx sdk.Context, req abci.RequestQuery, k Keeper, legacyQuerierCdc codec.JSONMarshaler) ([]byte, error) {
 	var params types.QueryBindingsParams
-	if err := k.cdc.UnmarshalJSON(req.Data, &params); err != nil {
+	if err := legacyQuerierCdc.UnmarshalJSON(req.Data, &params); err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 
-	bindings := make([]types.ServiceBinding, 0)
+	bindings := make([]*types.ServiceBinding, 0)
 
 	if params.Owner.Empty() {
 		iterator := k.ServiceBindingsIterator(ctx, params.ServiceName)
@@ -114,13 +115,13 @@ func queryBindings(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, er
 			var binding types.ServiceBinding
 			k.cdc.MustUnmarshalBinaryBare(iterator.Value(), &binding)
 
-			bindings = append(bindings, binding)
+			bindings = append(bindings, &binding)
 		}
 	} else {
 		bindings = k.GetOwnerServiceBindings(ctx, params.Owner, params.ServiceName)
 	}
 
-	bz, err := codec.MarshalJSONIndent(k.cdc, bindings)
+	bz, err := codec.MarshalJSONIndent(legacyQuerierCdc, bindings)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
@@ -128,15 +129,15 @@ func queryBindings(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, er
 	return bz, nil
 }
 
-func queryWithdrawAddress(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, error) {
+func queryWithdrawAddress(ctx sdk.Context, req abci.RequestQuery, k Keeper, legacyQuerierCdc codec.JSONMarshaler) ([]byte, error) {
 	var params types.QueryWithdrawAddressParams
-	if err := k.cdc.UnmarshalJSON(req.Data, &params); err != nil {
+	if err := legacyQuerierCdc.UnmarshalJSON(req.Data, &params); err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 
 	withdrawAddr := k.GetWithdrawAddress(ctx, params.Owner)
 
-	bz, err := codec.MarshalJSONIndent(k.cdc, withdrawAddr)
+	bz, err := codec.MarshalJSONIndent(legacyQuerierCdc, withdrawAddr)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
@@ -144,9 +145,9 @@ func queryWithdrawAddress(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]b
 	return bz, nil
 }
 
-func queryRequest(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, error) {
+func queryRequest(ctx sdk.Context, req abci.RequestQuery, k Keeper, legacyQuerierCdc codec.JSONMarshaler) ([]byte, error) {
 	var params types.QueryRequestParams
-	if err := k.cdc.UnmarshalJSON(req.Data, &params); err != nil {
+	if err := legacyQuerierCdc.UnmarshalJSON(req.Data, &params); err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 
@@ -157,7 +158,7 @@ func queryRequest(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, err
 
 	request, _ := k.GetRequest(ctx, params.RequestID)
 
-	bz, err := codec.MarshalJSONIndent(k.cdc, request)
+	bz, err := codec.MarshalJSONIndent(legacyQuerierCdc, request)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
@@ -165,9 +166,9 @@ func queryRequest(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, err
 	return bz, nil
 }
 
-func queryRequests(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, error) {
+func queryRequests(ctx sdk.Context, req abci.RequestQuery, k Keeper, legacyQuerierCdc codec.JSONMarshaler) ([]byte, error) {
 	var params types.QueryRequestsParams
-	if err := k.cdc.UnmarshalJSON(req.Data, &params); err != nil {
+	if err := legacyQuerierCdc.UnmarshalJSON(req.Data, &params); err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 
@@ -185,7 +186,7 @@ func queryRequests(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, er
 		requests = append(requests, request)
 	}
 
-	bz, err := codec.MarshalJSONIndent(k.cdc, requests)
+	bz, err := codec.MarshalJSONIndent(legacyQuerierCdc, requests)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
@@ -193,9 +194,9 @@ func queryRequests(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, er
 	return bz, nil
 }
 
-func queryResponse(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, error) {
+func queryResponse(ctx sdk.Context, req abci.RequestQuery, k Keeper, legacyQuerierCdc codec.JSONMarshaler) ([]byte, error) {
 	var params types.QueryResponseParams
-	if err := k.cdc.UnmarshalJSON(req.Data, &params); err != nil {
+	if err := legacyQuerierCdc.UnmarshalJSON(req.Data, &params); err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 
@@ -206,7 +207,7 @@ func queryResponse(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, er
 
 	response, _ := k.GetResponse(ctx, params.RequestID)
 
-	bz, err := codec.MarshalJSONIndent(k.cdc, response)
+	bz, err := codec.MarshalJSONIndent(legacyQuerierCdc, response)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
@@ -214,14 +215,14 @@ func queryResponse(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, er
 	return bz, nil
 }
 
-func queryRequestContext(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, error) {
+func queryRequestContext(ctx sdk.Context, req abci.RequestQuery, k Keeper, legacyQuerierCdc codec.JSONMarshaler) ([]byte, error) {
 	var params types.QueryRequestContextParams
-	if err := k.cdc.UnmarshalJSON(req.Data, &params); err != nil {
+	if err := legacyQuerierCdc.UnmarshalJSON(req.Data, &params); err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 
 	requestContext, _ := k.GetRequestContext(ctx, params.RequestContextID)
-	bz, err := codec.MarshalJSONIndent(k.cdc, requestContext)
+	bz, err := codec.MarshalJSONIndent(legacyQuerierCdc, requestContext)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
@@ -229,9 +230,9 @@ func queryRequestContext(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]by
 	return bz, nil
 }
 
-func queryRequestsByReqCtx(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, error) {
+func queryRequestsByReqCtx(ctx sdk.Context, req abci.RequestQuery, k Keeper, legacyQuerierCdc codec.JSONMarshaler) ([]byte, error) {
 	var params types.QueryRequestsByReqCtxParams
-	if err := k.cdc.UnmarshalJSON(req.Data, &params); err != nil {
+	if err := legacyQuerierCdc.UnmarshalJSON(req.Data, &params); err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 
@@ -247,7 +248,7 @@ func queryRequestsByReqCtx(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]
 		requests = append(requests, request)
 	}
 
-	bz, err := codec.MarshalJSONIndent(k.cdc, requests)
+	bz, err := codec.MarshalJSONIndent(legacyQuerierCdc, requests)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
@@ -255,9 +256,9 @@ func queryRequestsByReqCtx(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]
 	return bz, nil
 }
 
-func queryResponses(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, error) {
+func queryResponses(ctx sdk.Context, req abci.RequestQuery, k Keeper, legacyQuerierCdc codec.JSONMarshaler) ([]byte, error) {
 	var params types.QueryResponsesParams
-	if err := k.cdc.UnmarshalJSON(req.Data, &params); err != nil {
+	if err := legacyQuerierCdc.UnmarshalJSON(req.Data, &params); err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 
@@ -273,7 +274,7 @@ func queryResponses(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, e
 		responses = append(responses, response)
 	}
 
-	bz, err := codec.MarshalJSONIndent(k.cdc, responses)
+	bz, err := codec.MarshalJSONIndent(legacyQuerierCdc, responses)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
@@ -281,9 +282,9 @@ func queryResponses(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, e
 	return bz, nil
 }
 
-func queryEarnedFees(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, error) {
+func queryEarnedFees(ctx sdk.Context, req abci.RequestQuery, k Keeper, legacyQuerierCdc codec.JSONMarshaler) ([]byte, error) {
 	var params types.QueryEarnedFeesParams
-	if err := k.cdc.UnmarshalJSON(req.Data, &params); err != nil {
+	if err := legacyQuerierCdc.UnmarshalJSON(req.Data, &params); err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 
@@ -293,7 +294,7 @@ func queryEarnedFees(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, 
 			params.Provider.String())
 	}
 
-	bz, err := codec.MarshalJSONIndent(k.cdc, fees)
+	bz, err := codec.MarshalJSONIndent(legacyQuerierCdc, fees)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
@@ -301,9 +302,9 @@ func queryEarnedFees(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, 
 	return bz, nil
 }
 
-func querySchema(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, error) {
+func querySchema(ctx sdk.Context, req abci.RequestQuery, k Keeper, legacyQuerierCdc codec.JSONMarshaler) ([]byte, error) {
 	var params types.QuerySchemaParams
-	if err := k.cdc.UnmarshalJSON(req.Data, &params); err != nil {
+	if err := legacyQuerierCdc.UnmarshalJSON(req.Data, &params); err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 
@@ -318,7 +319,7 @@ func querySchema(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, erro
 		return nil, sdkerrors.Wrap(types.ErrInvalidSchemaName, schema)
 	}
 
-	bz, err := codec.MarshalJSONIndent(k.cdc, schema)
+	bz, err := codec.MarshalJSONIndent(legacyQuerierCdc, schema)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
@@ -326,10 +327,10 @@ func querySchema(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, erro
 	return bz, nil
 }
 
-func queryParams(ctx sdk.Context, k Keeper) ([]byte, error) {
+func queryParams(ctx sdk.Context, k Keeper, legacyQuerierCdc codec.JSONMarshaler) ([]byte, error) {
 	params := k.GetParams(ctx)
 
-	bz, err := codec.MarshalJSONIndent(k.cdc, params)
+	bz, err := codec.MarshalJSONIndent(legacyQuerierCdc, params)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}

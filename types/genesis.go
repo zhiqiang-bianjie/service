@@ -3,28 +3,17 @@ package types
 import (
 	"encoding/hex"
 	"fmt"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
-
-// GenesisState - all service state that must be provided at genesis
-type GenesisState struct {
-	Params            Params                    `json:"params"`             // service params
-	Definitions       []ServiceDefinition       `json:"definitions"`        // service definitions
-	Bindings          []ServiceBinding          `json:"bindings"`           // service bindings
-	WithdrawAddresses map[string]sdk.AccAddress `json:"withdraw_addresses"` // withdrawal addresses
-	RequestContexts   map[string]RequestContext `json:"request_contexts"`   // request contexts
-}
 
 // NewGenesisState constructs a GenesisState
 func NewGenesisState(
 	params Params,
 	definitions []ServiceDefinition,
 	bindings []ServiceBinding,
-	withdrawAddresses map[string]sdk.AccAddress,
-	requestContexts map[string]RequestContext,
-) GenesisState {
-	return GenesisState{
+	withdrawAddresses map[string][]byte,
+	requestContexts map[string]*RequestContext,
+) *GenesisState {
+	return &GenesisState{
 		Params:            params,
 		Definitions:       definitions,
 		Bindings:          bindings,
@@ -34,17 +23,9 @@ func NewGenesisState(
 }
 
 // DefaultGenesisState gets the raw genesis raw message for testing
-func DefaultGenesisState() GenesisState {
-	return GenesisState{
+func DefaultGenesisState() *GenesisState {
+	return &GenesisState{
 		Params: DefaultParams(),
-	}
-}
-
-// get raw genesis raw message for testing
-func DefaultGenesisStateForTest(moduleSvcDefinitions []ServiceDefinition) GenesisState {
-	return GenesisState{
-		Params:      DefaultParams(),
-		Definitions: moduleSvcDefinitions,
 	}
 }
 

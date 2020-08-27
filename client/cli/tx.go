@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/hex"
 	"encoding/json"
@@ -9,23 +8,19 @@ import (
 	"io/ioutil"
 	"strings"
 
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/version"
-	"github.com/cosmos/cosmos-sdk/x/auth"
-	authclient "github.com/cosmos/cosmos-sdk/x/auth/client"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	"github.com/irismod/service/types"
 )
 
 // GetTxCmd returns the transaction commands for this module
-func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
+func GetTxCmd() *cobra.Command {
 	serviceTxCmd := &cobra.Command{
 		Use:                        types.ModuleName,
 		Short:                      "Service transaction subcommands",
@@ -34,28 +29,28 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
-	serviceTxCmd.AddCommand(flags.PostCommands(
-		GetCmdDefineService(cdc),
-		GetCmdBindService(cdc),
-		GetCmdUpdateServiceBinding(cdc),
-		GetCmdSetWithdrawAddr(cdc),
-		GetCmdDisableServiceBinding(cdc),
-		GetCmdEnableServiceBinding(cdc),
-		GetCmdRefundServiceDeposit(cdc),
-		GetCmdCallService(cdc),
-		GetCmdRespondService(cdc),
-		GetCmdPauseRequestContext(cdc),
-		GetCmdStartRequestContext(cdc),
-		GetCmdKillRequestContext(cdc),
-		GetCmdUpdateRequestContext(cdc),
-		GetCmdWithdrawEarnedFees(cdc),
-	)...)
+	serviceTxCmd.AddCommand(
+		GetCmdDefineService(),
+		GetCmdBindService(),
+		GetCmdUpdateServiceBinding(),
+		GetCmdSetWithdrawAddr(),
+		GetCmdDisableServiceBinding(),
+		GetCmdEnableServiceBinding(),
+		GetCmdRefundServiceDeposit(),
+		GetCmdCallService(),
+		GetCmdRespondService(),
+		GetCmdPauseRequestContext(),
+		GetCmdStartRequestContext(),
+		GetCmdKillRequestContext(),
+		GetCmdUpdateRequestContext(),
+		GetCmdWithdrawEarnedFees(),
+	)
 
 	return serviceTxCmd
 }
 
 // GetCmdDefineService implements defining a service command
-func GetCmdDefineService(cdc *codec.Codec) *cobra.Command {
+func GetCmdDefineService() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "define",
 		Short: "Define a new service",
@@ -66,15 +61,17 @@ Example:
 $ %s tx service define --name=<service name> --description=<service description> --author-description=<author description> 
 --tags=<tag1,tag2,...> --schemas=<schemas content or path/to/schemas.json> --from mykey
 `,
-				version.ClientName,
+				version.AppName,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(authclient.GetTxEncoder(cdc))
-			cliCtx := context.NewCLIContextWithInput(inBuf).WithCodec(cdc)
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
-			author := cliCtx.GetFromAddress()
+			author := clientCtx.GetFromAddress()
 
 			name := viper.GetString(FlagName)
 			description := viper.GetString(FlagDescription)
@@ -108,19 +105,20 @@ $ %s tx service define --name=<service name> --description=<service description>
 				return err
 			}
 
-			return authclient.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 
 	cmd.Flags().AddFlagSet(FsDefineService)
 	_ = cmd.MarkFlagRequired(FlagName)
 	_ = cmd.MarkFlagRequired(FlagSchemas)
+	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
 }
 
 // GetCmdBindService implements binding a service command
-func GetCmdBindService(cdc *codec.Codec) *cobra.Command {
+func GetCmdBindService() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "bind",
 		Short: "Bind an existing service definition",
@@ -131,17 +129,18 @@ Example:
 $ %s tx service bind --service-name=<service-name> --deposit=1stake 
 --pricing=<pricing content or path/to/pricing.json> --qos=50 --from mykey
 `,
-				version.ClientName,
+				version.AppName,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(authclient.GetTxEncoder(cdc))
-			cliCtx := context.NewCLIContextWithInput(inBuf).WithCodec(cdc)
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
-			owner := cliCtx.GetFromAddress()
+			owner := clientCtx.GetFromAddress()
 
-			var err error
 			var provider sdk.AccAddress
 
 			providerStr := viper.GetString(FlagProvider)
@@ -190,7 +189,7 @@ $ %s tx service bind --service-name=<service-name> --deposit=1stake
 				return err
 			}
 
-			return authclient.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 
@@ -199,12 +198,13 @@ $ %s tx service bind --service-name=<service-name> --deposit=1stake
 	_ = cmd.MarkFlagRequired(FlagDeposit)
 	_ = cmd.MarkFlagRequired(FlagPricing)
 	_ = cmd.MarkFlagRequired(FlagQoS)
+	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
 }
 
 // GetCmdUpdateServiceBinding implements updating a service binding command
-func GetCmdUpdateServiceBinding(cdc *codec.Codec) *cobra.Command {
+func GetCmdUpdateServiceBinding() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "update-binding [service-name] [provider-address]",
 		Short: "Update an existing service binding",
@@ -215,18 +215,19 @@ Example:
 $ %s tx service update-binding <service-name> <provider-address> --deposit=1stake 
 --pricing=<pricing content or path/to/pricing.json> --qos=50 --from mykey
 `,
-				version.ClientName,
+				version.AppName,
 			),
 		),
 		Args: cobra.RangeArgs(1, 2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(authclient.GetTxEncoder(cdc))
-			cliCtx := context.NewCLIContextWithInput(inBuf).WithCodec(cdc)
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
-			owner := cliCtx.GetFromAddress()
+			owner := clientCtx.GetFromAddress()
 
-			var err error
 			var provider sdk.AccAddress
 
 			if len(args) > 1 {
@@ -279,17 +280,18 @@ $ %s tx service update-binding <service-name> <provider-address> --deposit=1stak
 				return err
 			}
 
-			return authclient.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 
 	cmd.Flags().AddFlagSet(FsUpdateServiceBinding)
+	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
 }
 
 // GetCmdSetWithdrawAddr implements setting a withdrawal address command
-func GetCmdSetWithdrawAddr(cdc *codec.Codec) *cobra.Command {
+func GetCmdSetWithdrawAddr() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "set-withdraw-addr [withdrawal-address]",
 		Short: "Set a withdrawal address for an owner",
@@ -299,16 +301,18 @@ func GetCmdSetWithdrawAddr(cdc *codec.Codec) *cobra.Command {
 Example:
 $ %s tx service set-withdraw-addr <withdrawal-address> --from mykey
 `,
-				version.ClientName,
+				version.AppName,
 			),
 		),
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(authclient.GetTxEncoder(cdc))
-			cliCtx := context.NewCLIContextWithInput(inBuf).WithCodec(cdc)
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
-			owner := cliCtx.GetFromAddress()
+			owner := clientCtx.GetFromAddress()
 
 			withdrawAddr, err := sdk.AccAddressFromBech32(args[0])
 			if err != nil {
@@ -320,15 +324,16 @@ $ %s tx service set-withdraw-addr <withdrawal-address> --from mykey
 				return err
 			}
 
-			return authclient.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
+	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
 }
 
 // GetCmdDisableServiceBinding implements disabling a service binding command
-func GetCmdDisableServiceBinding(cdc *codec.Codec) *cobra.Command {
+func GetCmdDisableServiceBinding() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "disable [service-name] [provider-address]",
 		Short: "Disable an available service binding",
@@ -338,18 +343,19 @@ func GetCmdDisableServiceBinding(cdc *codec.Codec) *cobra.Command {
 Example:
 $ %s tx service disable <service-name> <provider-address> --from mykey
 `,
-				version.ClientName,
+				version.AppName,
 			),
 		),
 		Args: cobra.RangeArgs(1, 2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(authclient.GetTxEncoder(cdc))
-			cliCtx := context.NewCLIContextWithInput(inBuf).WithCodec(cdc)
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
-			owner := cliCtx.GetFromAddress()
+			owner := clientCtx.GetFromAddress()
 
-			var err error
 			var provider sdk.AccAddress
 
 			if len(args) > 1 {
@@ -366,15 +372,16 @@ $ %s tx service disable <service-name> <provider-address> --from mykey
 				return err
 			}
 
-			return authclient.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
+	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
 }
 
 // GetCmdEnableServiceBinding implements enabling a service binding command
-func GetCmdEnableServiceBinding(cdc *codec.Codec) *cobra.Command {
+func GetCmdEnableServiceBinding() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "enable [service-name] [provider-address]",
 		Short: "Enable an unavailable service binding",
@@ -384,18 +391,19 @@ func GetCmdEnableServiceBinding(cdc *codec.Codec) *cobra.Command {
 Example:
 $ %s tx service enable <service-name> <provider-address> --deposit=1stake --from mykey
 `,
-				version.ClientName,
+				version.AppName,
 			),
 		),
 		Args: cobra.RangeArgs(1, 2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(authclient.GetTxEncoder(cdc))
-			cliCtx := context.NewCLIContextWithInput(inBuf).WithCodec(cdc)
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
-			owner := cliCtx.GetFromAddress()
+			owner := clientCtx.GetFromAddress()
 
-			var err error
 			var provider sdk.AccAddress
 
 			if len(args) > 1 {
@@ -422,17 +430,18 @@ $ %s tx service enable <service-name> <provider-address> --deposit=1stake --from
 				return err
 			}
 
-			return authclient.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 
 	cmd.Flags().AddFlagSet(FsEnableServiceBinding)
+	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
 }
 
 // GetCmdRefundServiceDeposit implements refunding deposit command
-func GetCmdRefundServiceDeposit(cdc *codec.Codec) *cobra.Command {
+func GetCmdRefundServiceDeposit() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "refund-deposit [service-name] [provider-address]",
 		Short: "Refund all deposit from a service binding",
@@ -442,18 +451,19 @@ func GetCmdRefundServiceDeposit(cdc *codec.Codec) *cobra.Command {
 Example:
 $ %s tx service refund-deposit <service-name> <provider-address> --from mykey
 `,
-				version.ClientName,
+				version.AppName,
 			),
 		),
 		Args: cobra.RangeArgs(1, 2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(authclient.GetTxEncoder(cdc))
-			cliCtx := context.NewCLIContextWithInput(inBuf).WithCodec(cdc)
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
-			owner := cliCtx.GetFromAddress()
+			owner := clientCtx.GetFromAddress()
 
-			var err error
 			var provider sdk.AccAddress
 
 			if len(args) > 1 {
@@ -470,15 +480,16 @@ $ %s tx service refund-deposit <service-name> <provider-address> --from mykey
 				return err
 			}
 
-			return authclient.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
+	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
 }
 
 // GetCmdCallService implements initiating a service call command
-func GetCmdCallService(cdc *codec.Codec) *cobra.Command {
+func GetCmdCallService() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "call",
 		Short: "Initiate a service call",
@@ -490,15 +501,17 @@ $ %s tx service call --service-name=<service-name> --providers=<provider list>
 --service-fee-cap=1stake --data=<input content or path/to/input.json> --timeout=100 
 --repeated --frequency=150 --total=100 --from mykey
 `,
-				version.ClientName,
+				version.AppName,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(authclient.GetTxEncoder(cdc))
-			cliCtx := context.NewCLIContextWithInput(inBuf).WithCodec(cdc)
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
-			consumer := cliCtx.GetFromAddress()
+			consumer := clientCtx.GetFromAddress()
 
 			serviceName := viper.GetString(FlagServiceName)
 
@@ -560,7 +573,7 @@ $ %s tx service call --service-name=<service-name> --providers=<provider list>
 				return err
 			}
 
-			return authclient.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 
@@ -570,12 +583,13 @@ $ %s tx service call --service-name=<service-name> --providers=<provider list>
 	_ = cmd.MarkFlagRequired(FlagServiceFeeCap)
 	_ = cmd.MarkFlagRequired(FlagData)
 	_ = cmd.MarkFlagRequired(FlagTimeout)
+	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
 }
 
 // GetCmdRespondService implements responding to a service request command
-func GetCmdRespondService(cdc *codec.Codec) *cobra.Command {
+func GetCmdRespondService() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "respond",
 		Short: "Respond to a service request",
@@ -586,15 +600,17 @@ Example:
 $ %s tx service respond --request-id=<request-id> --result=<result content or path/to/result.json>
 --data=<output content or path/to/output.json> --from mykey
 `,
-				version.ClientName,
+				version.AppName,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(authclient.GetTxEncoder(cdc))
-			cliCtx := context.NewCLIContextWithInput(inBuf).WithCodec(cdc)
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
-			provider := cliCtx.GetFromAddress()
+			provider := clientCtx.GetFromAddress()
 
 			requestIDStr := viper.GetString(FlagRequestID)
 			requestID, err := types.ConvertRequestID(requestIDStr)
@@ -654,19 +670,20 @@ $ %s tx service respond --request-id=<request-id> --result=<result content or pa
 				return err
 			}
 
-			return authclient.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 
 	cmd.Flags().AddFlagSet(FsRespondService)
 	_ = cmd.MarkFlagRequired(FlagRequestID)
 	_ = cmd.MarkFlagRequired(FlagResult)
+	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
 }
 
 // GetCmdPauseRequestContext implements pausing a request context command
-func GetCmdPauseRequestContext(cdc *codec.Codec) *cobra.Command {
+func GetCmdPauseRequestContext() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "pause [request-context-id]",
 		Short: "Pause a running request context",
@@ -676,16 +693,18 @@ func GetCmdPauseRequestContext(cdc *codec.Codec) *cobra.Command {
 Example:
 $ %s tx service pause <request-context-id> --from mykey
 `,
-				version.ClientName,
+				version.AppName,
 			),
 		),
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(authclient.GetTxEncoder(cdc))
-			cliCtx := context.NewCLIContextWithInput(inBuf).WithCodec(cdc)
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
-			consumer := cliCtx.GetFromAddress()
+			consumer := clientCtx.GetFromAddress()
 
 			requestContextID, err := hex.DecodeString(args[0])
 			if err != nil {
@@ -697,15 +716,16 @@ $ %s tx service pause <request-context-id> --from mykey
 				return err
 			}
 
-			return authclient.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
+	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
 }
 
 // GetCmdStartRequestContext implements restarting a request context command
-func GetCmdStartRequestContext(cdc *codec.Codec) *cobra.Command {
+func GetCmdStartRequestContext() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "start [request-context-id]",
 		Short: "Start a paused request context",
@@ -715,16 +735,18 @@ func GetCmdStartRequestContext(cdc *codec.Codec) *cobra.Command {
 Example:
 $ %s tx service start <request-context-id> --from mykey
 `,
-				version.ClientName,
+				version.AppName,
 			),
 		),
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(authclient.GetTxEncoder(cdc))
-			cliCtx := context.NewCLIContextWithInput(inBuf).WithCodec(cdc)
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
-			consumer := cliCtx.GetFromAddress()
+			consumer := clientCtx.GetFromAddress()
 
 			requestContextID, err := hex.DecodeString(args[0])
 			if err != nil {
@@ -736,15 +758,16 @@ $ %s tx service start <request-context-id> --from mykey
 				return err
 			}
 
-			return authclient.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
+	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
 }
 
 // GetCmdKillRequestContext implements terminating a request context command
-func GetCmdKillRequestContext(cdc *codec.Codec) *cobra.Command {
+func GetCmdKillRequestContext() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "kill [request-context-id]",
 		Short: "Terminate a request context",
@@ -754,16 +777,18 @@ func GetCmdKillRequestContext(cdc *codec.Codec) *cobra.Command {
 Example:
 $ %s tx service kill <request-context-id> --from mykey
 `,
-				version.ClientName,
+				version.AppName,
 			),
 		),
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(authclient.GetTxEncoder(cdc))
-			cliCtx := context.NewCLIContextWithInput(inBuf).WithCodec(cdc)
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
-			consumer := cliCtx.GetFromAddress()
+			consumer := clientCtx.GetFromAddress()
 
 			requestContextID, err := hex.DecodeString(args[0])
 			if err != nil {
@@ -775,15 +800,16 @@ $ %s tx service kill <request-context-id> --from mykey
 				return err
 			}
 
-			return authclient.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
+	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
 }
 
 // GetCmdUpdateRequestContext implements updating a request context command
-func GetCmdUpdateRequestContext(cdc *codec.Codec) *cobra.Command {
+func GetCmdUpdateRequestContext() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "update [request-context-id]",
 		Short: "Update a request context",
@@ -794,16 +820,18 @@ Example:
 $ %s tx service update <request-context-id> --providers=<new providers> 
 --service-fee-cap=2iris --timeout=0 --frequency=200 --total=200 --from mykey
 `,
-				version.ClientName,
+				version.AppName,
 			),
 		),
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(authclient.GetTxEncoder(cdc))
-			cliCtx := context.NewCLIContextWithInput(inBuf).WithCodec(cdc)
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
-			consumer := cliCtx.GetFromAddress()
+			consumer := clientCtx.GetFromAddress()
 
 			requestContextID, err := hex.DecodeString(args[0])
 			if err != nil {
@@ -844,17 +872,18 @@ $ %s tx service update <request-context-id> --providers=<new providers>
 				return err
 			}
 
-			return authclient.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 
 	cmd.Flags().AddFlagSet(FsUpdateRequestContext)
+	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
 }
 
 // GetCmdWithdrawEarnedFees implements withdrawing earned fees command
-func GetCmdWithdrawEarnedFees(cdc *codec.Codec) *cobra.Command {
+func GetCmdWithdrawEarnedFees() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "withdraw-fees [provider-address]",
 		Short: "Withdraw the earned fees of a provider or owner",
@@ -865,18 +894,19 @@ for all providers of the owner if the provider not given.
 Example:
 $ %s tx service withdraw-fees <provider-address> --from mykey
 `,
-				version.ClientName,
+				version.AppName,
 			),
 		),
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(authclient.GetTxEncoder(cdc))
-			cliCtx := context.NewCLIContextWithInput(inBuf).WithCodec(cdc)
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
-			owner := cliCtx.GetFromAddress()
+			owner := clientCtx.GetFromAddress()
 
-			var err error
 			var provider sdk.AccAddress
 
 			if len(args) > 1 {
@@ -893,9 +923,10 @@ $ %s tx service withdraw-fees <provider-address> --from mykey
 				return err
 			}
 
-			return authclient.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
+	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
 }

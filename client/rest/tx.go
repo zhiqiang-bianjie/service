@@ -5,17 +5,18 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/cosmos/cosmos-sdk/client/tx"
+
 	"github.com/gorilla/mux"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
-	authclient "github.com/cosmos/cosmos-sdk/x/auth/client"
 
 	"github.com/irismod/service/types"
 )
 
-func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router) {
+func registerTxRoutes(cliCtx client.Context, r *mux.Router) {
 	r.HandleFunc("/service/definitions", defineServiceHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/service/bindings", bindServiceHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc(fmt.Sprintf("/service/bindings/{%s}/{%s}", RestServiceName, RestProvider), updateServiceBindingHandlerFn(cliCtx)).Methods("PUT")
@@ -147,10 +148,10 @@ type withdrawEarnedFeesReq struct {
 	Owner   string       `json:"owner" yaml:"owner"`
 }
 
-func defineServiceHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func defineServiceHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req DefineServiceReq
-		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+		if !rest.ReadRESTReq(w, r, cliCtx.JSONMarshaler, &req) {
 			return
 		}
 
@@ -171,14 +172,14 @@ func defineServiceHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		authclient.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
+		tx.WriteGeneratedTxResponse(cliCtx, w, req.BaseReq, msg)
 	}
 }
 
-func bindServiceHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func bindServiceHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req BindServiceReq
-		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+		if !rest.ReadRESTReq(w, r, cliCtx.JSONMarshaler, &req) {
 			return
 		}
 
@@ -217,11 +218,12 @@ func bindServiceHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		authclient.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
+		tx.WriteGeneratedTxResponse(cliCtx, w, req.BaseReq, msg)
+
 	}
 }
 
-func updateServiceBindingHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func updateServiceBindingHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		serviceName := vars[RestServiceName]
@@ -234,7 +236,7 @@ func updateServiceBindingHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		var req UpdateServiceBindingReq
-		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+		if !rest.ReadRESTReq(w, r, cliCtx.JSONMarshaler, &req) {
 			return
 		}
 
@@ -270,11 +272,12 @@ func updateServiceBindingHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		authclient.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
+		tx.WriteGeneratedTxResponse(cliCtx, w, req.BaseReq, msg)
+
 	}
 }
 
-func setWithdrawAddrHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func setWithdrawAddrHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		ownerStr := vars[RestOwner]
@@ -286,7 +289,7 @@ func setWithdrawAddrHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		var req SetWithdrawAddrReq
-		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+		if !rest.ReadRESTReq(w, r, cliCtx.JSONMarshaler, &req) {
 			return
 		}
 
@@ -307,11 +310,12 @@ func setWithdrawAddrHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		authclient.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
+		tx.WriteGeneratedTxResponse(cliCtx, w, req.BaseReq, msg)
+
 	}
 }
 
-func disableServiceBindingHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func disableServiceBindingHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		serviceName := vars[RestServiceName]
@@ -324,7 +328,7 @@ func disableServiceBindingHandlerFn(cliCtx context.CLIContext) http.HandlerFunc 
 		}
 
 		var req DisableServiceBindingReq
-		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+		if !rest.ReadRESTReq(w, r, cliCtx.JSONMarshaler, &req) {
 			return
 		}
 
@@ -351,11 +355,12 @@ func disableServiceBindingHandlerFn(cliCtx context.CLIContext) http.HandlerFunc 
 			return
 		}
 
-		authclient.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
+		tx.WriteGeneratedTxResponse(cliCtx, w, req.BaseReq, msg)
+
 	}
 }
 
-func enableServiceBindingHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func enableServiceBindingHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		serviceName := vars[RestServiceName]
@@ -368,7 +373,7 @@ func enableServiceBindingHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		var req EnableServiceBindingReq
-		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+		if !rest.ReadRESTReq(w, r, cliCtx.JSONMarshaler, &req) {
 			return
 		}
 
@@ -404,11 +409,12 @@ func enableServiceBindingHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		authclient.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
+		tx.WriteGeneratedTxResponse(cliCtx, w, req.BaseReq, msg)
+
 	}
 }
 
-func refundServiceDepositHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func refundServiceDepositHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		serviceName := vars[RestServiceName]
@@ -421,7 +427,7 @@ func refundServiceDepositHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		var req RefundServiceDepositReq
-		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+		if !rest.ReadRESTReq(w, r, cliCtx.JSONMarshaler, &req) {
 			return
 		}
 
@@ -448,14 +454,14 @@ func refundServiceDepositHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		authclient.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
+		tx.WriteGeneratedTxResponse(cliCtx, w, req.BaseReq, msg)
 	}
 }
 
-func requestServiceHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func requestServiceHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req callServiceReq
-		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+		if !rest.ReadRESTReq(w, r, cliCtx.JSONMarshaler, &req) {
 			return
 		}
 
@@ -496,14 +502,14 @@ func requestServiceHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		authclient.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
+		tx.WriteGeneratedTxResponse(cliCtx, w, req.BaseReq, msg)
 	}
 }
 
-func respondServiceHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func respondServiceHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req respondServiceReq
-		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+		if !rest.ReadRESTReq(w, r, cliCtx.JSONMarshaler, &req) {
 			return
 		}
 
@@ -531,11 +537,11 @@ func respondServiceHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		authclient.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
+		tx.WriteGeneratedTxResponse(cliCtx, w, req.BaseReq, msg)
 	}
 }
 
-func pauseRequestContextHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func pauseRequestContextHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		requestContextIDStr := vars[RestRequestContextID]
@@ -547,7 +553,7 @@ func pauseRequestContextHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		var req pauseRequestContextReq
-		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+		if !rest.ReadRESTReq(w, r, cliCtx.JSONMarshaler, &req) {
 			return
 		}
 
@@ -568,11 +574,11 @@ func pauseRequestContextHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		authclient.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
+		tx.WriteGeneratedTxResponse(cliCtx, w, req.BaseReq, msg)
 	}
 }
 
-func startRequestContextHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func startRequestContextHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		requestContextIDStr := vars[RestRequestContextID]
@@ -584,7 +590,7 @@ func startRequestContextHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		var req startRequestContextReq
-		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+		if !rest.ReadRESTReq(w, r, cliCtx.JSONMarshaler, &req) {
 			return
 		}
 
@@ -605,11 +611,11 @@ func startRequestContextHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		authclient.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
+		tx.WriteGeneratedTxResponse(cliCtx, w, req.BaseReq, msg)
 	}
 }
 
-func killRequestContextHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func killRequestContextHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		requestContextIDStr := vars[RestRequestContextID]
@@ -621,7 +627,7 @@ func killRequestContextHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		var req killRequestContextReq
-		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+		if !rest.ReadRESTReq(w, r, cliCtx.JSONMarshaler, &req) {
 			return
 		}
 
@@ -642,11 +648,11 @@ func killRequestContextHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		authclient.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
+		tx.WriteGeneratedTxResponse(cliCtx, w, req.BaseReq, msg)
 	}
 }
 
-func updateRequestContextHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func updateRequestContextHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		requestContextIDStr := vars[RestRequestContextID]
@@ -658,7 +664,7 @@ func updateRequestContextHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		var req updateRequestContextReq
-		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+		if !rest.ReadRESTReq(w, r, cliCtx.JSONMarshaler, &req) {
 			return
 		}
 
@@ -703,11 +709,11 @@ func updateRequestContextHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		authclient.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
+		tx.WriteGeneratedTxResponse(cliCtx, w, req.BaseReq, msg)
 	}
 }
 
-func withdrawEarnedFeesHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func withdrawEarnedFeesHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		providerStr := vars[RestProvider]
@@ -719,7 +725,7 @@ func withdrawEarnedFeesHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		var req withdrawEarnedFeesReq
-		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+		if !rest.ReadRESTReq(w, r, cliCtx.JSONMarshaler, &req) {
 			return
 		}
 
@@ -746,6 +752,6 @@ func withdrawEarnedFeesHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		authclient.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
+		tx.WriteGeneratedTxResponse(cliCtx, w, req.BaseReq, msg)
 	}
 }

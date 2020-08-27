@@ -4,10 +4,11 @@ import (
 	"testing"
 	"time"
 
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
+
 	"github.com/stretchr/testify/suite"
 
 	gogotypes "github.com/gogo/protobuf/types"
-	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/tmhash"
 	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 
@@ -58,7 +59,7 @@ var (
 type KeeperTestSuite struct {
 	suite.Suite
 
-	cdc    *codec.Codec
+	cdc    codec.Marshaler
 	ctx    sdk.Context
 	keeper *keeper.Keeper
 	app    *simapp.SimApp
@@ -72,8 +73,8 @@ func (suite *KeeperTestSuite) SetupTest() {
 	isCheckTx := false
 	app := simapp.Setup(isCheckTx)
 
-	suite.cdc = app.Codec()
-	suite.ctx = app.BaseApp.NewContext(isCheckTx, abci.Header{})
+	suite.cdc = codec.NewAminoCodec(app.LegacyAmino())
+	suite.ctx = app.BaseApp.NewContext(isCheckTx, tmproto.Header{})
 	suite.app = app
 	suite.keeper = &app.ServiceKeeper
 
@@ -144,7 +145,7 @@ func (suite *KeeperTestSuite) TestBindService() {
 
 	svcBindings := suite.keeper.GetOwnerServiceBindings(suite.ctx, testOwner, testServiceName)
 	suite.Equal(1, len(svcBindings))
-	suite.Equal(svcBinding, svcBindings[0])
+	suite.Equal(svcBinding.String(), svcBindings[0].String())
 
 	providerOwner, found := suite.keeper.GetOwner(suite.ctx, testProvider)
 	suite.True(found)

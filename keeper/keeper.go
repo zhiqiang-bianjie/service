@@ -7,8 +7,8 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth/exported"
-	"github.com/cosmos/cosmos-sdk/x/params"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
 	"github.com/irismod/service/types"
 )
@@ -22,7 +22,7 @@ type Keeper struct {
 	// The bankKeeper to reduce the supply of the network
 	bankKeeper  types.BankKeeper
 	tokenKeeper types.TokenKeeper
-	paramstore  params.Subspace
+	paramSpace  paramstypes.Subspace
 
 	feeCollectorName string // name of the FeeCollector ModuleAccount
 
@@ -40,7 +40,7 @@ func NewKeeper(
 	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
 	tokenKeeper types.TokenKeeper,
-	paramstore params.Subspace,
+	paramSpace paramstypes.Subspace,
 	feeCollectorName string,
 ) Keeper {
 	// ensure service module accounts are set
@@ -52,6 +52,11 @@ func NewKeeper(
 		panic(fmt.Sprintf("%s module account has not been set", types.RequestAccName))
 	}
 
+	// set KeyTable if it has not already been set
+	if !paramSpace.HasKeyTable() {
+		paramSpace = paramSpace.WithKeyTable(ParamKeyTable())
+	}
+
 	keeper := Keeper{
 		storeKey:         key,
 		cdc:              cdc,
@@ -59,7 +64,7 @@ func NewKeeper(
 		bankKeeper:       bankKeeper,
 		tokenKeeper:      tokenKeeper,
 		feeCollectorName: feeCollectorName,
-		paramstore:       paramstore.WithKeyTable(ParamKeyTable()),
+		paramSpace:       paramSpace,
 	}
 
 	keeper.respCallbacks = make(map[string]types.ResponseCallback)
@@ -73,11 +78,11 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 }
 
 // GetServiceDepositAccount returns the service depost ModuleAccount
-func (k Keeper) GetServiceDepositAccount(ctx sdk.Context) exported.ModuleAccountI {
+func (k Keeper) GetServiceDepositAccount(ctx sdk.Context) authtypes.ModuleAccountI {
 	return k.accountKeeper.GetModuleAccount(ctx, types.DepositAccName)
 }
 
 // GetServiceRequestAccount returns the service request ModuleAccount
-func (k Keeper) GetServiceRequestAccount(ctx sdk.Context) exported.ModuleAccountI {
+func (k Keeper) GetServiceRequestAccount(ctx sdk.Context) authtypes.ModuleAccountI {
 	return k.accountKeeper.GetModuleAccount(ctx, types.RequestAccName)
 }
