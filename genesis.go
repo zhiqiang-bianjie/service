@@ -40,7 +40,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, data types.GenesisState) {
 }
 
 // ExportGenesis - output genesis parameters
-func ExportGenesis(ctx sdk.Context, k keeper.Keeper) types.GenesisState {
+func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	var definitions []types.ServiceDefinition
 	var bindings []types.ServiceBinding
 	withdrawAddresses := make(map[string][]byte)

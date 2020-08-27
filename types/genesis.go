@@ -12,8 +12,8 @@ func NewGenesisState(
 	bindings []ServiceBinding,
 	withdrawAddresses map[string][]byte,
 	requestContexts map[string]*RequestContext,
-) GenesisState {
-	return GenesisState{
+) *GenesisState {
+	return &GenesisState{
 		Params:            params,
 		Definitions:       definitions,
 		Bindings:          bindings,
@@ -26,14 +26,6 @@ func NewGenesisState(
 func DefaultGenesisState() *GenesisState {
 	return &GenesisState{
 		Params: DefaultParams(),
-	}
-}
-
-// get raw genesis raw message for testing
-func DefaultGenesisStateForTest(moduleSvcDefinitions []ServiceDefinition) GenesisState {
-	return GenesisState{
-		Params:      DefaultParams(),
-		Definitions: moduleSvcDefinitions,
 	}
 }
 
