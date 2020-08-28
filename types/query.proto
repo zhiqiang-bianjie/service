@@ -4,7 +4,7 @@ package irismod.service;
 import "third_party/proto/gogoproto/gogo.proto";
 import "types/service.proto";
 import "third_party/proto/cosmos_proto/cosmos.proto";
-import "third_party/proto/cosmos_proto/types.proto";
+import "third_party/proto/cosmos_proto/coin.proto";
 import "third_party/proto/cosmos_proto/pagination.proto";
 
 option go_package = "github.com/irismod/service/types";
@@ -176,7 +176,7 @@ message QueryEarnedFeesRequest {
 
 // QueryEarnedFeesResponse is response type for the Query/EarnedFees RPC method
 message QueryEarnedFeesResponse {
-    repeated cosmos_sdk.v1.Coin fees = 1 [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins", (gogoproto.moretags) = "yaml:\"service_fee\""];
+    repeated cosmos.base.v1beta1.Coin fees = 1 [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins", (gogoproto.moretags) = "yaml:\"service_fee\""];
 }
 
 // QuerySchemaRequest is request type for the Query/Schema RPC method
