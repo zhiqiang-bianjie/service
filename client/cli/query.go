@@ -502,16 +502,15 @@ $ %s query service request-context <request-context-id>
 				return err
 			}
 
-			queryClient := types.NewQueryClient(clientCtx)
-
-			res, err := queryClient.RequestContext(context.Background(), &types.QueryRequestContextRequest{
+			res, err := utils.QueryRequestContext(clientCtx, types.QuerierRoute, types.QueryRequestContextRequest{
 				RequestContextID: requestContextID,
 			})
+
 			if err != nil {
 				return err
 			}
 
-			return clientCtx.PrintOutput(res.RequestContext)
+			return clientCtx.PrintOutput(&res)
 		},
 	}
 	flags.AddQueryFlagsToCmd(cmd)

@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"context"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -16,20 +17,15 @@ import (
 )
 
 // QueryRequestContext queries a single request context
-func QueryRequestContext(cliCtx client.Context, queryRoute string, params types.QueryRequestContextParams) (
+func QueryRequestContext(cliCtx client.Context, queryRoute string, params types.QueryRequestContextRequest) (
 	requestContext types.RequestContext, err error) {
-	bz, err := cliCtx.JSONMarshaler.MarshalJSON(params)
+	queryClient := types.NewQueryClient(cliCtx)
+	res, err := queryClient.RequestContext(context.Background(), &params)
 	if err != nil {
 		return requestContext, err
 	}
+	requestContext = *res.RequestContext
 
-	route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryRequestContext)
-	res, _, err := cliCtx.QueryWithData(route, bz)
-	if err != nil {
-		return requestContext, err
-	}
-
-	_ = cliCtx.JSONMarshaler.UnmarshalJSON(res, &requestContext)
 	if requestContext.Empty() {
 		requestContext, err = QueryRequestContextByTxQuery(cliCtx, queryRoute, params)
 		if err != nil {
@@ -44,7 +40,7 @@ func QueryRequestContext(cliCtx client.Context, queryRoute string, params types.
 }
 
 // QueryRequestContextByTxQuery will query for a single request context via a direct txs tags query.
-func QueryRequestContextByTxQuery(cliCtx client.Context, queryRoute string, params types.QueryRequestContextParams) (
+func QueryRequestContextByTxQuery(cliCtx client.Context, queryRoute string, params types.QueryRequestContextRequest) (
 	requestContext types.RequestContext, err error) {
 	txHash, msgIndex, err := types.SplitRequestContextID(params.RequestContextID)
 	if err != nil {
@@ -87,7 +83,7 @@ func QueryRequestByTxQuery(cliCtx client.Context, queryRoute string, requestID t
 	}
 
 	// query request context
-	requestContext, err := QueryRequestContext(cliCtx, queryRoute, types.QueryRequestContextParams{
+	requestContext, err := QueryRequestContext(cliCtx, queryRoute, types.QueryRequestContextRequest{
 		RequestContextID: contextID,
 	})
 
@@ -177,7 +173,7 @@ func QueryResponseByTxQuery(cliCtx client.Context, queryRoute string, requestID 
 	}
 
 	// query request context
-	requestContext, err := QueryRequestContext(cliCtx, queryRoute, types.QueryRequestContextParams{
+	requestContext, err := QueryRequestContext(cliCtx, queryRoute, types.QueryRequestContextRequest{
 		RequestContextID: contextID,
 	})
 

@@ -372,7 +372,7 @@ func queryRequestContextHandlerFn(cliCtx client.Context) http.HandlerFunc {
 			return
 		}
 
-		params := types.QueryRequestContextParams{
+		params := types.QueryRequestContextRequest{
 			RequestContextID: requestContextID,
 		}
 
