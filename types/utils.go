@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	reDnmString = `[a-z][a-z0-9]{2,}`
+	reDnmString = `[a-z][a-z0-9:-]{2,15}`
 	reAmt       = `[0-9]+(\.[0-9]+)?`
 	reSpc       = `[[:space:]]*`
 	reCoin      = regexp.MustCompile(fmt.Sprintf(`^(%s)%s(%s)$`, reAmt, reSpc, reDnmString))
@@ -30,6 +30,7 @@ func HasDuplicate(arr []string) bool {
 }
 
 // ParseCoinParts parses the given string to the amount and denom
+// TODO should replace it with cosmos-sdk ParseDecCoin
 func ParseCoinParts(coinStr string) (denom, amount string, err error) {
 	coinStr = strings.ToLower(strings.TrimSpace(coinStr))
 
