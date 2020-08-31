@@ -11,7 +11,7 @@ import (
 // TokenI defines the interface for Token
 type TokenI interface {
 	GetMinUnit() string
-	GetScale() uint8
+	GetScale() uint32
 	ToMainCoin(coin sdk.Coin) (sdk.DecCoin, error)
 	ToMinCoin(coin sdk.DecCoin) (sdk.Coin, error)
 }
@@ -20,7 +20,7 @@ type TokenI interface {
 type MockToken struct {
 	Symbol  string
 	MinUnit string
-	Scale   uint8
+	Scale   uint32
 }
 
 func (token MockToken) ToMainCoin(coin sdk.Coin) (sdk.DecCoin, error) {
@@ -76,6 +76,6 @@ func (token MockToken) GetMinUnit() string {
 }
 
 // GetScale gets the scale
-func (token MockToken) GetScale() uint8 {
+func (token MockToken) GetScale() uint32 {
 	return token.Scale
 }
