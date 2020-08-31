@@ -306,10 +306,11 @@ func (k Keeper) ParsePricing(ctx sdk.Context, pricing string) (p types.Pricing, 
 		return p, sdkerrors.Wrapf(types.ErrInvalidPricing, "invalid price: %s", err.Error())
 	}
 
-	p.Price = sdk.NewCoins(sdk.NewCoin(
-		token.GetMinUnit(),
-		amt.Mul(sdk.NewDecFromInt(sdk.NewIntWithDecimal(1, int(token.GetScale())))).TruncateInt(),
-	))
+	price,err := token.ToMinCoin(sdk.NewDecCoinFromDec(denom,amt))
+	if err != nil {
+		return p, sdkerrors.Wrapf(types.ErrInvalidPricing, "invalid price: %s", err.Error())
+	}
+	p.Price = sdk.NewCoins(price)
 	p.PromotionsByTime = rawPricing.PromotionsByTime
 	p.PromotionsByVolume = rawPricing.PromotionsByVolume
 
